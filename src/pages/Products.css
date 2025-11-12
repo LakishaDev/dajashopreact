@@ -1,0 +1,31 @@
+.product__media {
+  padding: 12px;
+}
+.product__media img {
+  width: 100%;
+  border-radius: 12px;
+  display: block;
+}
+.product__title {
+  margin: 8px 0;
+}
+.product__price {
+  color: var(--color-primary);
+  font-weight: 900;
+  font-size: 1.25rem;
+  margin-bottom: 12px;
+}
+.product__specs {
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+}
+.product__cta {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--color-primary);
+  color: #111;
+  font-weight: 800;
+}
