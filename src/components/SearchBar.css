@@ -1,0 +1,21 @@
+.search {
+  display: flex;
+  gap: 8px;
+  flex: 1 1 auto;
+}
+.search__input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+.search__btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 0;
+  background: var(--color-primary);
+  color: #111;
+  font-weight: 700;
+}

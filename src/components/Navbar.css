@@ -1,0 +1,41 @@
+.navbar {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.navbar__row {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+.navbar__all {
+  color: var(--color-text);
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+.navbar__group {
+  position: relative;
+}
+.navbar__label {
+  padding: 10px 8px;
+  opacity: 0.9;
+}
+.navbar__group:hover .navbar__dropdown {
+  display: grid;
+}
+.navbar__dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  padding: 8px;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+.navbar__dropdown a {
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+.navbar__dropdown a:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
