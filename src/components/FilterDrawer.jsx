@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import "./FilterDrawer.css";
 import { useSearchParams } from "react-router-dom";
 import Filters from "./Filters";

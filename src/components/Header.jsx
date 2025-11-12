@@ -8,13 +8,17 @@ import { useCart } from "../hooks/useCart.js";
 
 export default function Header() {
   const { count } = useCart();
+
   return (
     <header className="header card shadow">
-      <div className="container header__row">
-        <Link to="/" className="header__brand">
-          DajaShop
-        </Link>
-        <SearchBar />
+      {/* GRID: desktop (brand | search | actions), mobile (brand+actions | search) */}
+      <div className="container header__grid">
+        <Link to="/" className="header__brand">DajaShop</Link>
+
+        <div className="header__search">
+          <SearchBar />
+        </div>
+
         <div className="header__actions">
           <ThemeSwitcher />
           <Link className="header__cart" to="/cart">
@@ -23,10 +27,9 @@ export default function Header() {
           <Link to="/account" className="header__account">
             Moj nalog
           </Link>
-
-          
         </div>
       </div>
+
       <NavBar />
     </header>
   );
