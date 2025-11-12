@@ -1,7 +1,7 @@
 import React from "react";
 import "./Cart.css";
 import { Link } from "react-router-dom";
-import { useCart } from "../context/CartContext.jsx";
+import { useCart } from "../hooks/useCart.js";
 import { money } from "../utils/currency.js";
 
 export default function Cart() {

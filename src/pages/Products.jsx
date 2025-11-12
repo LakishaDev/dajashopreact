@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import Breadcrumbs from "../components/Breadcrumbs.jsx";
 import catalog from "../services/CatalogService.js";
 import { money } from "../utils/currency.js";
-import { useCart } from "../context/CartContext.jsx";
+import { useCart } from "../hooks/useCart.js";
 
 export default function Product() {
   const { slug } = useParams();

@@ -4,9 +4,7 @@ import { Link } from "react-router-dom";
 import NavBar from "./NavBar.jsx";
 import SearchBar from "./SearchBar.jsx";
 import ThemeSwitcher from "./ThemeSwitcher.jsx";
-import { useCart } from "../context/CartContext.jsx";
-import FilterDrawer from "../components/FilterDrawer";
-import Filters from "./Filters.jsx";
+import { useCart } from "../hooks/useCart.js";
 
 export default function Header() {
   const { count } = useCart();
