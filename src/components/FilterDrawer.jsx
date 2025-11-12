@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useCallback } from "react";
-import "./FilterDrawer.css";
+import "./FilterBar.css";
 import { useSearchParams } from "react-router-dom";
 import Filters from "./Filters";
 
-/** Utility: izračunaj ukupan broj aktivnih filtera */
+/* Broj aktivnih filtera iz URL-a */
 function useActiveCount() {
   const [sp] = useSearchParams();
   const [count, setCount] = useState(0);
@@ -17,14 +17,11 @@ function useActiveCount() {
     setCount(sum);
   }, [sp]);
 
-  useEffect(() => {
-    calc();
-  }, [calc]);
-
+  useEffect(() => { calc(); }, [calc]);
   return count;
 }
 
-/** Hook za zabranu skrolovanja kad je drawer otvoren */
+/* Zaključaj body dok je sheet otvoren (iOS-safe) */
 function useLockBody(isLocked) {
   useEffect(() => {
     const html = document.documentElement;
@@ -57,107 +54,85 @@ function useLockBody(isLocked) {
   }, [isLocked]);
 }
 
-
-export default function FilterDrawer({ className = "" }) {
+/**
+ * FilterBar – sedi ispod headera, full width u katalogu.
+ * Header visinu čita iz CSS varijable --header-h (fallback 64px).
+ */
+export default function FilterBar() {
   const [open, setOpen] = useState(false);
-  const activeCount = useActiveCount();
+  const active = useActiveCount();
 
   useLockBody(open);
 
   // ESC za zatvaranje
   useEffect(() => {
-    function onKey(e) {
-      if (e.key === "Escape") setOpen(false);
-    }
+    function onKey(e) { if (e.key === "Escape") setOpen(false); }
     if (open) window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  // Fokus po otvaranju
+  // Fokus na dugme "Zatvori" pri otvaranju
   const setInitialFocus = (node) => {
     if (node) {
-      const btn = node.querySelector(".fd-close");
+      const btn = node.querySelector(".fb-close");
       if (btn) btn.focus();
     }
   };
 
   return (
     <>
-      {/* Trigger dugme (vidljivo primarno na mobilnom, ali može i na desktopu po želji) */}
-      <button
-        type="button"
-        className={`fd-trigger ${className}`}
-        onClick={() => setOpen(true)}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        aria-controls="filter-drawer"
-      >
-        {/* Ikonica filter (SVG) */}
-        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M3 5h18M6 12h12M10 19h4"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </svg>
-        <span>Filteri</span>
-        {activeCount > 0 && (
-          <span className="fd-badge" aria-label={`${activeCount} aktivno`}>
-            {activeCount}
-          </span>
-        )}
-      </button>
+      {/* Traka ispod headera */}
+      <div className="filterbar" role="region" aria-label="Filter traka">
+        <button
+          type="button"
+          className="fb-button"
+          onClick={() => setOpen(true)}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          aria-controls="filters-sheet"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 5h18M6 12h12M10 19h4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+          <span>Filteri</span>
+          {active > 0 && <span className="fb-badge" aria-label={`${active} aktivno`}>{active}</span>}
+        </button>
+      </div>
 
-      {/* Overlay + Drawer */}
+      {/* Overlay koji počinje ispod headera */}
       {open && (
         <div
-          className="fd-overlay"
+          className="fb-overlay"
           role="dialog"
           aria-modal="true"
           aria-label="Filteri"
-          id="filter-drawer"
+          id="filters-sheet"
           onClick={(e) => {
-            if (e.target.classList.contains("fd-overlay")) setOpen(false);
+            if (e.target.classList.contains("fb-overlay")) setOpen(false);
           }}
         >
-          <div className="fd-sheet" ref={setInitialFocus}>
-            <div className="fd-topbar">
+          <div className="fb-sheet" ref={setInitialFocus}>
+            <div className="fb-topbar">
               <button
                 type="button"
-                className="fd-close"
+                className="fb-close"
                 onClick={() => setOpen(false)}
                 aria-label="Zatvori filtere"
               >
-                {/* X ikonica */}
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M6 6l12 12M18 6L6 18"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
+                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                 </svg>
                 <span>Zatvori</span>
               </button>
-              <div className="fd-title">
+              <div className="fb-title">
                 <span>Filteri</span>
-                {activeCount > 0 && (
-                  <span className="fd-badge">{activeCount}</span>
-                )}
+                {active > 0 && <span className="fb-badge">{active}</span>}
               </div>
-              <div className="fd-spacer" />
+              <div className="fb-spacer" />
             </div>
 
-            <div className="fd-content">
-              {/* Reuse desktop Filters UI unutra (isti komponent) */}
+            <div className="fb-content">
+              {/* Tvoj postojeći Filters UI */}
               <Filters />
             </div>
           </div>
