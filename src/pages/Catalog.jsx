@@ -6,6 +6,7 @@ import Filters from "../components/Filters.jsx";
 import Pagination from "../components/Pagination.jsx";
 import catalog from "../services/CatalogService.js";
 import { useSearchParams } from "react-router-dom";
+import FilterDrawer from "../components/FilterDrawer.jsx";
 
 const PER_PAGE = 12;
 
@@ -31,7 +32,13 @@ export default function Catalog() {
 
   return (
     <div className="catalog grid" style={{ gridTemplateColumns: "260px 1fr" }}>
-      <Filters />
+      <aside className="sidebar-filters">
+        <FilterDrawer />
+      </aside>
+      <aside className="sidebar-filter">
+        <Filters />
+      </aside>
+
       <div>
         <Breadcrumbs trail={[{ label: "Katalog", href: "/catalog" }]} />
         <div className="catalog__count">Ukupno: {data.length}</div>

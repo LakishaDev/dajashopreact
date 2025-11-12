@@ -5,6 +5,8 @@ import NavBar from "./NavBar.jsx";
 import SearchBar from "./SearchBar.jsx";
 import ThemeSwitcher from "./ThemeSwitcher.jsx";
 import { useCart } from "../context/CartContext.jsx";
+import FilterDrawer from "../components/FilterDrawer";
+import Filters from "./Filters.jsx";
 
 export default function Header() {
   const { count } = useCart();
@@ -23,6 +25,8 @@ export default function Header() {
           <Link to="/account" className="header__account">
             Moj nalog
           </Link>
+
+          
         </div>
       </div>
       <NavBar />
