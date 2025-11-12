@@ -1,5 +1,16 @@
 // Svaka tema ima: primary, accent, bg, surface, text, muted
 export const themes = {
+  appleMono: {
+    name: "appleMono",
+    primary: "#9b9b9bff", // crna za akcente/dugmad
+    accent: "#D2D2D7", // svetlosiva linije/ivice
+    bg: "#FFFFFF", // bela pozadina
+    surface: "#F5F5F7", // kartice/sekcije (apple siva)
+    text: "#111111", // skoro crna
+    muted: "#6E6E73", // apple siva za sekundarni tekst
+    onPrimary: "#FFFFFF", // tekst na primary (belo na crnoj)
+  },
+
   luxGold: {
     name: "luxGold",
     primary: "#C8A94E", // zlatna
@@ -57,4 +68,5 @@ export function applyTheme(theme) {
   r.setProperty("--color-surface", t.surface);
   r.setProperty("--color-text", t.text);
   r.setProperty("--color-muted", t.muted);
+  //r.setProperty("--color-on-primary", t.onPrimary || "#111"); // NOVO
 }
