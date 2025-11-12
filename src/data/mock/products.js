@@ -7,9 +7,10 @@ export default [
     price: 5500,
     gender: "MUŠKI",
     category: "RETRO",
-    image: "/placeholder.png",
+    image: "/images/GA-100-1A1-500x600.jpg",
     specs: {
       staklo: "Mineralno",
+      kirac: "pocka",
       vodootpornost: "WR ISO 22810",
       baterija: "3 godine",
     },
@@ -22,7 +23,7 @@ export default [
     price: 4900,
     gender: "MUŠKI",
     category: "RETRO",
-    image: "/placeholder.png",
+    image: "/images/MTP-1314PL-8AVEF.jpg",
     specs: {
       staklo: "Mineralno",
       vodootpornost: "WR ISO 22810",
