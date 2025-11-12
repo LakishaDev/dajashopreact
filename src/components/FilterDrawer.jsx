@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import "./FilterDrawer.css";
 import { useSearchParams } from "react-router-dom";
 import Filters from "./Filters";
 
-/** Prebroj aktivne filtere iz URL-a */
+/** Utility: izračunaj ukupan broj aktivnih filtera */
 function useActiveCount() {
   const [sp] = useSearchParams();
   const [count, setCount] = useState(0);
@@ -15,11 +15,15 @@ function useActiveCount() {
       (sp.get("min") || sp.get("max") ? 1 : 0);
     setCount(sum);
   }, [sp]);
-  useEffect(() => { calc(); }, [calc]);
+
+  useEffect(() => {
+    calc();
+  }, [calc]);
+
   return count;
 }
 
-/** Zaključaj body dok je otvoreno (iOS-friendly) */
+/** Hook za zabranu skrolovanja kad je drawer otvoren */
 function useLockBody(isLocked) {
   useEffect(() => {
     const html = document.documentElement;
@@ -50,71 +54,34 @@ function useLockBody(isLocked) {
   }, [isLocked]);
 }
 
-/** Izmeri visinu headera (bez menjanja header fajla) i upiši u --header-h */
-function useHeaderHeight(active) {
-  useEffect(() => {
-    if (!active) return;
-
-    const root = document.documentElement;
-    const findHeader = () =>
-      document.querySelector("[data-site-header]") ||
-      document.querySelector("header") ||
-      document.querySelector(".header");
-
-    const setVar = () => {
-      const h = findHeader();
-      const rect = h?.getBoundingClientRect();
-      const px = rect ? Math.round(rect.height) : 0;
-      root.style.setProperty("--header-h", px + "px");
-    };
-
-    setVar();
-    const onResize = () => setVar();
-    window.addEventListener("resize", onResize);
-    window.addEventListener("orientationchange", onResize);
-
-    // ako header menja visinu dinamički (npr. sticky koji se skuplja)
-    let mo;
-    const hdr = findHeader();
-    if (hdr && "ResizeObserver" in window) {
-      mo = new ResizeObserver(() => setVar());
-      mo.observe(hdr);
-    }
-
-    return () => {
-      window.removeEventListener("resize", onResize);
-      window.removeEventListener("orientationchange", onResize);
-      if (mo) mo.disconnect();
-    };
-  }, [active]);
-}
 
 export default function FilterDrawer({ className = "" }) {
   const [open, setOpen] = useState(false);
-  const activeCount = useActiveCount();
+  const active = useActiveCount();
 
   useLockBody(open);
   useHeaderHeight(open);
 
   // ESC zatvara
   useEffect(() => {
-    if (!open) return;
-    const onKey = (e) => e.key === "Escape" && setOpen(false);
-    window.addEventListener("keydown", onKey);
+    function onKey(e) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    if (open) window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  // Fokus na X dugme po otvaranju
+  // Fokus po otvaranju
   const setInitialFocus = (node) => {
     if (node) {
       const btn = node.querySelector(".fd-close");
-      btn?.focus();
+      if (btn) btn.focus();
     }
   };
 
   return (
     <>
-      {/* Trigger dugme – vidi se samo na mobilnom preko CSS-a (po tvojoj stranici) */}
+      {/* Trigger dugme (vidljivo primarno na mobilnom, ali može i na desktopu po želji) */}
       <button
         type="button"
         className={`fd-trigger ${className}`}
@@ -123,41 +90,72 @@ export default function FilterDrawer({ className = "" }) {
         aria-expanded={open}
         aria-controls="filter-drawer"
       >
+        {/* Ikonica filter (SVG) */}
         <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M3 5h18M6 12h12M10 19h4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path
+            d="M3 5h18M6 12h12M10 19h4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
         </svg>
         <span>Filteri</span>
-        {activeCount > 0 && <span className="fd-badge" aria-label={`${activeCount} aktivno`}>{activeCount}</span>}
+        {activeCount > 0 && (
+          <span className="fd-badge" aria-label={`${activeCount} aktivno`}>
+            {activeCount}
+          </span>
+        )}
       </button>
 
+      {/* Overlay + Drawer */}
       {open && (
         <div
-          className="fd-overlay"
+          className="fb-overlay"
           role="dialog"
           aria-modal="true"
           aria-label="Filteri"
-          id="filter-drawer"
+          id="filters-sheet"
           onClick={(e) => {
-            if (e.target.classList.contains("fd-overlay")) setOpen(false);
+            if (e.target.classList.contains("fb-overlay")) setOpen(false);
           }}
         >
           <div className="fd-sheet" ref={setInitialFocus}>
             <div className="fd-topbar">
-              <button type="button" className="fd-close" onClick={() => setOpen(false)} aria-label="Zatvori filtere">
-                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <button
+                type="button"
+                className="fd-close"
+                onClick={() => setOpen(false)}
+                aria-label="Zatvori filtere"
+              >
+                {/* X ikonica */}
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M6 6l12 12M18 6L6 18"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
                 </svg>
                 <span>Zatvori</span>
               </button>
-              <div className="fd-title">
+              <div className="fb-title">
                 <span>Filteri</span>
-                {activeCount > 0 && <span className="fd-badge">{activeCount}</span>}
+                {activeCount > 0 && (
+                  <span className="fd-badge">{activeCount}</span>
+                )}
               </div>
-              <div className="fd-spacer" />
+              <div className="fb-spacer" />
             </div>
 
             <div className="fd-content">
-              {/* Tvoj desktop Filters UI recikliran u sheet-u */}
+              {/* Reuse desktop Filters UI unutra (isti komponent) */}
               <Filters />
             </div>
           </div>
