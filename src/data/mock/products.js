@@ -38,7 +38,7 @@ export default [
     price: 3990,
     gender: "ŽENSKI",
     category: "CLASSIC",
-    image: "/placeholder.png",
+    image: "/images/QB64J202Y.jpg",
     specs: { narukvica: "Čelik", mehanizam: "Quartz" },
   },
   {
@@ -49,7 +49,7 @@ export default [
     price: 7990,
     gender: "MUŠKI",
     category: "FASHION",
-    image: "/placeholder.png",
+    image: "/images/thumb_13691.jpg",
     specs: { narukvica: "Čelik", prikaz: "Analogni" },
   },
   {
@@ -60,7 +60,7 @@ export default [
     price: 29990,
     gender: "MUŠKI",
     category: "200m DIVERS",
-    image: "/placeholder.png",
+    image: "/images/TAC08002F0.jpg",
     specs: { vodootpornost: "200m", staklo: "Mineralno" },
   },
 ];

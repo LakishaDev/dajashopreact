@@ -1,13 +1,12 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import "./FilterDrawer.css";
 import { useSearchParams } from "react-router-dom";
 import Filters from "./Filters";
 
-/** Utility: izračunaj ukupan broj aktivnih filtera */
+/** Prebroj aktivne filtere iz URL-a */
 function useActiveCount() {
   const [sp] = useSearchParams();
   const [count, setCount] = useState(0);
-
   const calc = useCallback(() => {
     const sum =
       sp.getAll("brand").length +
@@ -16,21 +15,16 @@ function useActiveCount() {
       (sp.get("min") || sp.get("max") ? 1 : 0);
     setCount(sum);
   }, [sp]);
-
-  useEffect(() => {
-    calc();
-  }, [calc]);
-
+  useEffect(() => { calc(); }, [calc]);
   return count;
 }
 
-/** Hook za zabranu skrolovanja kad je drawer otvoren */
+/** Zaključaj body dok je otvoreno (iOS-friendly) */
 function useLockBody(isLocked) {
   useEffect(() => {
     const html = document.documentElement;
     const body = document.body;
     let scrollY = 0;
-
     if (isLocked) {
       scrollY = window.scrollY || window.pageYOffset;
       body.style.position = "fixed";
@@ -40,7 +34,6 @@ function useLockBody(isLocked) {
       html.style.overscrollBehavior = "none";
       html.style.height = "100%";
     }
-
     return () => {
       const y = body.style.top;
       body.style.position = "";
@@ -57,33 +50,71 @@ function useLockBody(isLocked) {
   }, [isLocked]);
 }
 
+/** Izmeri visinu headera (bez menjanja header fajla) i upiši u --header-h */
+function useHeaderHeight(active) {
+  useEffect(() => {
+    if (!active) return;
+
+    const root = document.documentElement;
+    const findHeader = () =>
+      document.querySelector("[data-site-header]") ||
+      document.querySelector("header") ||
+      document.querySelector(".header");
+
+    const setVar = () => {
+      const h = findHeader();
+      const rect = h?.getBoundingClientRect();
+      const px = rect ? Math.round(rect.height) : 0;
+      root.style.setProperty("--header-h", px + "px");
+    };
+
+    setVar();
+    const onResize = () => setVar();
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
+
+    // ako header menja visinu dinamički (npr. sticky koji se skuplja)
+    let mo;
+    const hdr = findHeader();
+    if (hdr && "ResizeObserver" in window) {
+      mo = new ResizeObserver(() => setVar());
+      mo.observe(hdr);
+    }
+
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
+      if (mo) mo.disconnect();
+    };
+  }, [active]);
+}
 
 export default function FilterDrawer({ className = "" }) {
   const [open, setOpen] = useState(false);
   const activeCount = useActiveCount();
 
   useLockBody(open);
+  useHeaderHeight(open);
 
-  // ESC za zatvaranje
+  // ESC zatvara
   useEffect(() => {
-    function onKey(e) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    if (open) window.addEventListener("keydown", onKey);
+    if (!open) return;
+    const onKey = (e) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  // Fokus po otvaranju
+  // Fokus na X dugme po otvaranju
   const setInitialFocus = (node) => {
     if (node) {
       const btn = node.querySelector(".fd-close");
-      if (btn) btn.focus();
+      btn?.focus();
     }
   };
 
   return (
     <>
-      {/* Trigger dugme (vidljivo primarno na mobilnom, ali može i na desktopu po želji) */}
+      {/* Trigger dugme – vidi se samo na mobilnom preko CSS-a (po tvojoj stranici) */}
       <button
         type="button"
         className={`fd-trigger ${className}`}
@@ -92,25 +123,13 @@ export default function FilterDrawer({ className = "" }) {
         aria-expanded={open}
         aria-controls="filter-drawer"
       >
-        {/* Ikonica filter (SVG) */}
         <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M3 5h18M6 12h12M10 19h4"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
+          <path d="M3 5h18M6 12h12M10 19h4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
         <span>Filteri</span>
-        {activeCount > 0 && (
-          <span className="fd-badge" aria-label={`${activeCount} aktivno`}>
-            {activeCount}
-          </span>
-        )}
+        {activeCount > 0 && <span className="fd-badge" aria-label={`${activeCount} aktivno`}>{activeCount}</span>}
       </button>
 
-      {/* Overlay + Drawer */}
       {open && (
         <div
           className="fd-overlay"
@@ -124,40 +143,21 @@ export default function FilterDrawer({ className = "" }) {
         >
           <div className="fd-sheet" ref={setInitialFocus}>
             <div className="fd-topbar">
-              <button
-                type="button"
-                className="fd-close"
-                onClick={() => setOpen(false)}
-                aria-label="Zatvori filtere"
-              >
-                {/* X ikonica */}
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M6 6l12 12M18 6L6 18"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
+              <button type="button" className="fd-close" onClick={() => setOpen(false)} aria-label="Zatvori filtere">
+                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 </svg>
                 <span>Zatvori</span>
               </button>
               <div className="fd-title">
                 <span>Filteri</span>
-                {activeCount > 0 && (
-                  <span className="fd-badge">{activeCount}</span>
-                )}
+                {activeCount > 0 && <span className="fd-badge">{activeCount}</span>}
               </div>
               <div className="fd-spacer" />
             </div>
 
             <div className="fd-content">
-              {/* Reuse desktop Filters UI unutra (isti komponent) */}
+              {/* Tvoj desktop Filters UI recikliran u sheet-u */}
               <Filters />
             </div>
           </div>
