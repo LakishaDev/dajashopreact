@@ -1,14 +1,66 @@
-.catalog__count {
-  margin-bottom: 12px;
-  color: var(--color-muted);
+:root { --header-h: 76px; } /* prilagodi tvojoj visini headera */
+
+.catalog-page {
+  background: var(--color-bg, #fff);
+  color: var(--color-text, #111);
 }
+
+/* MOBILNI TRIGGER (dugme za FilterDrawer) */
+.catalog-mobile-trigger {
+  position: sticky;
+  top: var(--header-h, 76px);
+  z-index: 20;
+  display: none;              /* sakrij na desktopu */
+  background: var(--color-bg, #fff);
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+  padding: 8px 12px;
+}
+.catalog-mobile-trigger .fd-trigger { width: 100%; justify-content: center; }
+
+/* LAYOUT: sidebar + sadržaj (desktop) */
+.catalog-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.sidebar-filters {
+  align-self: start;
+  position: sticky;
+  top: calc(var(--header-h, 76px) + 8px);
+}
+
+.catalog-main { min-width: 0; }
+
+.catalog__toprow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 8px 0 12px;
+}
+
+.catalog__count { font-weight: 800; }
+
+/* GRID PROIZVODA – stabilan na svim veličinama */
+.catalog-main .catalog-grid,
+.catalog-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  align-items: start;
+}
+
+/* RESPONSIVE: mobilni koristi FilterDrawer; sidebar se gasi */
 @media (max-width: 1023px) {
-  .sidebar-filter {
-    display: none;
+  .catalog-mobile-trigger { display: block; }
+  .catalog-layout {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
-}
-@media (min-width: 1023px) {
-  .sidebar-filters {
-    display: none;
-  }
+  .sidebar-filters { display: none; }
 }
