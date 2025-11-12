@@ -5,6 +5,7 @@ import NavBar from "./NavBar.jsx";
 import SearchBar from "./SearchBar.jsx";
 import ThemeSwitcher from "./ThemeSwitcher.jsx";
 import { useCart } from "../hooks/useCart.js";
+import HeaderLoginButton from "./HeaderLoginButton.jsx";
 
 export default function Header() {
   const { count } = useCart();
@@ -27,6 +28,7 @@ export default function Header() {
           <Link to="/account" className="header__account">
             Moj nalog
           </Link>
+          <HeaderLoginButton />
         </div>
       </div>
 
