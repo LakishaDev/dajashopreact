@@ -2,7 +2,7 @@ import React from "react";
 import "./ProductCard.css";
 import { Link } from "react-router-dom";
 import { money } from "../utils/currency.js";
-import { useCart } from "../context/CartContext.jsx";
+import { useCart } from "../hooks/useCart.js";
 
 export default function ProductCard({ p }) {
   const { dispatch } = useCart();

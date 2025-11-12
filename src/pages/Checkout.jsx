@@ -1,6 +1,6 @@
 import React from "react";
 import "./Checkout.css";
-import { useCart } from "../context/CartContext.jsx";
+import { useCart } from "../hooks/useCart.js";
 import { money } from "../utils/currency.js";
 
 export default function Checkout() {
