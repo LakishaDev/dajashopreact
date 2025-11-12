@@ -1,0 +1,60 @@
+/* ===== Account stranica (glass kartice) ===== */
+.account-page {
+  padding: 24px 0;
+}
+.account-card,
+.account-empty {
+  padding: 18px;
+}
+
+/* Glass (isti vizuelni jezik kao u modalu) */
+.glass {
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--color-surface, #f5f5f7) 70%, transparent),
+    color-mix(in oklab, var(--color-surface, #f5f5f7) 88%, transparent)
+  );
+  border: 1px solid
+    color-mix(in oklab, var(--color-accent, #d2d2d7) 45%, transparent);
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+.userline {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--color-surface, #f5f5f7);
+  border: 1px solid
+    color-mix(in oklab, var(--color-accent, #d2d2d7) 55%, transparent);
+  color: var(--color-text, #111);
+  font-weight: 700;
+}
+.avatar.small {
+  width: 32px;
+  height: 32px;
+}
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.muted {
+  color: var(--color-muted, #6e6e73);
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
