@@ -1,6 +1,6 @@
 import React from "react";
 import "./ThemeSwitcher.css";
-import { useTheme } from "../context/ThemeContext.jsx";
+import { useTheme } from "../hooks/useTheme.js";
 
 export default function ThemeSwitcher() {
   const { theme, setTheme, available } = useTheme();

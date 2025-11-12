@@ -1,4 +1,4 @@
-import Product from "../domain/Product.js";
+import Product from "../models/Product.js";
 import data from "../data/mock/products.js";
 
 class ProductRepository {
