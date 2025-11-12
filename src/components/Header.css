@@ -1,29 +1,176 @@
+/* ===== Header base ===== */
 .header {
   position: sticky;
   top: 0;
-  z-index: 40;
-  backdrop-filter: blur(6px);
+  z-index: 50;
+  backdrop-filter: saturate(140%) blur(8px);
+  -webkit-backdrop-filter: saturate(140%) blur(8px);
 }
-.header__row {
+
+.header .header__row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
-  padding: 10px 0;
+  min-height: 64px;
 }
+
 .header__brand {
-  font-size: 1.25rem;
   font-weight: 700;
-  color: var(--color-primary);
+  font-size: 1.25rem;
+  letter-spacing: 0.2px;
+  text-decoration: none;
 }
+
+/* Actions (desktop defaults) */
 .header__actions {
-  margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
+
 .header__cart,
 .header__account {
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  position: relative;
+}
+
+.header__cart .badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Search bar defaults (desktop) */
+.header .search-bar,
+.header .SearchBar,
+.header .searchbar,
+.header .search {
+  width: 520px;
+  max-width: 100%;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 768px) {
+  .header .header__row {
+    /* 2 reda: 1) brand + mini actions, 2) search full width */
+    flex-wrap: wrap;
+    row-gap: 10px;
+    padding-block: 8px;
+  }
+
+  /* Brand malo veći, da bude čitljiv na telefonu */
+  .header__brand {
+    font-size: 1.1rem;
+  }
+
+  /* Search ide u ceo red ispod */
+  .header .search-bar,
+  .header .SearchBar,
+  .header .searchbar,
+  .header .search {
+    order: 2;
+    width: 100%;
+  }
+
+  /* Actions kompaktnije: pretvaramo tekst u ikonice (emoji), ostavljamo badge */
+  .header__actions {
+    order: 1;
+    gap: 8px;
+  }
+
+  /* Smanji ThemeSwitcher dugme ako ti izlazi veliko */
+  .header__actions > * {
+    transform: translateZ(0);
+  }
+
+  /* Korpa */
+  .header__cart {
+    padding: 8px 10px;
+    border-radius: 12px;
+  }
+
+  /* Sakrij tekst "Korpa" i prikaži 🛒 kao ikonu */
+  .header__cart {
+    font-size: 0; /* sakrije tekst, ali ostaje za a11y čitače */
+  }
+  .header__cart::before {
+    content: "🛒";
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  /* Badge pozicioniranje za ikonicu */
+  .header__cart .badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    font-size: 11px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Nalog – pretvori u 👤 */
+  .header__account {
+    padding: 8px 10px;
+    border-radius: 12px;
+    font-size: 0;
+  }
+  .header__account::before {
+    content: "👤";
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  /* ThemeSwitcher – smanji “klik zonu” da stane uz ostale */
+  .header .ThemeSwitcher,
+  .header button[aria-label*="theme" i],
+  .header .theme-switcher {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0;
+    border-radius: 12px;
+  }
+
+  /* NavBar ispod hedera: neka bude horizontalni scroll na mobilu ako ima puno linkova */
+  .header + .navbar,
+  .header + nav,
+  .header + .NavBar {
+    position: sticky;
+    top: 64px; /* ispod headera */
+    z-index: 40;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+
+  /* Dajte malo “glass” efekta i na nav bar kad skroluje */
+  .header + .navbar,
+  .header + nav,
+  .header + .NavBar {
+    backdrop-filter: saturate(140%) blur(8px);
+    -webkit-backdrop-filter: saturate(140%) blur(8px);
+  }
+}
+
+/* ===== EXTRA TWEAKS (fine) ===== */
+/* Lagani hover na mobilnim ikonama (ne smeta na desktopu) */
+.header__cart:hover,
+.header__account:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+  transition: all 120ms ease;
 }
