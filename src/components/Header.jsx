@@ -6,7 +6,7 @@ import SearchBar from "./SearchBar.jsx";
 import ThemeSwitcher from "./ThemeSwitcher.jsx";
 import { useCart } from "../hooks/useCart.js";
 import HeaderLoginButton from "./HeaderLoginButton.jsx";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuth } from "../hooks/useAuth.js";
 
 export default function Header() {
   const { count } = useCart();
