@@ -181,7 +181,11 @@ export default function Home() {
                 Pogledaj
               </Link>
             </div>
-            <img className="editorial__img" src="/placeholder.png" alt="" />
+            <img
+              className="editorial__img"
+              src="/images/daniel-klain-5252.PNG"
+              alt=""
+            />
           </div>
         </Carousel>
       </section>
