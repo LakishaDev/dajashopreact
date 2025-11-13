@@ -4,13 +4,49 @@ import { Link } from "react-router-dom";
 import Carousel from "../components/Carousel.jsx";
 import BrandStrip from "../components/BrandStrip.jsx";
 import HeroBgSlider from "../components/HeroBgSlider.jsx";
+import FeaturedSlider from "../components/FeaturedSlider.jsx";
+import { Check } from "lucide-react";
+import TrustBar from "../components/TrustBar.jsx";
+
+const bgSlides = [
+  {
+    src: "/images/banner-watches-casio.png",
+    alt: "Casio",
+    to: "/catalog?brand=CASIO",
+  },
+  {
+    src: "/images/model_banner_bed6ebb9-b47f-438a-835e-f63534a7d455.jpg",
+    alt: "Daniel Klein",
+    to: "/catalog?brand=DANIEL+KLEIN",
+  },
+  { src: "/images/q&q.png", alt: "Q&Q", to: "/catalog?brand=Q%26Q" },
+];
+
+const izdvojeno = [
+  {
+    brand: "CASIO",
+    name: "MTP-VD02B-1EUDF",
+    price: "5.500 RSD",
+    img: "/images/MTP-1314PL-8AVEF.jpg",
+    to: "/product/casio-mtp-vd02b-1e",
+  },
+  {
+    brand: "DANIEL KLEIN",
+    name: "DK12345",
+    price: "7.200 RSD",
+    img: "/images/thumb_13691.jpg",
+    to: "/product/daniel-klein-dk12345",
+  },
+  {
+    brand: "ORIENT",
+    name: "RA-AB0010B19B",
+    price: "8.300 RSD",
+    img: "/images/TAC08002F0.jpg",
+    to: "/product/orient-ra-ab0010b19b",
+  },
+];
 
 export default function Home() {
-  const bgSlides = [
-  { src: "/images/banner-watches-casio.png",  alt: "Casio",        to: "/catalog?brand=CASIO" },
-  { src: "/images/model_banner_bed6ebb9-b47f-438a-835e-f63534a7d455.jpg",     alt: "Daniel Klein", to: "/catalog?brand=DANIEL+KLEIN" },
-  { src: "/images/q&q.png",     alt: "Q&Q",          to: "/catalog?brand=Q%26Q" },
-];
   return (
     <div className="home">
       {/* HERO */}
@@ -45,13 +81,16 @@ export default function Home() {
         </div> */}
       </section>
 
-      {/* TRUST BAR */}
+      {/* TRUST BAR
       <section className="trust container">
-        <div className="trust__item">✔️ Original proizvodi</div>
+        <div className="trust__item">
+          <Check /> Original proizvodi
+        </div>
         <div className="trust__item">🚚 Isporuka širom Srbije</div>
         <div className="trust__item">🔄 14 dana povraćaj</div>
         <div className="trust__item">☎️ Podrška</div>
-      </section>
+      </section> */}
+      <TrustBar variant="glass" mobileVariant="cards" />
 
       {/* BRAND STRIP (marquee-like, ali bez animacije koja smara) */}
       <BrandStrip
@@ -68,7 +107,8 @@ export default function Home() {
       />
 
       {/* FEATURED SLIDER */}
-      <section className="section container">
+      <FeaturedSlider />
+      {/* <section className="section container">
         <div className="section__head">
           <h2 className="section__title">Izdvojeno</h2>
           <Link to="/catalog" className="link">
@@ -77,20 +117,17 @@ export default function Home() {
         </div>
 
         <Carousel autoPlay interval={4500} showDots>
-          {[1, 2, 3, 4, 5, 6].map((i) => (
+          {izdvojeno.map((item, i) => (
             <article key={i} className="card productCard">
               <div className="productCard__img">
-                <img src="/placeholder.png" alt={`Model ${i}`} loading="lazy" />
+                <img src={item.img} alt={`Model ${item.name}`} loading="lazy" />
               </div>
               <div className="productCard__body">
-                <div className="productCard__brand">CASIO</div>
-                <div className="productCard__name">MTP-VD02B-1EUDF</div>
-                <div className="productCard__price">5.500 RSD</div>
+                <div className="productCard__brand">{item.brand}</div>
+                <div className="productCard__name">{item.name}</div>
+                <div className="productCard__price">{item.price}</div>
                 <div className="productCard__actions">
-                  <Link
-                    to="/product/casio-mtp-vd02b-1e"
-                    className="btn btn--primary"
-                  >
+                  <Link to={item.to} className="btn btn--primary">
                     Detalji
                   </Link>
                   <Link to="/cart" className="btn btn--ghost">
@@ -101,7 +138,7 @@ export default function Home() {
             </article>
           ))}
         </Carousel>
-      </section>
+      </section> */}
 
       {/* EDITORIAL SLIDE (čisto, velika tipografija) */}
       <section className="section container">
@@ -118,7 +155,11 @@ export default function Home() {
                 Retro linija
               </Link>
             </div>
-            <img className="editorial__img" src="images/Screenshot 2025-11-13 at 5.39.19 PM.png" alt="" />
+            <img
+              className="editorial__img"
+              src="images/Screenshot 2025-11-13 at 5.39.19 PM.png"
+              alt=""
+            />
           </div>
 
           <div className="editorial">
