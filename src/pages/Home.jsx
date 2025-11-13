@@ -111,7 +111,7 @@ export default function Home() {
                 Retro linija
               </Link>
             </div>
-            <img className="editorial__img" src="/placeholder.png" alt="" />
+            <img className="editorial__img" src="images/Screenshot 2025-11-13 at 5.39.19 PM.png" alt="" />
           </div>
 
           <div className="editorial">
