@@ -3,18 +3,25 @@ import "./Home.css";
 import { Link } from "react-router-dom";
 import Carousel from "../components/Carousel.jsx";
 import BrandStrip from "../components/BrandStrip.jsx";
+import HeroBgSlider from "../components/HeroBgSlider.jsx";
 
 export default function Home() {
+  const bgSlides = [
+  { src: "/images/banner-watches-casio.png",  alt: "Casio",        to: "/catalog?brand=CASIO" },
+  { src: "/images/model_banner_bed6ebb9-b47f-438a-835e-f63534a7d455.jpg",     alt: "Daniel Klein", to: "/catalog?brand=DANIEL+KLEIN" },
+  { src: "/images/q&q.png",     alt: "Q&Q",          to: "/catalog?brand=Q%26Q" },
+];
   return (
     <div className="home">
       {/* HERO */}
       <section className="hero">
+        <HeroBgSlider slides={bgSlides} interval={5200} />
         <picture className="hero__media">
           {/* zameni placeholder realnim coverom */}
           <img src="/placeholder.png" alt="" />
         </picture>
 
-        {/* glass panel */}
+        {/* glass panel
         <div className="hero__glass card shadow">
           <div className="hero__wrap container">
             <div className="hero__copy">
@@ -35,7 +42,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
       </section>
 
       {/* TRUST BAR */}
