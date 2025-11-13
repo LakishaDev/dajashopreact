@@ -1,7 +1,7 @@
 .heroBg {
   position: absolute;
   inset: 0;
-  z-index: 0;                 /* ispod .hero__glass */
+  z-index: 0; /* ispod .hero__glass */
   overflow: hidden;
   isolation: isolate;
 }
@@ -14,8 +14,8 @@
   width: 100%;
   height: 100%;
   opacity: 0;
-  pointer-events: none;       /* samo aktivna prima klik */
-  transition: opacity .6s ease;
+  pointer-events: none; /* samo aktivna prima klik */
+  transition: opacity 0.6s ease;
   cursor: pointer;
 }
 .heroBg__slide.is-active {
@@ -31,8 +31,12 @@
   will-change: transform, opacity;
 }
 @keyframes ken {
-  from { transform: scale(1.08); }
-  to   { transform: scale(1.0); }
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 
 /* Blaga tamna folija za čitljivost */
@@ -40,7 +44,12 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,.20), rgba(0,0,0,.10) 40%, rgba(0,0,0,.25));
+  /* background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.2),
+    rgba(0, 0, 0, 0.1) 40%,
+    rgba(0, 0, 0, 0.25)
+  ); */
   z-index: 1;
   pointer-events: none;
 }
@@ -63,8 +72,12 @@
   font-size: 22px;
   cursor: pointer;
 }
-.heroBg__btn.prev { left: 12px; }
-.heroBg__btn.next { right: 12px; }
+.heroBg__btn.prev {
+  left: 12px;
+}
+.heroBg__btn.next {
+  right: 12px;
+}
 
 /* Tačkice */
 .heroBg__dots {
@@ -82,7 +95,8 @@
   -webkit-backdrop-filter: blur(6px);
 }
 .heroBg__dots .dot {
-  width: 8px; height: 8px;
+  width: 8px;
+  height: 8px;
   border-radius: 999px;
   border: 1px solid var(--color-border, #e5e7eb);
   background: color-mix(in oklab, var(--color-surface, #fff) 40%, transparent);
@@ -90,11 +104,14 @@
 }
 .heroBg__dots .dot.is-active {
   width: 18px;
-  transition: width .25s ease;
+  transition: width 0.25s ease;
   background: var(--color-text, #111);
 }
 
 /* Mobile proporcije (prepuštamo .hero visini) */
 @media (max-width: 640px) {
-  .heroBg__btn { width: 38px; height: 38px; }
+  .heroBg__btn {
+    width: 38px;
+    height: 38px;
+  }
 }
