@@ -1,38 +1,103 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Mail, Lock, User, Eye, EyeOff, X } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  User,
+  Eye,
+  EyeOff,
+  X,
+  Facebook,
+  Smartphone,
+  AtSign,
+  ShieldCheck,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import "./AuthModal.css";
 
 export default function AuthModal() {
-  const { authOpen, hideAuth, mode, setMode, login, register } = useAuth();
+  const {
+    authOpen,
+    hideAuth,
+    mode,
+    setMode,
+    login,
+    register,
+    confirmPhoneCode,
+    oauth,
+    pendingEmailVerify,
+    detectIdentity,
+  } = useAuth();
   const isLogin = mode === "login";
 
-  // bez čekanja – obe forme su mount-ovane, kliza se track
+  // track slider state (bez čekanja – obe forme su mount-ovane)
   function go(next) {
     setMode(next);
   }
 
-  const [email, setEmail] = useState("");
+  const [identity, setIdentity] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [awaitPhoneCode, setAwaitPhoneCode] = useState(false);
+  const [smsCode, setSmsCode] = useState("");
+  const idType = useMemo(
+    () => detectIdentity(identity).type,
+    [identity, detectIdentity]
+  );
+
+  // lock scroll behind modal
+  useEffect(() => {
+    if (!authOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [authOpen]);
+
+  useEffect(() => {
+    // reset UI per tab
+    setPassword("");
+    setSmsCode("");
+    setAwaitPhoneCode(false);
+  }, [mode]);
 
   async function onSubmit(e) {
     e.preventDefault();
     setLoading(true);
     try {
-      if (isLogin) await login({ email, password });
-      else await register({ name, email, password });
-      setEmail("");
-      setPassword("");
-      setName("");
-      hideAuth();
+      if (isLogin) {
+        const r = await login({ identity, password });
+        if (r === "phone-code") setAwaitPhoneCode(true);
+      } else {
+        const r = await register({ identity, password, name });
+        if (r === "phone-code") setAwaitPhoneCode(true);
+        // email-verify handled by pendingEmailVerify flag
+      }
+    } catch (err) {
+      alert(err.message || "Greška.");
     } finally {
       setLoading(false);
     }
   }
+
+  async function onConfirmCode(e) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await confirmPhoneCode(smsCode);
+      hideAuth();
+    } catch (err) {
+      alert(err.message || "Nevažeći kod.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const isPhone = idType === "phone";
+  const showPassword = !isPhone; // za telefon ne tražimo lozinku
 
   return (
     <AnimatePresence>
@@ -60,7 +125,7 @@ export default function AuthModal() {
               <X size={20} />
             </button>
 
-            {/* TAB BAR – klizna bela pozadina */}
+            {/* TAB BAR sa kliznom pozadinom */}
             <div className="tabs">
               <motion.button
                 className={`tab ${isLogin ? "active" : ""}`}
@@ -87,7 +152,6 @@ export default function AuthModal() {
                   />
                 )}
               </motion.button>
-
               <motion.button
                 className={`tab ${!isLogin ? "active" : ""}`}
                 onClick={() => go("register")}
@@ -115,7 +179,7 @@ export default function AuthModal() {
               </motion.button>
             </div>
 
-            {/* SLIDER: obe forme mount-ovane, track kliza 0% / -100% */}
+            {/* SLIDER: obe forme su mount-ovane, track kliza 0% / -100% */}
             <div className="form-slider">
               <motion.div
                 className="track"
@@ -133,74 +197,135 @@ export default function AuthModal() {
                   aria-hidden={!isLogin}
                 >
                   <div className="pane-inner">
-                    <form className="form" onSubmit={onSubmit}>
-                      <label className="field">
-                        <span>Email</span>
-                        <div className="input">
-                          <Mail className="ico" size={18} />
-                          <input
-                            type="email"
-                            placeholder="ime@primer.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                          />
-                        </div>
-                      </label>
-
-                      <label className="field">
-                        <span>Lozinka</span>
-                        <div className="input">
-                          <Lock className="ico" size={18} />
-                          <input
-                            type={showPass ? "text" : "password"}
-                            placeholder="••••••••"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            minLength={6}
-                          />
-                          <button
-                            type="button"
-                            className="icon-btn"
-                            onClick={() => setShowPass((p) => !p)}
-                            aria-label={
-                              showPass ? "Sakrij lozinku" : "Prikaži lozinku"
-                            }
-                          >
-                            {showPass ? (
-                              <EyeOff size={18} />
+                    {!awaitPhoneCode ? (
+                      <form className="form" onSubmit={onSubmit}>
+                        <label className="field">
+                          <span>Identitet</span>
+                          <div className="input">
+                            {idType === "phone" ? (
+                              <Smartphone className="ico" size={18} />
+                            ) : idType === "username" ? (
+                              <AtSign className="ico" size={18} />
                             ) : (
-                              <Eye size={18} />
+                              <Mail className="ico" size={18} />
                             )}
+                            <input
+                              type="text"
+                              placeholder="Email / korisničko ime / +3816…"
+                              value={identity}
+                              onChange={(e) =>
+                                setIdentity(e.target.value.trim())
+                              }
+                              required
+                            />
+                          </div>
+                        </label>
+
+                        {showPassword && (
+                          <label className="field">
+                            <span>Lozinka</span>
+                            <div className="input">
+                              <Lock className="ico" size={18} />
+                              <input
+                                type={showPass ? "text" : "password"}
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                minLength={6}
+                              />
+                              <button
+                                type="button"
+                                className="icon-btn"
+                                onClick={() => setShowPass((p) => !p)}
+                                aria-label={
+                                  showPass
+                                    ? "Sakrij lozinku"
+                                    : "Prikaži lozinku"
+                                }
+                              >
+                                {showPass ? (
+                                  <EyeOff size={18} />
+                                ) : (
+                                  <Eye size={18} />
+                                )}
+                              </button>
+                            </div>
+                          </label>
+                        )}
+
+                        <motion.button
+                          className="btn-primary w-full"
+                          disabled={loading}
+                          whileTap={{ scale: 0.97 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 700,
+                            damping: 30,
+                          }}
+                        >
+                          {loading ? "Prijavljivanje…" : "Prijavi se"}
+                        </motion.button>
+                        {/* OAUTH dugmad */}
+                        <div className="oauth-row">
+                          <button
+                            className="btn-oauth"
+                            onClick={() => oauth("google")}
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              width="18"
+                              height="18"
+                              aria-hidden="true"
+                            >
+                              <path
+                                fill="#EA4335"
+                                d="M12 10.2v3.9h5.5c-.2 1.3-1.7 3.9-5.5 3.9-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.1.8 3.8 1.5l2.6-2.6C16.9 3.1 14.7 2 12 2 6.9 2 3 5.9 3 11s3.9 9 9 9c5.2 0 8.6-3.7 8.6-8.9 0-.6-.1-1-.1-1.4H12z"
+                              />
+                            </svg>
+                            <span>Google</span>
+                          </button>
+                          <button
+                            className="btn-oauth"
+                            onClick={() => oauth("facebook")}
+                          >
+                            <Facebook size={18} />
+                            <span>Facebook</span>
                           </button>
                         </div>
-                      </label>
-
-                      <motion.button
-                        className="btn-primary w-full"
-                        disabled={loading}
-                        whileTap={{ scale: 0.97 }}
-                        transition={{
-                          type: "spring",
-                          stiffness: 700,
-                          damping: 30,
-                        }}
-                      >
-                        {loading ? "Prijavljivanje…" : "Prijavi se"}
-                      </motion.button>
-
-                      <p className="hint">
-                        Nemaš nalog?{" "}
-                        <button
-                          type="button"
-                          className="link"
-                          onClick={() => go("register")}
+                      </form>
+                    ) : (
+                      <form className="form" onSubmit={onConfirmCode}>
+                        <label className="field">
+                          <span>SMS kod</span>
+                          <div className="input">
+                            <ShieldCheck className="ico" size={18} />
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              placeholder="123456"
+                              value={smsCode}
+                              onChange={(e) => setSmsCode(e.target.value)}
+                              required
+                              minLength={6}
+                              maxLength={6}
+                            />
+                          </div>
+                        </label>
+                        <motion.button
+                          className="btn-primary w-full"
+                          disabled={loading}
+                          whileTap={{ scale: 0.97 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 700,
+                            damping: 30,
+                          }}
                         >
-                          Registruj se
-                        </button>
-                      </p>
-                    </form>
+                          Potvrdi kod
+                        </motion.button>
+                      </form>
+                    )}
                   </div>
                 </div>
 
@@ -210,81 +335,162 @@ export default function AuthModal() {
                   aria-hidden={isLogin}
                 >
                   <div className="pane-inner">
-                    <form className="form" onSubmit={onSubmit}>
-                      <label className="field">
-                        <span>Ime i prezime</span>
-                        <div className="input">
-                          <User className="ico" size={18} />
-                          <input
-                            type="text"
-                            placeholder="npr. Marko Marković"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            required
-                          />
-                        </div>
-                      </label>
+                    {!awaitPhoneCode && !pendingEmailVerify ? (
+                      <form className="form" onSubmit={onSubmit}>
+                        <label className="field">
+                          <span>Ime i prezime</span>
+                          <div className="input">
+                            <User className="ico" size={18} />
+                            <input
+                              type="text"
+                              placeholder="npr. Marko Marković"
+                              value={name}
+                              onChange={(e) => setName(e.target.value)}
+                              required
+                            />
+                          </div>
+                        </label>
 
-                      <label className="field">
-                        <span>Email</span>
-                        <div className="input">
-                          <Mail className="ico" size={18} />
-                          <input
-                            type="email"
-                            placeholder="ime@primer.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                          />
-                        </div>
-                      </label>
-
-                      <label className="field">
-                        <span>Lozinka</span>
-                        <div className="input">
-                          <Lock className="ico" size={18} />
-                          <input
-                            type={showPass ? "text" : "password"}
-                            placeholder="••••••••"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            minLength={6}
-                          />
-                          <button
-                            type="button"
-                            className="icon-btn"
-                            onClick={() => setShowPass((p) => !p)}
-                            aria-label={
-                              showPass ? "Sakrij lozinku" : "Prikaži lozinku"
-                            }
-                          >
-                            {showPass ? (
-                              <EyeOff size={18} />
+                        <label className="field">
+                          <span>Email ili broj telefona</span>
+                          <div className="input">
+                            {idType === "phone" ? (
+                              <Smartphone className="ico" size={18} />
                             ) : (
-                              <Eye size={18} />
+                              <Mail className="ico" size={18} />
                             )}
+                            <input
+                              type="text"
+                              placeholder="ime@primer.com ili +3816…"
+                              value={identity}
+                              onChange={(e) =>
+                                setIdentity(e.target.value.trim())
+                              }
+                              required
+                            />
+                          </div>
+                        </label>
+
+                        {idType !== "phone" && (
+                          <label className="field">
+                            <span>Lozinka</span>
+                            <div className="input">
+                              <Lock className="ico" size={18} />
+                              <input
+                                type={showPass ? "text" : "password"}
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                minLength={6}
+                              />
+                              <button
+                                type="button"
+                                className="icon-btn"
+                                onClick={() => setShowPass((p) => !p)}
+                                aria-label={
+                                  showPass
+                                    ? "Sakrij lozinku"
+                                    : "Prikaži lozinku"
+                                }
+                              >
+                                {showPass ? (
+                                  <EyeOff size={18} />
+                                ) : (
+                                  <Eye size={18} />
+                                )}
+                              </button>
+                            </div>
+                          </label>
+                        )}
+
+                        <motion.button
+                          className="btn-primary w-full"
+                          disabled={loading}
+                          whileTap={{ scale: 0.97 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 700,
+                            damping: 30,
+                          }}
+                        >
+                          {loading ? "Kreiranje naloga…" : "Napravi nalog"}
+                        </motion.button>
+                        {/* OAUTH dugmad */}
+                        <div className="oauth-row">
+                          <button
+                            className="btn-oauth"
+                            onClick={() => oauth("google")}
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              width="18"
+                              height="18"
+                              aria-hidden="true"
+                            >
+                              <path
+                                fill="#EA4335"
+                                d="M12 10.2v3.9h5.5c-.2 1.3-1.7 3.9-5.5 3.9-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.1.8 3.8 1.5l2.6-2.6C16.9 3.1 14.7 2 12 2 6.9 2 3 5.9 3 11s3.9 9 9 9c5.2 0 8.6-3.7 8.6-8.9 0-.6-.1-1-.1-1.4H12z"
+                              />
+                            </svg>
+                            <span>Google</span>
+                          </button>
+                          <button
+                            className="btn-oauth"
+                            onClick={() => oauth("facebook")}
+                          >
+                            <Facebook size={18} />
+                            <span>Facebook</span>
                           </button>
                         </div>
-                      </label>
-
-                      <motion.button
-                        className="btn-primary w-full"
-                        disabled={loading}
-                        whileTap={{ scale: 0.97 }}
-                        transition={{
-                          type: "spring",
-                          stiffness: 700,
-                          damping: 30,
-                        }}
-                      >
-                        {loading ? "Kreiranje naloga…" : "Napravi nalog"}
-                      </motion.button>
-                    </form>
+                      </form>
+                    ) : pendingEmailVerify ? (
+                      <div className="verify-box">
+                        <h3>Proveri email 📬</h3>
+                        <p>
+                          Poslali smo link za verifikaciju. Otvori email i
+                          potvrdi nalog, pa zatvori ovaj prozor.
+                        </p>
+                      </div>
+                    ) : (
+                      <form className="form" onSubmit={onConfirmCode}>
+                        <label className="field">
+                          <span>SMS kod</span>
+                          <div className="input">
+                            <ShieldCheck className="ico" size={18} />
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              placeholder="123456"
+                              value={smsCode}
+                              onChange={(e) => setSmsCode(e.target.value)}
+                              required
+                              minLength={6}
+                              maxLength={6}
+                            />
+                          </div>
+                        </label>
+                        <motion.button
+                          className="btn-primary w-full"
+                          disabled={loading}
+                          whileTap={{ scale: 0.97 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 700,
+                            damping: 30,
+                          }}
+                        >
+                          Potvrdi kod
+                        </motion.button>
+                      </form>
+                    )}
                   </div>
                 </div>
               </motion.div>
             </div>
+
+            {/* Firebase ReCAPTCHA host (invisible) */}
+            <div id="recaptcha-container" />
           </motion.div>
         </motion.div>
       )}

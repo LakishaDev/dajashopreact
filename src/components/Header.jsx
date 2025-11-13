@@ -6,15 +6,19 @@ import SearchBar from "./SearchBar.jsx";
 import ThemeSwitcher from "./ThemeSwitcher.jsx";
 import { useCart } from "../hooks/useCart.js";
 import HeaderLoginButton from "./HeaderLoginButton.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Header() {
   const { count } = useCart();
+  const { user } = useAuth();
 
   return (
     <header className="header card shadow">
       {/* GRID: desktop (brand | search | actions), mobile (brand+actions | search) */}
       <div className="container header__grid">
-        <Link to="/" className="header__brand">DajaShop</Link>
+        <Link to="/" className="header__brand">
+          DajaShop
+        </Link>
 
         <div className="header__search">
           <SearchBar />
@@ -25,9 +29,11 @@ export default function Header() {
           <Link className="header__cart" to="/cart">
             Korpa <span className="badge">{count}</span>
           </Link>
-          <Link to="/account" className="header__account">
-            Moj nalog
-          </Link>
+          {user && (
+            <Link to="/account" className="header__account">
+              Moj nalog
+            </Link>
+          )}
           <HeaderLoginButton />
         </div>
       </div>

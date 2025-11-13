@@ -5,27 +5,58 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import {
+  onAuthStateChanged,
+  signOut,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  signInWithPhoneNumber,
+  updateProfile,
+} from "firebase/auth";
+import {
+  auth,
+  db,
+  googleProvider,
+  facebookProvider, // ⬅️ umesto appleProvider
+  ensureRecaptcha,
+} from "../services/firebase";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
-const AuthContext = createContext(null);
-
-function getStoredUser() {
-  try {
-    const raw = localStorage.getItem("auth_user");
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
+const Ctx = createContext(null);
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(getStoredUser());
+  const [user, setUser] = useState(null);
   const [authOpen, setAuthOpen] = useState(false);
-  const [mode, setMode] = useState("login"); // "login" | "register"
+  const [mode, setMode] = useState("login"); // login | register
+  const [phoneConf, setPhoneConf] = useState(null); // confirmationResult
+  const [pendingEmailVerify, setPendingEmailVerify] = useState(false);
 
-  useEffect(() => {
-    if (user) localStorage.setItem("auth_user", JSON.stringify(user));
-    else localStorage.removeItem("auth_user");
-  }, [user]);
+  useEffect(
+    () =>
+      onAuthStateChanged(auth, async (u) => {
+        setUser(u);
+        if (u) {
+          // ensure user doc
+          const ref = doc(db, "users", u.uid);
+          const s = await getDoc(ref);
+          if (!s.exists()) {
+            await setDoc(
+              ref,
+              {
+                uid: u.uid,
+                email: u.email || null,
+                phoneNumber: u.phoneNumber || null,
+                displayName: u.displayName || null,
+                createdAt: serverTimestamp(),
+              },
+              { merge: true }
+            );
+          }
+        }
+      }),
+    []
+  );
 
   function showAuth(nextMode = "login") {
     setMode(nextMode);
@@ -33,45 +64,136 @@ export function AuthProvider({ children }) {
   }
   function hideAuth() {
     setAuthOpen(false);
+    setPendingEmailVerify(false);
+    setPhoneConf(null);
   }
 
-  async function login({ email, password }) {
-    // TODO: zameniti pravim API pozivom
-    await new Promise((r) => setTimeout(r, 400));
-    const name = email.split("@")[0];
-    setUser({ id: crypto.randomUUID(), name, email });
+  // ---------- helpers ----------
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
+  const PHONE_RE = /^\+?[0-9]{8,15}$/; // internacionalni
+  const USER_RE = /^[a-zA-Z0-9._-]{3,24}$/;
+
+  async function usernameToEmail(username) {
+    // mapiranje u Firestore: usernames/{username} -> { uid, email }
+    const snap = await getDoc(doc(db, "usernames", username.toLowerCase()));
+    if (!snap.exists()) return null;
+    const data = snap.data();
+    return data.email || null;
   }
 
-  async function register({ name, email, password }) {
-    // TODO: zameniti pravim API pozivom
-    await new Promise((r) => setTimeout(r, 500));
-    setUser({ id: crypto.randomUUID(), name, email });
+  function detectIdentity(id) {
+    if (EMAIL_RE.test(id)) return { type: "email", value: id };
+    if (PHONE_RE.test(id))
+      return { type: "phone", value: id.startsWith("+") ? id : `+${id}` };
+    if (USER_RE.test(id)) return { type: "username", value: id.toLowerCase() };
+    return { type: "unknown", value: id };
   }
 
-  function logout() {
-    setUser(null);
+  // ---------- sign-in / register ----------
+  async function login({ identity, password }) {
+    const id = detectIdentity(identity);
+    if (id.type === "email") {
+      await signInWithEmailAndPassword(auth, id.value, password);
+      return;
+    }
+    if (id.type === "username") {
+      const email = await usernameToEmail(id.value);
+      if (!email) throw new Error("Korisničko ime ne postoji.");
+      await signInWithEmailAndPassword(auth, email, password);
+      return;
+    }
+    if (id.type === "phone") {
+      const verifier = ensureRecaptcha();
+      const conf = await signInWithPhoneNumber(auth, id.value, verifier);
+      setPhoneConf(conf);
+      return "phone-code";
+    }
+    throw new Error("Unesite validan email/korisničko ime/broj telefona.");
+  }
+
+  async function confirmPhoneCode(code) {
+    if (!phoneConf) throw new Error("Nema aktivne telefonske sesije.");
+    const res = await phoneConf.confirm(code);
+    setPhoneConf(null);
+    // user doc handled by onAuthStateChanged
+    return res;
+  }
+
+  async function register({ identity, password, name }) {
+    const id = detectIdentity(identity);
+    if (id.type === "email") {
+      const cred = await createUserWithEmailAndPassword(
+        auth,
+        id.value,
+        password
+      );
+      if (name) await updateProfile(cred.user, { displayName: name });
+      await sendEmailVerification(cred.user);
+      setPendingEmailVerify(true);
+      // user doc handled in onAuthStateChanged after email verification/sign-in
+      return "email-verify";
+    }
+    if (id.type === "phone") {
+      const verifier = ensureRecaptcha();
+      const conf = await signInWithPhoneNumber(auth, id.value, verifier);
+      setPhoneConf(conf);
+      return "phone-code";
+    }
+    throw new Error("Za registraciju koristite email ili broj telefona.");
+  }
+
+  async function linkUsernameToEmail(username, email) {
+    // pozovi nakon registracije email-om da rezervišeš username
+    if (!USER_RE.test(username)) throw new Error("Nevalidno korisničko ime.");
+    await setDoc(
+      doc(db, "usernames", username.toLowerCase()),
+      { email },
+      { merge: true }
+    );
+  }
+
+  async function oauth(provider) {
+    let prov;
+    if (provider === "google") {
+      prov = googleProvider;
+    } else if (provider === "facebook") {
+      prov = facebookProvider;
+    } else {
+      throw new Error("Nepoznat provider.");
+    }
+
+    const res = await signInWithPopup(auth, prov);
+    return res.user;
+  }
+
+  async function logout() {
+    await signOut(auth);
   }
 
   const value = useMemo(
     () => ({
       user,
-      login,
-      register,
-      logout,
       authOpen,
       showAuth,
       hideAuth,
       mode,
       setMode,
+      login,
+      register,
+      confirmPhoneCode,
+      oauth,
+      pendingEmailVerify,
+      detectIdentity,
+      linkUsernameToEmail,
+      logout,
     }),
-    [user, authOpen, mode]
+    [user, authOpen, mode, pendingEmailVerify]
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
-
 export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
-  return ctx;
+  const v = useContext(Ctx);
+  if (!v) throw new Error("useAuth in provider");
+  return v;
 }

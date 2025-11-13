@@ -21,9 +21,6 @@ export default function HeaderLoginButton() {
       <Link to="/account" className="avatar small" aria-label="Moj nalog">
         <span>{user.name?.[0]?.toUpperCase() || "U"}</span>
       </Link>
-      <button className="link" onClick={logout}>
-        Odjava
-      </button>
     </div>
   );
 }
