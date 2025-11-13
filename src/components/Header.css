@@ -2,7 +2,8 @@
 :root {
   --header-bar-h: 64px;     /* visina zaglavlja na desktopu (jedan red) */
   --header-search-h: 56px;  /* visina reda sa pretragom na mobilnom */
-  --header-sticky-offset: var(--header-bar-h);
+  --header-sticky-offset: var(--header-bar-h+48px); /* offset za lepljivi navbar ispod hedera */
+  
 }
 
 @media (max-width: 768px) {
