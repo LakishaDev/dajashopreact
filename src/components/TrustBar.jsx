@@ -48,6 +48,7 @@ export default function TrustBar({
   const DesktopPanel = (
     <div className={`${panelBase} ${panelVariants[variant]}`}>
       <ul className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 p-2 sm:p-3 md:p-4">
+        {/* eslint-disable-next-line no-unused-vars */}
         {items.map(({ icon: Icon, title, desc }, i) => (
           <li
             key={i}
@@ -87,6 +88,7 @@ export default function TrustBar({
       }
     >
       <ul className="flex gap-2 p-2 overflow-x-auto snap-x snap-mandatory">
+        {/* eslint-disable-next-line no-unused-vars */}
         {items.map(({ icon: Icon, title, desc }, i) => (
           <li
             key={i}
@@ -124,6 +126,7 @@ export default function TrustBar({
       }
     >
       <ul className="grid grid-cols-2 gap-2 p-2">
+        {/* eslint-disable-next-line no-unused-vars */}
         {items.map(({ icon: Icon, title, desc }, i) => (
           <li
             key={i}
@@ -161,6 +164,7 @@ export default function TrustBar({
       }
     >
       <ul className="grid grid-cols-1 gap-1 p-2">
+        {/* eslint-disable-next-line no-unused-vars */}
         {items.map(({ icon: Icon, title }, i) => (
           <li
             key={i}

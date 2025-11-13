@@ -1,5 +1,6 @@
 // src/pages/Account.jsx
 import { useAuth } from "../hooks/useAuth.js";
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { LogOut, User } from "lucide-react";
 import "./Account.css";
