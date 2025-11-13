@@ -1,11 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { User } from "lucide-react";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuth } from "../hooks/useAuth.js";
 import "./HeaderLoginButton.css";
 
 export default function HeaderLoginButton() {
-  const { user, showAuth, logout } = useAuth();
+  const { user, showAuth } = useAuth();
 
   if (!user) {
     return (

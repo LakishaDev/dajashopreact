@@ -12,7 +12,7 @@ import {
   AtSign,
   ShieldCheck,
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuth } from "../hooks/useAuth.js";
 import "./AuthModal.css";
 
 export default function AuthModal() {
