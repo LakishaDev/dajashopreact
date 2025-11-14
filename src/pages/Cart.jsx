@@ -3,6 +3,7 @@ import "./Cart.css";
 import { Link } from "react-router-dom";
 import { useCart } from "../hooks/useCart.js";
 import { money } from "../utils/currency.js";
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingBag,

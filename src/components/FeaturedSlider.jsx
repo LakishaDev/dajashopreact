@@ -4,6 +4,7 @@
 // ==============================
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+// eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from "framer-motion";
 import { useCart } from "../hooks/useCart.js"; // adjust path if different
 
@@ -65,7 +66,7 @@ export default function FeaturedSlider({
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [paused, setPaused] = useState(false);
-  const { add, dispatch } = useCart?.() || { add: null }; // fail‑safe ako hook ne postoji
+  const { dispatch } = useCart?.() || { dispatch: null }; // fail‑safe ako hook ne postoji
   const slideRef = useRef(null);
 
   const safeItems = useMemo(
@@ -77,9 +78,12 @@ export default function FeaturedSlider({
   // ⏱️ Auto‑play sa pauzom na hover/focus
   useEffect(() => {
     if (paused) return;
-    const id = setInterval(() => paginate(1), autoMs);
+    const id = setInterval(() => {
+      setDirection(1);
+      setIndex((i) => (i + 1 + safeItems.length) % safeItems.length);
+    }, autoMs);
     return () => clearInterval(id);
-  }, [index, paused, autoMs]);
+  }, [index, paused, autoMs, safeItems.length]);
 
   function paginate(dir) {
     setDirection(dir);
@@ -91,10 +95,6 @@ export default function FeaturedSlider({
     const threshold = 80;
     if (info.offset.x < -threshold) paginate(1);
     else if (info.offset.x > threshold) paginate(-1);
-  }
-
-  function handleAdd(p) {
-    if (typeof add === "function") add(p);
   }
 
   return (
@@ -155,7 +155,7 @@ export default function FeaturedSlider({
 
         {/* Content grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 p-6 md:p-4 md:px-20 md:items-center">
-          <AnimatePresence mode="wait" custom={direction}>
+          <AnimatePresence initial={false} custom={direction}>
             {/* LEFT: copy */}
             <motion.div
               key={`copy-${active.id}`}

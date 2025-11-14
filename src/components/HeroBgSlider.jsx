@@ -52,8 +52,6 @@ export default function HeroBgSlider({ slides = [], interval = 5000 }) {
 
   if (!slides.length) return null;
 
-  const active = slides[i];
-
   return (
     <div
       className="heroBg"

@@ -31,8 +31,7 @@ export const storage = getStorage(app);
 // ---- App Check (reCAPTCHA v3) ----
 // Debug token samo u DEV okruženju:
 if (import.meta.env.DEV && import.meta.env.VITE_FIREBASE_APPCHECK_DEBUG_TOKEN) {
-  // eslint-disable-next-line no-undef
-  self.FIREBASE_APPCHECK_DEBUG_TOKEN =
+  globalThis.FIREBASE_APPCHECK_DEBUG_TOKEN =
     import.meta.env.VITE_FIREBASE_APPCHECK_DEBUG_TOKEN;
 }
 
@@ -51,7 +50,7 @@ export let analytics = null;
 if (typeof window !== "undefined" && cfg.measurementId) {
   try {
     analytics = getAnalytics(app);
-  } catch (e) {
+  } catch {
     // npr. ako si u dev bez HTTPS, analytics može da padne – ignoriši
   }
 }

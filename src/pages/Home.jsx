@@ -22,30 +22,6 @@ const bgSlides = [
   { src: "/images/q&q.png", alt: "Q&Q", to: "/catalog?brand=Q%26Q" },
 ];
 
-const izdvojeno = [
-  {
-    brand: "CASIO",
-    name: "MTP-VD02B-1EUDF",
-    price: "5.500 RSD",
-    img: "/images/MTP-1314PL-8AVEF.jpg",
-    to: "/product/casio-mtp-vd02b-1e",
-  },
-  {
-    brand: "DANIEL KLEIN",
-    name: "DK12345",
-    price: "7.200 RSD",
-    img: "/images/thumb_13691.jpg",
-    to: "/product/daniel-klein-dk12345",
-  },
-  {
-    brand: "ORIENT",
-    name: "RA-AB0010B19B",
-    price: "8.300 RSD",
-    img: "/images/TAC08002F0.jpg",
-    to: "/product/orient-ra-ab0010b19b",
-  },
-];
-
 export default function Home() {
   return (
     <div className="home">
