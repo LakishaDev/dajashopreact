@@ -41,8 +41,8 @@
   justify-content: center;
 
   transition:
-    transform 180ms ease,
-    opacity 180ms ease,
+   transform 180ms ease,
+   opacity 180ms ease,
     text-shadow 180ms ease,
     color 180ms ease;
 }
@@ -59,6 +59,28 @@
 @media (max-width: 640px) {
   .brandstrip__track {
     gap: clamp(24px, 10vw, 80px);
+  }
+}
+/* ===== MOBILNI / TOUCH: ručni swipe, bez auto-animacije ===== */
+@media (pointer: coarse), (max-width: 768px) {
+  /* Omogući horizontalni scroll prstom */
+  .brandstrip__row {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity; /* prijatan snap kad pustiš prst */
+    touch-action: pan-x;
+  }
+
+  /* Isključi animaciju da ne "gura" dok korisnik skroluje */
+  .brandstrip__track {
+    gap: clamp(25px, 8vw, 80px); /* malo veći razmak na telu */
+  }
+
+  /* Svaki item lepo “lepi” na ivicu pri skrolu */
+  .brandstrip__item {
+    scroll-snap-align: start;
+
+    scroll-margin-inline-start: clamp(25px, 8vw, 80px);
   }
 }
 
