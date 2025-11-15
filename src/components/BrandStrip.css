@@ -1,23 +1,73 @@
 .brandstrip {
   border-block: 1px solid rgba(0, 0, 0, 0.06);
   background: var(--color-bg);
+  overflow: hidden;
 }
+
+/* viewport */
 .brandstrip__row {
-  display: grid;
-  grid-auto-flow: column;
-  gap: clamp(20px, 5vw, 72px);
-  align-items: center;
-  overflow-x: auto;
+  position: relative;
+  overflow: hidden;
   padding-block: 14px;
-  scrollbar-width: none; /* firefox */
 }
-.brandstrip__row::-webkit-scrollbar {
-  display: none;
+
+/* traka koja se pomera */
+.brandstrip__track {
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(20px, 5vw, 72px);
+  white-space: nowrap;
+  will-change: transform;
+  animation: brandstrip-scroll 100s linear infinite;
 }
+
+/* pauza kad korisnik priđe mišem (da lakše klikne) */
+.brandstrip:hover .brandstrip__track {
+  animation-play-state: paused;
+}
+
+/* item = link */
 .brandstrip__item {
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   opacity: 0.7;
-  white-space: nowrap;
+  text-decoration: none;
+  color: var(--color-text, #111);
+  cursor: pointer;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  transition:
+    transform 180ms ease,
+    opacity 180ms ease,
+    text-shadow 180ms ease,
+    color 180ms ease;
+}
+
+/* hover animacija */
+.brandstrip__item:hover {
+  opacity: 1;
+  transform: translateY(-2px) scale(1.04);
+  text-shadow: 0 0 18px
+    color-mix(in oklab, var(--color-primary, #111) 30%, transparent);
+}
+
+/* mobilni: malo veći razmak da diše */
+@media (max-width: 640px) {
+  .brandstrip__track {
+    gap: clamp(24px, 10vw, 80px);
+  }
+}
+
+/* beskonačni skrol – pošto smo duplirali listu, -50% je seamless loop */
+@keyframes brandstrip-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }

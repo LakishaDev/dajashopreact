@@ -146,7 +146,7 @@ export default function Home() {
                 G-Shock
               </Link>
             </div>
-            <img className="editorial__img" src="/placeholder.png" alt="" />
+            <img className="editorial__img" src="images/casio-g-shock-original-ga-2100-4aer-carbon-core-guard_183960_205228.jpg" alt="" />
           </div>
 
           <div className="editorial">
