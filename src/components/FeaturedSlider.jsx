@@ -53,9 +53,13 @@ const fmtPrice = (n) =>
   new Intl.NumberFormat("sr-RS", { maximumFractionDigits: 0 }).format(n);
 
 const variants = {
-  enter: (dir) => ({ x: dir > 0 ? 60 : -60, opacity: 0 }),
+  enter: (dir) => ({ x: dir > 0 ? 220 : -220, opacity: 0 }),
   center: { x: 0, opacity: 1 },
-  exit: (dir) => ({ x: dir > 0 ? -60 : 60, opacity: 0 }),
+  exit: (dir) => ({
+    x: dir > 0 ? -220 : 220,
+    opacity: 0,
+    position: "absolute",
+  }),
 };
 
 export default function FeaturedSlider({
@@ -154,7 +158,7 @@ export default function FeaturedSlider({
         </button>
 
         {/* Content grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 p-6 md:p-4 md:px-20 md:items-center">
+        <div className="relative grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 p-6 md:p-4 md:px-20 md:items-center">
           <AnimatePresence initial={false} custom={direction}>
             {/* LEFT: copy */}
             <motion.div
@@ -167,9 +171,9 @@ export default function FeaturedSlider({
               exit="exit"
               transition={{
                 type: "spring",
-                stiffness: 250,
-                damping: 28,
-                mass: 0.6,
+                stiffness: 200,
+                damping: 20,
+                mass: 0.9,
               }}
             >
               <h3 className="text-3xl md:text-5xl font-extrabold text-neutral-900">
@@ -226,9 +230,9 @@ export default function FeaturedSlider({
               exit="exit"
               transition={{
                 type: "spring",
-                stiffness: 240,
-                damping: 26,
-                mass: 0.5,
+                stiffness: 120,
+                damping: 30,
+                mass: 0.85,
               }}
             >
               <motion.div
