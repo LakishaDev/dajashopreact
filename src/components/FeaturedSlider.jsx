@@ -163,7 +163,7 @@ export default function FeaturedSlider({
             {/* LEFT: copy */}
             <motion.div
               key={`copy-${active.id}`}
-              className="self-center space-y-4"
+              className="self-center md:space-y-4 space-y-1"
               custom={direction}
               variants={variants}
               initial="enter"
