@@ -11,6 +11,7 @@
   width: 100%;
   max-width: 460px;
   padding: 22px;
+  padding-top: 40px;
   position: relative;
   box-sizing: border-box;
   overflow: visible;
@@ -217,7 +218,8 @@
 
 @media (max-width: 480px) {
   .auth-card {
-    max-width: 100%;
+    max-width: 90dvw;
     padding: 18px;
+    padding-top: 40px;
   }
 }

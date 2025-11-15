@@ -4,7 +4,7 @@ import { ThemeCtx } from "./ThemeContext.jsx";
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(
-    () => localStorage.getItem("theme") || "luxGold"
+    () => localStorage.getItem("theme") || "appleMono"
   );
 
   useEffect(() => {
