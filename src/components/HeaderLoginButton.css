@@ -16,3 +16,11 @@
   color: var(--color-text, #111);
   font-weight: 700;
 }
+
+/* Ikonica + tekst u jednom redu za "Prijavi se" */
+.btn-ghost.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;           /* razmak između ikonice i teksta */
+}
