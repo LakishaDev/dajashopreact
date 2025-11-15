@@ -138,19 +138,37 @@
 }
 
 /* ---------- EDITORIAL SLIDE ---------- */
+/* EDITORIAL SLIDE – layout */
 .editorial {
-  display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 16px;
+  display: flex;
   align-items: center;
-  padding: clamp(14px, 2vw, 20px);
-  border-radius: 16px;
+  justify-content: space-between;
+   border-radius: 16px;
   background: var(--color-surface);
+  gap: clamp(16px, 4vw, 48px);
+
+  /* padding oko sadržaja */
+  padding: 24px clamp(16px, 6vw, 40px);
+
+  /* pomeramo ceo sadržaj udesno da strelica ne seče tekst */
+  padding-left: 60px; /* OVDE SE IGRAJ AKO TREBA VIŠE/MANJE */
 }
+
+/* Tekst blok – malo udesno plus max širina */
+.editorial__copy {
+  flex: 0 0 38%;
+  max-width: 420px;
+}
+
+/* SLIKA – da bude "malo duža" / dominantnija */
 .editorial__img {
-  width: 100%;
-  border-radius: 12px;
+  flex: 0 0 62%;
+  width: 510%;
+  max-width: 600px;
+  aspect-ratio: 4 / 3;
   object-fit: cover;
+  border-radius: 20px;
+  display: block;
 }
 .editorial__copy h3 {
   margin: 0 0 6px;
@@ -159,7 +177,27 @@
 }
 .editorial__copy p {
   margin: 0 0 12px;
-  color: var(--color-muted);
+  color: var(--color-muted);}
+
+/* Responsive za telefon – da ne bude tesno sa padding-left */
+@media (max-width: 768px) {
+  .editorial {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px 16px;
+    padding-left: 24px; /* manje, da ne gubimo prostor na mobilnom */
+  }
+
+  .editorial__copy {
+    flex: initial;
+    max-width: 100%;
+  }
+
+  .editorial__img {
+    flex: initial;
+    max-width: 100%;
+  }
+  
 }
 
 /* ---------- NEWSLETTER ---------- */
