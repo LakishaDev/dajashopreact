@@ -2,7 +2,8 @@
 :root {
   --header-bar-h: 64px;     /* visina zaglavlja na desktopu (jedan red) */
   --header-search-h: 56px;  /* visina reda sa pretragom na mobilnom */
-  --header-sticky-offset: var(--header-bar-h+48px); /* offset za lepljivi navbar ispod hedera */
+--header-sticky-offset: calc(var(--header-bar-h) + 48px);
+ /* offset za lepljivi navbar ispod hedera */
   
 }
 
@@ -162,3 +163,40 @@
     -webkit-backdrop-filter: saturate(140%) blur(8px);
   }
 }
+/* ===== Hamburger dugme u headeru ===== */
+.hamburger {
+  --size: 40px;
+  inline-size: var(--size);
+  block-size: var(--size);
+  border-radius: 12px;
+  border: 1px solid var(--color-border, #e5e7eb);
+  background: var(--color-surface, #f5f5f7);
+  display: inline-grid;
+  place-content: center;
+  gap: 4px;
+  padding: 0 10px;
+  cursor: pointer;
+  transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+.hamburger:hover {
+  transform: translateY(-1px);
+  background: color-mix(in oklab, var(--color-surface, #f5f5f7) 100%, transparent);
+}
+.hamburger span {
+  display: block;
+  inline-size: 18px;
+  block-size: 2px;
+  background: var(--color-text, #111);
+  border-radius: 999px;
+}
+
+/* ako želiš da bude vidljiv samo na mobilu, odkomentariši:
+@media (min-width: 1024px) {
+  .hamburger { display: none; }
+}
+*/
+
+/* (ispravka ranijeg offseta ako ti treba u rootu)
+:root { --header-sticky-offset: calc(var(--header-bar-h) + 48px); }
+*/
+
