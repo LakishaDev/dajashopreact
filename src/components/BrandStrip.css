@@ -67,6 +67,8 @@
   .brandstrip__row {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* sakrij scrollbar u Firefoxu */
+  
     scroll-snap-type: x proximity; /* prijatan snap kad pustiš prst */
     touch-action: pan-x;
   }
