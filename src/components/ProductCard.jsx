@@ -250,7 +250,7 @@ export default function ProductCard({ p }) {
   const data = optimistic ? { ...p, ...optimistic } : p;
 
   return (
-    <div className="product-card card relative overflow-hidden">
+    <div className="product-card card relative overflow-hidden max-w-3xs">
       {/* NOVO bedž */}
       {(data.novo ?? false) && (
         <div className="pointer-events-none absolute left-2 top-2 z-10">
@@ -368,7 +368,7 @@ export default function ProductCard({ p }) {
         </div>
 
         {/* NAME */}
-        <Link to={`/product/${data.slug}`} className="product-card__name">
+        <div className="product-card__name">
           {isAdmin && isEditing ? (
             <input
               className="w-full rounded-lg border px-2 py-1"
@@ -376,9 +376,11 @@ export default function ProductCard({ p }) {
               {...bind("name")}
             />
           ) : (
-            data.name
+            <Link to={`/product/${data.slug}`}>
+              {data.name}
+            </Link>
           )}
-        </Link>
+        </div>
 
         {/* PRICE */}
         <div className="product-card__price">
@@ -437,7 +439,7 @@ export default function ProductCard({ p }) {
                 <motion.button
                   whileTap={{ scale: 0.98 }}
                   onClick={cancelEdit}
-                  className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 bg-zinc-200 dark:bg-zinc-800"
+                  className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 text-zinc-800"
                 >
                   <X size={16} /> Prekini izmene
                 </motion.button>
