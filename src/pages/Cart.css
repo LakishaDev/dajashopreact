@@ -1,4 +1,9 @@
-/* ===== Theme hooks (fall back na zlatnu/lux) ===== */
+/* src/pages/Cart.css */
+
+/* =========================================
+   GLOBAL & DESKTOP STYLES (DEFAULT)
+   ========================================= */
+
 :root {
   --primary: var(--color-primary, #C8A94E);
   --on-primary: var(--color-on-primary, #0b0b0c);
@@ -9,36 +14,22 @@
   --ring: var(--color-ring, rgba(200,169,78,0.45));
 }
 
-/* Container */
+/* Glavni kontejner */
 .container {
   width: min(1100px, 92vw);
   margin-inline: auto;
   padding: clamp(16px, 2.6vw, 32px);
 }
 
-/* Glass card (Globalni stil, ali uključen radi konteksta) */
-.card {
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.08);
-}
-.glass {
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)) /* subtle tint */,
-    radial-gradient(1200px 400px at 20% -10%, rgba(255,255,255,0.10), transparent 60%) /* glow */;
-  backdrop-filter: saturate(140%) blur(14px);
-  -webkit-backdrop-filter: saturate(140%) blur(14px);
-  box-shadow:
-    0 10px 30px rgba(0,0,0,0.35),
-    0 0 0 1px rgba(255,255,255,0.05) inset;
-}
-
-/* Titles */
+/* Titles & Header */
 .cart__header {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-bottom: 24px;
   position: relative;
+  /* Fix za prelivanje preko hedera - dodajemo vazduh na vrhu */
+  padding-top: 12px;
 }
 .cart__title {
   display: flex;
@@ -54,16 +45,7 @@
 }
 .cart__title svg { opacity: 0.9; color: var(--primary); }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.clear-btn {
-    font-size: 0.9rem;
-    padding: 8px 12px;
-    border-radius: 10px;
-}
+.header-actions { display: flex; align-items: center; gap: 10px; }
 
 .cart__badge {
   font-size: 13px;
@@ -72,9 +54,25 @@
   background: var(--primary);
   color: var(--on-primary, #111);
   box-shadow: 0 1px 0 rgba(0,0,0,.25);
+  font-weight: 700;
 }
 
-/* Empty state */
+/* Glass Card Utility */
+.card {
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.glass {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  backdrop-filter: saturate(140%) blur(14px);
+  -webkit-backdrop-filter: saturate(140%) blur(14px);
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.35),
+    0 0 0 1px rgba(255,255,255,0.05) inset;
+}
+
+/* Empty State */
 .empty {
   text-align: center;
   padding: clamp(32px, 5vw, 64px);
@@ -86,13 +84,11 @@
   border: 1px solid color-mix(in oklab, var(--primary), #000 40%);
   box-shadow: 0 10px 30px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.05) inset;
 }
-.empty__icon { width: 28px; height: 28px; color: var(--primary); filter: drop-shadow(0 1px 0 rgba(0,0,0,.4)); }
+.empty__icon { width: 28px; height: 28px; color: var(--primary); }
 .empty h2 { color: var(--text); margin: 16px 0 6px; letter-spacing: -.01em; }
 .muted { color: var(--muted); margin: 0 0 18px; }
 
-/* ----------------------------------------------------
-   GLAVNI DIZAJN: Dva panela
-   ---------------------------------------------------- */
+/* Layout Grid (Desktop) */
 .cart-content-grid {
     display: grid;
     gap: 32px;
@@ -100,26 +96,25 @@
 }
 @media (min-width: 1024px) {
   .cart-content-grid {
-    grid-template-columns: 1.5fr 1fr; /* Lista je šira od Sažetka */
+    grid-template-columns: 1.5fr 1fr;
     gap: 24px;
   }
   .cart__summary-panel {
-    /* Summary panel je sticky na desktopu */
-    position: sticky;
-    top: 100px; /* Prilagođeno visini headera */
-    max-height: fit-content;
+    padding: 24px;
+  display: grid;
+  gap: 12px; /* Smanjeno sa 16px na 12px da zbije elemente */
+  align-content: start;
   }
 }
 
-/* LISTA ARTIKALA */
-.items-list-panel {
-  padding: 16px;
-}
+/* Items List */
+.items-list-panel { padding: 16px; }
 .cart__rows { display: grid; gap: 12px; }
 
+/* --- DESKTOP ROW LAYOUT --- */
 .cart__row {
   display: grid;
-  grid-template-columns: 84px 1fr auto auto auto;
+  grid-template-columns: 84px 1fr auto auto auto; /* Slika | Info | Qty | Cena | Remove */
   align-items: center;
   gap: 16px;
   padding: 12px;
@@ -153,7 +148,7 @@
 }
 .cart__brand { color: var(--muted); font-size: 13px; }
 
-/* Kontrola Količine */
+/* Qty Controls */
 .cart__qtyWrap {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 4px; border-radius: 999px;
@@ -165,9 +160,10 @@
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(255,255,255,0.02);
   cursor: pointer;
-  transition: transform .12s ease, background .2s ease, border-color .2s ease;
   color: var(--text);
+  transition: all .2s ease;
 }
+.qty__btn:hover { background: rgba(255,255,255,0.1); }
 
 .cart__qty {
   width: 42px; text-align: center;
@@ -176,7 +172,14 @@
   background: transparent;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+/* No Spinners */
+input.no-spin::-webkit-outer-spin-button,
+input.no-spin::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input.no-spin {
+  -webkit-appearance: textfield;
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .cart__price {
@@ -189,15 +192,25 @@
 .cart__remove {
   width: 36px; height: 36px; border-radius: 10px;
   display: grid; place-items: center;
-  border: 0; 
-  background: transparent;
+  border: 0; background: transparent;
   color: var(--muted);
   cursor: pointer;
-  transition: color .2s ease, transform .12s ease;
+  transition: all .2s ease;
 }
-.cart__remove:hover {
+.cart__remove:hover { color: #ff6666; transform: scale(1.1); }
+
+/* Clear All */
+.cart__clear-row {
+  margin-top: 16px; padding-top: 16px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  display: flex; justify-content: center;
+}
+.btn-clear-all {
+  color: var(--muted); border-color: transparent; gap: 8px; padding: 10px 20px;
+}
+.btn-clear-all:hover {
+  background: rgba(255, 80, 80, 0.1);
   color: #ff6666;
-  transform: scale(1.05);
 }
 
 /* Divider */
@@ -207,118 +220,61 @@
   margin: 16px 0;
 }
 
-/* ----------------------------------------------------
-   SUMMARY PANEL (Panel 2)
-   ---------------------------------------------------- */
+/* Summary Panel */
 .cart__summary-panel {
-  padding: 24px;
-  display: grid;
-  gap: 16px;
-  align-content: start;
+  padding: 24px; display: grid; gap: 16px; align-content: start;
 }
+.summary-title { font-size: 1.4rem; font-weight: 700; margin: 0 0 4px; }
+.summary-details { display: grid; gap: 10px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.summary-row { display: flex; justify-content: space-between; font-size: 1rem; }
+.summary-row.shipping .text-primary { color: #40a840; font-weight: 700; }
 
-.summary-title {
-    font-size: 1.4rem;
-    font-weight: 700;
-    margin: 0 0 10px;
-}
+.cart__total { display: flex; justify-content: space-between; align-items: baseline; font-weight: 800; }
+.cart__total span:first-child { font-size: 1.1rem; }
+.cart__totalPrice { color: var(--primary); font-size: 2rem; letter-spacing: -0.02em; }
 
-.summary-details {
-    display: grid;
-    gap: 10px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
-.summary-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 1rem;
-}
-.summary-row.shipping .text-primary {
-  color: #3df93d; 
-  font-weight: 700;
-}
-
-/* Total Price */
-.cart__total {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-weight: 800;
-}
-.cart__total span:first-child {
-  font-size: 1.1rem;
-}
-.cart__totalPrice { 
-  color: var(--primary); 
-  font-size: 2rem;
-  letter-spacing: -0.02em;
-}
-
-/* Dugmad za Akcije */
 .checkout-btn {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    padding: 14px 18px;
-    border-radius: 14px;
-    color: var(--on-primary, #111);
-    font-weight: 800;
+    width: 100%; display: flex; justify-content: center; align-items: center;
+    gap: 8px; padding: 14px 18px; border-radius: 14px;
+    color: var(--on-primary, #111); font-weight: 800;
 }
 .cart__note {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  color: var(--muted);
-  border-top: 1px dashed rgba(255,255,255,0.05);
-  padding-top: 16px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 0.85rem; color:#40a840;
+  border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 16px;
 }
 
-/* ... (Sve od ranije ostaje isto, ali zamenite Promo Box i dodajte No-spin) ... */
+/* Promo Box */
+/* --- PROMO BOX (Unified Styles) --- */
 
-/* 1. UKLANJANJE STRELICA (SPINNERS) IZ INPUTA */
-/* Chrome, Safari, Edge, Opera */
-input.no-spin::-webkit-outer-spin-button,
-input.no-spin::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-/* Firefox */
-input.no-spin {
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-
-/* ... ostali stilovi ... */
-
-/* 2. PIXEL-PERFECT PROMO BOX */
+/* Osnovni kontejner (fiksna visina kao i inputi) */
 .promo-box {
   display: flex;
   gap: 8px;
-  /* Fiksna visina kontejnera da osiguramo ravnanje */
-  height: 48px; 
-  margin-bottom: 16px;
+  height: 48px; /* Desktop visina */
+  margin-bottom: 4px;
+  width: 100%;
+  transition: all 0.2s ease;
 }
 
+/* Input Wrapper (okvir) */
 .promo-box .input-wrapper {
   flex: 1;
   display: flex;
   align-items: center;
-  background: rgba(0,0,0,0.05);
-  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.1);
   border-radius: 12px;
   padding: 0 12px;
-  height: 100%; /* Puni visinu roditelja */
-  transition: box-shadow 0.2s;
+  height: 100%; /* Popunjava celu visinu promo-boxa */
+  transition: box-shadow 0.2s, border-color 0.2s;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .promo-box .input-wrapper:focus-within {
   box-shadow: 0 0 0 2px var(--ring);
+  border-color: var(--primary);
 }
 
 .promo-box .icon {
@@ -339,103 +295,301 @@ input.no-spin {
 }
 
 .promo-box .promo-btn {
-  height: 100%; /* Ista visina kao input wrapper */
+  height: 100%;
   padding: 0 24px;
   border-radius: 12px;
   font-weight: 700;
   font-size: 0.9rem;
-  flex-shrink: 0; /* Da se ne skuplja */
+  flex-shrink: 0;
   background: var(--primary);
   color: var(--on-primary);
   border: 1px solid var(--primary);
+  cursor: pointer;
   transition: filter 0.2s ease;
 }
-.promo-box .promo-btn:hover {
-  filter: brightness(1.1);
+.promo-box .promo-btn:hover { filter: brightness(1.1); }
+.promo-box .promo-btn:disabled { opacity: 0.6; cursor: not-allowed; filter: none; }
+
+/* --- APPLIED STATE (Kada je kod unet) --- */
+
+/* Ključno: Ne menjamo visinu, ostaje ista kao standardni promo-box */
+.promo-box.applied {
+  /* Nema height: auto, nasleđuje 48px (desktop) ili 44px (mobile) */
 }
 
-/* ... ostali stilovi ... */
-
-/* Global Buttons */
-.btn {
-  border-radius: 12px;
-  font-weight: 700;
-}
-.btn-primary {
-  background: var(--primary);
-  color: var(--on-primary, #111);
-  border: 1px solid var(--primary);
-}
-.btn-ghost {
-  background: rgba(255,255,255,0.08);
+.applied-wrapper {
+  width: 100%; /* Zauzima celu širinu jer nema dugmeta sa strane */
+  background: rgba(34, 197, 94, 0.1) !important; /* Zelena prozirna */
+  border-color: rgba(34, 197, 94, 0.3) !important;
+  justify-content: space-between;
   color: var(--text);
-  border: 1px solid rgba(255,255,255,0.12);
 }
 
-/* RESPONSIVE */
-@media (max-width: 820px) {
-  /* Promeni raspored u redu korpe na mobilnom */
-  .cart__row {
-    grid-template-columns: 72px 1fr auto;
-    grid-template-areas:
-      "img title remove"
-      "img qty price";
-    gap: 10px;
-    padding: 10px;
-  }
-  .cart__thumb { grid-area: img; width: 72px; height: 72px; }
-  .cart__meta { grid-area: title; }
-  .cart__qtyWrap { grid-area: qty; }
-  .cart__price { grid-area: price; justify-self: end; }
-  .cart__remove { grid-area: remove; justify-self: end; }
-  
-  .hide-mobile { display: none; }
+.applied-text {
+  flex: 1;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 8px;
 }
+.applied-text strong { color: #4ade80; font-weight: 700; }
 
-@media (max-width: 520px) {
-  .cart__summary-panel {
-    /* Summary panel je fiksiran na dnu ekrana na malim uređajima */
-    position: sticky; 
-    bottom: 0;
-    left: 0;
-    right: 0;
-    margin-top: 0;
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
-    padding: 20px 16px;
-  }
-  .cart__totalPrice { font-size: 1.8rem; }
-  .promo-box {
-      flex-direction: column;
-  }
-  .promo-box .promo-btn {
-      width: 100%;
-  }
-}/* ... (postojeći stilovi odozgo ostaju isti) ... */
-
-/* Dodajte ovo na kraj fajla: */
-
-/* Dugme "Isprazni" ispod liste */
-.cart__clear-row {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+.btn-remove-code {
+  height: 32px;
+  width: 32px;
   display: flex;
+  align-items: center;
   justify-content: center;
-}
-
-.btn-clear-all {
+  border-radius: 8px;
+  border: 0;
+  background: transparent;
   color: var(--muted);
-  border-color: transparent;
-  transition: all 0.2s ease;
-  gap: 8px;
-  padding: 10px 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.btn-remove-code:hover {
+  background: rgba(239, 68, 68, 0.15); /* Crvena pozadina na hover */
+  color: #ef4444;
 }
 
-.btn-clear-all:hover {
-  background: rgba(255, 80, 80, 0.1);
-  color: #ff6666;
-  border-color: rgba(255, 80, 80, 0.2);
-  transform: translateY(-1px);
+.btn-remove-code {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+.btn-remove-code:hover {
+  background: rgba(0,0,0,0.1);
+  color: #ef4444;
+}
+/* Global Buttons */
+.btn { border-radius: 12px; font-weight: 700; }
+.btn-primary { background: var(--primary); color: var(--on-primary, #111); border: 1px solid var(--primary); }
+.btn-ghost { background: rgba(255,255,255,0.08); color: var(--text); border: 1px solid rgba(255,255,255,0.12); }
+
+/* src/pages/Cart.css - Mobile Compact Part */
+
+/* =========================================================
+   MOBILE OPTIMIZATION (COMPACT / ZBIJENO)
+   ========================================================= */
+@media (max-width: 768px) {
+  
+  /* 1. FIX KONTEJNERA (da ne beži) */
+  .container.cart {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-top: 16px;        /* Malo manji razmak od hedera */
+    padding-inline: 0;
+  }
+
+  .cart__header {
+    margin-bottom: 12px;
+    padding-bottom: 0;
+    border: none;
+    padding-inline: 8px;     /* Malo uvlačenje naslova */
+  }
+
+  .cart__title h1 { font-size: 1.5rem; } /* Malo manji naslov */
+
+  /* 2. ZBIJENIJA LISTA */
+  .cart__rows {
+    padding: 0 8px;          /* Minimalni bočni padding */
+    gap: 8px;                /* Manji razmak između proizvoda (bilo 12/16) */
+  }
+  
+  /* --- KARTICA PROIZVODA (Compact) --- */
+  .cart__row {
+    display: grid;
+    /* Smanjena slika na 72px */
+    grid-template-columns: 86px 1fr; 
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      "img title"
+      "img price"
+      "img qty";
+    column-gap: 12px;        /* Manji razmak slika-tekst */
+    row-gap: 2px;            /* Skoro bez razmaka vertikalno */
+    
+    padding: 10px;           /* Znatno manji unutrašnji padding */
+    position: relative;
+    align-items: start;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px;     /* Manji radijus */
+  }
+
+  /* Slika */
+  .cart__thumb {
+    grid-area: img;
+    width: 72px; 
+    height: 115px;
+    border-radius: 8px;
+    align-self: start;
+    background: #fff;
+    padding: 2px;
+  }
+
+  /* Naslov i Brend */
+  .cart__meta {
+    grid-area: title;
+    padding-right: 24px;     /* Mesto za X dugme */
+    margin-bottom: 0;
+  }
+  .cart__name { 
+    font-size: 0.9rem;       /* Malo manji font */
+    line-height: 1.2; 
+    margin-bottom: 2px;
+    white-space: normal;
+  }
+  .cart__brand { font-size: 0.7rem; opacity: 0.7; margin-bottom: 0; }
+
+  /* Cena */
+  .cart__price {
+    grid-area: price;
+    justify-self: start;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-top: 2px;
+    margin-bottom: 4px;
+  }
+
+  /* Količina (Ultra kompaktna) */
+  .cart__qtyWrap {
+    grid-area: qty;
+    justify-self: start;
+    
+    display: flex;
+    align-items: center;
+    height: 28px;            /* Niži kontroler (bilo 32/36) */
+    
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    padding: 1px;
+  }
+  
+  .qty__btn { 
+    width: 28px; 
+    height: 100%;
+    background: transparent;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .qty__btn svg { width: 14px; height: 14px; } /* Manje ikonice */
+  
+  .cart__qty { 
+    width: 28px; 
+    font-size: 0.85rem; 
+    font-weight: 600;
+    height: 100%;
+    border: none;
+    margin: 0;
+  }
+
+  /* X Dugme (Diskretnije) */
+  .cart__remove {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 24px; 
+    height: 24px;
+    color: var(--muted);
+    background: transparent;
+    border: none;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cart__remove svg { width: 16px; height: 16px; }
+
+  /* Dugme Isprazni */
+  .cart__clear-row {
+    padding: 8px 0 0;
+    margin: 0;
+    border: none;
+  }
+  .btn-clear-all {
+    width: auto;
+    min-width: 180px;
+    margin: 0 auto;
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    background: rgba(255, 80, 80, 0.05);
+    border: 1px dashed rgba(255, 80, 80, 0.2);
+    color: #ff6666;
+    border-radius: 8px;
+  }
+
+  /* --- Summary Panel (Compact Sheet) --- */
+  .cart__summary-panel {
+    margin-top: 8px;
+    margin-inline: -16px; /* Raširi do ivica */
+    width: calc(100% + 32px);
+    
+    border-radius: 20px 20px 0 0;
+    padding: 20px 16px 32px;
+    gap: 12px;
+    
+    background: var(--surface);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.25);
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  
+  /* Besplatna dostava bar */
+  .cart__summary-panel > div:first-child {
+    margin-bottom: 12px !important;
+    padding: 10px !important;
+  }
+
+  .summary-title { font-size: 1.1rem; margin-bottom: 0; }
+  .summary-details { gap: 6px; padding-bottom: 12px; }
+  .summary-row { font-size: 0.9rem; }
+  
+  .cart__total {
+    margin-top: 4px;
+    padding-top: 10px;
+    margin-bottom: 8px;
+  }
+  .cart__total span:first-child { font-size: 1rem; }
+  .cart__totalPrice { font-size: 1.5rem; }
+  
+  .cart__actions {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+  
+  .checkout-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 14px;
+    font-size: 1rem;
+    background: var(--primary);
+    color: var(--on-primary);
+    border-radius: 12px;
+  }
+.promo-box {
+    flex-direction: row;
+    height: 44px; /* <--- Ovo je ključno za mobilni */
+    margin-bottom: 4px;
+  }
+  .promo-box .promo-btn { padding: 0 14px; font-size: 0.8rem; }
+}
+/* src/pages/Cart.css */
+
+/* ... unutar @media (max-width: 768px) ... */
+
+.shipping-progress {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 12px;
+  border-radius: 12px;
+  /* OVO JE GAP KOJI TRAŽIŠ - Povećaj ili smanji po želji */
+  margin-bottom: 24px; 
 }

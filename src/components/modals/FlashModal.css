@@ -1,0 +1,59 @@
+/* FlashModal.css */
+.flash-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100; /* Mora biti iznad svega */
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.2); /* Suptilna pozadina */
+  backdrop-filter: blur(2px);
+}
+
+.flash-card {
+  width: 100%;
+  max-width: 380px;
+  padding: 24px;
+  text-align: center;
+  border-radius: 16px;
+  
+  /* Koristimo naše varijable za temiranje */
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--color-surface) 95%, transparent),
+    var(--color-surface)
+  );
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
+  color: var(--color-text);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  
+  /* Glass efekat */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.flash-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  margin-bottom: 12px;
+  background: var(--color-primary);
+  color: var(--color-bg); /* Ikonica u kontrastu sa primarnom bojom */
+}
+
+.flash-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: var(--color-text);
+}
+
+.flash-subtitle {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+  margin: 0;
+  line-height: 1.4;
+}
