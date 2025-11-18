@@ -6,15 +6,18 @@ import "./styles/base.css";
 import { ThemeProvider } from "./context/ThemeProvider.jsx";
 import { CartProvider } from "./context/CarProvider.jsx";
 import { AuthProvider } from "./context/AuthProvider.jsx";
+import { FlashProvider } from "./context/FlashContext.jsx";
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <AuthProvider>
       <ThemeProvider>
         <CartProvider>
+          <FlashProvider>
           <BrowserRouter>
             <App />
           </BrowserRouter>
+          </FlashProvider>
         </CartProvider>
       </ThemeProvider>
     </AuthProvider>

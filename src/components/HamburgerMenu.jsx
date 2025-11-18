@@ -1,6 +1,5 @@
 // ==============================
-// Desktop: mala drop-lista (centrirana ispod dugmeta)
-// Mobile: slide-over panel
+// File: src/components/HamburgerMenu.jsx
 // ==============================
 import React, {
   useEffect,
@@ -9,38 +8,46 @@ import React, {
   useLayoutEffect,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import { Link, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import { useCart } from "../hooks/useCart.js";
+// 👇 Nove ikonice za footer menija
+import { Phone, HelpCircle, Facebook, Instagram, MapPin } from "lucide-react";
 import "./HamburgerMenu.css";
 
-const DROPDOWN_WIDTH = 220; // ⇦ promeni ako želiš šire/uže (menjaš i u CSS/style)
+const DROPDOWN_WIDTH = 220;
 
 export default function HamburgerMenu({
   open,
   onClose,
   count = 0,
   user = null,
-  anchorEl = null, // ref ka hamburger dugmetu u Header-u
+  anchorEl = null,
 }) {
   const isDesktop = useIsDesktop();
   const loc = useLocation();
 
-  // auto-zatvori na promenu rute
   useEffect(() => {
     if (open) onClose?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loc.pathname]);
 
-  return isDesktop ? (
-    <DesktopDropdown
-      open={open}
-      onClose={onClose}
-      count={count}
-      user={user}
-      anchorEl={anchorEl}
-    />
-  ) : (
-    <MobileSheet open={open} onClose={onClose} count={count} user={user} />
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    isDesktop ? (
+      <DesktopDropdown
+        open={open}
+        onClose={onClose}
+        count={count}
+        user={user}
+        anchorEl={anchorEl}
+      />
+    ) : (
+      <MobileSheet open={open} onClose={onClose} user={user} />
+    ),
+    document.body
   );
 }
 
@@ -139,9 +146,18 @@ function DesktopDropdown({ open, onClose, count, user, anchorEl }) {
             {user ? (
               <DDItem to="/account" label="Moj nalog" onClose={onClose} />
             ) : (
-              <DDItem to="/login" label="Prijava / Registracija" onClose={onClose} />
+              <DDItem
+                to="/login"
+                label="Prijava / Registracija"
+                onClose={onClose}
+              />
             )}
-            <DDItem to="/cart" label={`Korpa (${count})`} onClose={onClose} strong />
+            <DDItem
+              to="/cart"
+              label={`Korpa (${count})`}
+              onClose={onClose}
+              strong
+            />
           </nav>
         </motion.div>
       )}
@@ -163,9 +179,10 @@ function DDItem({ to, label, strong, onClose }) {
 }
 
 /* ----- MOBILE: slide-over panel ----- */
-function MobileSheet({ open, onClose, count, user }) {
+function MobileSheet({ open, onClose, user }) {
   const panelRef = useRef(null);
   const firstFocusableRef = useRef(null);
+  const { items, count } = useCart();
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -177,19 +194,6 @@ function MobileSheet({ open, onClose, count, user }) {
     if (!open) return;
     const onKey = (e) => {
       if (e.key === "Escape") onClose?.();
-      if (e.key === "Tab") {
-        const focusables = panelRef.current?.querySelectorAll(
-          'a[href],button:not([disabled]),[tabindex]:not([tabindex="-1"])'
-        );
-        if (!focusables?.length) return;
-        const first = focusables[0];
-        const last = focusables[focusables.length - 1];
-        if (e.shiftKey && document.activeElement === first) {
-          last.focus(); e.preventDefault();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          first.focus(); e.preventDefault();
-        }
-      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -234,6 +238,7 @@ function MobileSheet({ open, onClose, count, user }) {
           animate="visible"
           exit="exit"
           variants={backdrop}
+          style={{ zIndex: 9999 }}
         >
           <motion.aside
             id="hm-panel"
@@ -249,8 +254,11 @@ function MobileSheet({ open, onClose, count, user }) {
               if (info.offset.x > 120 || info.velocity.x > 800) onClose?.();
             }}
           >
+            {/* HEADER MENIJA */}
             <div className="hm__head">
-              <h2 id="hm-title" className="hm__title">Meni</h2>
+              <h2 id="hm-title" className="hm__title">
+                Meni
+              </h2>
               <button
                 ref={firstFocusableRef}
                 className="hm__close"
@@ -261,28 +269,82 @@ function MobileSheet({ open, onClose, count, user }) {
               </button>
             </div>
 
+            {/* NAVIGACIJA */}
             <nav className="hm__nav">
-              <Link className="hm__link" to="/about" onClick={onClose}>O nama</Link>
-              <Link className="hm__link" to="/catalog" onClick={onClose}>Prodavnica</Link>
-              <Link className="hm__link" to="/usluge" onClick={onClose}>Usluge</Link>
+              <Link className="hm__link" to="/about" onClick={onClose}>
+                O nama
+              </Link>
+              <Link className="hm__link" to="/catalog" onClick={onClose}>
+                Prodavnica
+              </Link>
+              <Link className="hm__link" to="/usluge" onClick={onClose}>
+                Usluge
+              </Link>
 
               {user ? (
-                <Link className="hm__link" to="/account" onClick={onClose}>Moj nalog</Link>
+                <Link className="hm__link" to="/account" onClick={onClose}>
+                  Moj nalog
+                </Link>
               ) : (
-                <Link className="hm__link" to="/login" onClick={onClose}>Prijava / Registracija</Link>
+                <Link className="hm__link" to="/login" onClick={onClose}>
+                  Prijava / Registracija
+                </Link>
               )}
 
               <Link className="hm__link hm__cart" to="/cart" onClick={onClose}>
-                <span className="hm__cartIcon">🛒</span>
-                <span>Korpa</span>
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: 8 }}
+                >
+                  <span className="hm__cartIcon" style={{ margin: 0 }}>
+                    🛒
+                  </span>
+                  <span>Korpa</span>
+                </div>
                 <span className="hm__badge">{count}</span>
               </Link>
+
+              {/* Mini Cart Items */}
+              {items.length > 0 && (
+                <div className="hm__miniCart">
+                  {items.map((item) => (
+                    <div key={item.id} className="hm__miniItem">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="hm__miniImg"
+                        loading="lazy"
+                      />
+                      <div className="hm__miniInfo">
+                        <div className="hm__miniName">{item.name}</div>
+                        <div className="hm__miniQty">{item.qty} kom.</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </nav>
 
+            {/* NOVI FOOTER MENIJA - "STICKY" DNO */}
             <div className="hm__footer">
-              <Link to="/kontakt" className="hm__muted" onClick={onClose}>Kontakt</Link>
-              <span className="hm__dot">•</span>
-              <Link to="/faq" className="hm__muted" onClick={onClose}>FAQ</Link>
+              <div className="hm__f-info">
+                <Link to="/contact" className="hm__f-btn" onClick={onClose}>
+                  <Phone size={16} /> Kontakt
+                </Link>
+                <Link to="/faq" className="hm__f-btn" onClick={onClose}>
+                  <HelpCircle size={16} /> Pomoć
+                </Link>
+                <Link to="/about" className="hm__f-btn" onClick={onClose}>
+                  <MapPin size={16} /> Lokacija
+                </Link>
+              </div>
+              
+              <div className="hm__f-bottom">
+                <div className="hm__f-socials">
+                   <a href="https://facebook.com" target="_blank" rel="noreferrer" aria-label="Facebook"><Facebook size={18} /></a>
+                   <a href="https://instagram.com" target="_blank" rel="noreferrer" aria-label="Instagram"><Instagram size={18} /></a>
+                </div>
+                <div className="hm__f-copy">Daja Shop © {new Date().getFullYear()}</div>
+              </div>
             </div>
           </motion.aside>
         </motion.div>
@@ -290,4 +352,3 @@ function MobileSheet({ open, onClose, count, user }) {
     </AnimatePresence>
   );
 }
-/* ----- KRAJ ----- */
