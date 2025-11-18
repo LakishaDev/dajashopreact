@@ -263,6 +263,7 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     description: "",
     gender: "",
     specs: {},
+    model3DUrl: "",
   });
 
   const [tempSpecKey, setTempSpecKey] = useState("");
@@ -289,6 +290,7 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
         ...product,
         images: loadedImages,
         specs: product.specs || {},
+        model3DUrl: product.model3DUrl || "", // <--- UČITAVANJE 3D URL-A
       });
     }
 
@@ -476,6 +478,22 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                   options={genderOptions}
                   onChange={(v) => handleChange("gender", v)}
                 />
+                {/* NOVO: 3D Model URL */}
+                <div className="md:col-span-3">
+                  <label className="block">
+                    <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1 block">
+                      3D Model URL (.glb)
+                    </span>
+                    <input
+                      value={form.model3DUrl}
+                      onChange={(e) =>
+                        handleChange("model3DUrl", e.target.value)
+                      }
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-neutral-900 outline-none focus:ring-2 focus:ring-neutral-200 focus:border-neutral-400 transition-all font-medium"
+                      placeholder="/models/moj-sat.glb (iz Storage-a)"
+                    />
+                  </label>
+                </div>
               </div>
 
               {/* Specifikacije */}
