@@ -5,16 +5,16 @@
 import React from "react";
 import "./About.css";
 
-import AboutHero from "../components/About/AboutHero.jsx";
-import AboutStats from "../components/About/AboutStats.jsx";
-import AboutStory from "../components/About/AboutStory.jsx";
-import AboutMarquee from "../components/About/AboutMarquee.jsx";
-import AboutValues from "../components/About/AboutValues.jsx";
-import AboutInfoGlass from "../components/About/AboutInfoGlass.jsx";
+import AboutHero from "../components/about/AboutHero.jsx";
+import AboutStats from "../components/about/AboutStats.jsx";
+import AboutStory from "../components/about/AboutStory.jsx";
+import AboutMarquee from "../components/about/AboutMarquee.jsx";
+import AboutValues from "../components/about/AboutValues.jsx";
+import AboutInfoGlass from "../components/about/AboutInfoGlass.jsx";
 import AboutTimeline from "../components/about/AboutTimeline.jsx";
-import AboutTestimonials from "../components/About/AboutTestimonials.jsx";
-import AboutFAQ from "../components/About/AboutFAQ.jsx";
-import AboutCTA from "../components/About/AboutCTA.jsx";
+import AboutTestimonials from "../components/about/AboutTestimonials.jsx";
+import AboutFAQ from "../components/about/AboutFAQ.jsx";
+import AboutCTA from "../components/about/AboutCTA.jsx";
 
 export default function About() {
   return (
