@@ -20,7 +20,6 @@ export default function Catalog() {
   const [sp] = useSearchParams();
 
   // 1. Dohvatamo SVE proizvode iz baze
-  // Sortiramo ih u bazi po imenu ili ceni (ako je sort parametar prisutan)
   const {
     items: allItems,
     loading,
@@ -29,8 +28,7 @@ export default function Catalog() {
     order: sp.get("sort") || "name",
   });
 
-  // 2. Filtriranje podataka u memoriji (Client-side filtering)
-  // Ovo omogućava kombinovanje pretrage, brendova i cene bez grešaka u bazi
+  // 2. Filtriranje podataka u memoriji
   const filteredData = useMemo(() => {
     if (!allItems) return [];
 
@@ -43,7 +41,7 @@ export default function Catalog() {
     const min = sp.get("min") ? Number(sp.get("min")) : null;
     const max = sp.get("max") ? Number(sp.get("max")) : null;
 
-    // A) Tekstualna pretraga (ime ili brend)
+    // A) Tekstualna pretraga
     if (q) {
       out = out.filter((p) =>
         (p.brand + " " + p.name).toLowerCase().includes(q)
@@ -63,7 +61,7 @@ export default function Catalog() {
     return out;
   }, [allItems, sp]);
 
-  // 3. Paginacija na već filtriranim podacima
+  // 3. Paginacija
   const [page, setPage] = useState(1);
   const totalCount = filteredData.length;
 
@@ -169,11 +167,13 @@ export default function Catalog() {
             </div>
           </div>
 
+          {/* IZMENA OVDE: Uklonjen 'layout' prop, ostavljena samo opacity animacija */}
           <motion.div
-            layout
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
+            key={sp.toString()} /* Ključ forsira re-render i fade animaciju pri promeni filtera */
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
           >
             {renderContent()}
           </motion.div>

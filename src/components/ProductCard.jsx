@@ -10,7 +10,6 @@ import {
 } from "../services/products";
 import FlashModal from "./modals/FlashModal.jsx";
 import UploadProgressBar from "./UploadProgressBar.jsx";
-// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import {
   Edit3,
@@ -20,7 +19,6 @@ import {
   CheckCircle2,
   ImagePlus,
   Trash2,
-  Plus,
   Check,
 } from "lucide-react";
 import { auth, ADMIN_EMAILS } from "../services/firebase";
@@ -52,6 +50,7 @@ export default function ProductCard({ p }) {
 
   // Stanje za slider (stranica i smer)
   const [[page, direction], setPage] = useState([0, 0]);
+
   // ===== LOKALNA STANJA =====
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(null); // lokalni draft izmena
@@ -65,8 +64,7 @@ export default function ProductCard({ p }) {
     return Array.isArray(arr) ? arr : [];
   }, [p.images, p.image, optimistic]);
 
-  // Sinhronizacija page-a sa brojem slika (da ne odemo u minus ili previše)
-  // 'imgs' varijablu već imaš u svom kodu
+  // Sinhronizacija page-a sa brojem slika
   const imageIndex = Math.abs(page % imgs.length);
 
   // Funkcija za promenu slike (sledeća/prethodna)
@@ -294,7 +292,14 @@ export default function ProductCard({ p }) {
   const data = optimistic ? { ...p, ...optimistic } : p;
 
   return (
-    <div className="product-card card relative overflow-hidden max-w-full md:max-w-full w-full bg-white dark:bg-zinc-900 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+    // KORISTIMO motion.div ALI BEZ layout PROPA DA IZBEGNEMO WARPING
+    <motion.div
+      className="product-card card relative overflow-hidden max-w-full md:max-w-full w-full bg-white dark:bg-zinc-900 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
+      initial={{ opacity: 0 }} // Počinje nevidljivo
+      animate={{ opacity: 1 }} // Elegantan Fade In
+      exit={{ opacity: 0 }} // Fade Out pri brisanju/filtriranju
+      transition={{ duration: 0.35, ease: "easeOut" }} // Glatka tranzicija
+    >
       {/* NOVO bedž */}
       {(data.novo ?? false) && (
         <div className="pointer-events-none absolute left-2 top-2 z-20">
@@ -636,6 +641,6 @@ export default function ProductCard({ p }) {
           )
         }
       />
-    </div>
+    </motion.div>
   );
 }

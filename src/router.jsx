@@ -8,6 +8,7 @@ import Checkout from "./pages/Checkout.jsx";
 import Account from "./pages/Account.jsx";
 import Orders from "./pages/Orders.jsx";
 import About from "./pages/About.jsx";
+import AdminDashboard from "./pages/Admin/AdminDashboard.jsx";
 
 export default function AppRoutes() {
   return (
@@ -19,7 +20,8 @@ export default function AppRoutes() {
       <Route path="/checkout" element={<Checkout />} />
       <Route path="/account" element={<Account />} />
       <Route path="/orders" element={<Orders />} />
-       <Route path="/about" element={<About />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/admin" element={<AdminDashboard />} />
     </Routes>
   );
 }
