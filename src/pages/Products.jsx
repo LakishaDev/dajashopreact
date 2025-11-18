@@ -5,12 +5,32 @@ import Breadcrumbs from "../components/Breadcrumbs.jsx";
 import catalog from "../services/CatalogService.js";
 import { money } from "../utils/currency.js";
 import { useCart } from "../hooks/useCart.js";
+import { useFlash } from "../hooks/useFlash.js"; // 👈 Import
 
 export default function Product() {
   const { slug } = useParams();
   const p = catalog.get(slug);
   const { dispatch } = useCart();
+  const { flash } = useFlash(); // 👈 Hook
+
   if (!p) return <div>Proizvod nije pronađen.</div>;
+
+  const handleAdd = () => {
+    dispatch({
+      type: "ADD",
+      item: {
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        image: p.image,
+        brand: p.brand,
+        slug: p.slug,
+      },
+    });
+    // ✅ Flash
+    flash("Dodato u korpu", `${p.name} je spreman za isporuku.`, "cart");
+  };
+
   return (
     <div
       className="product grid"
@@ -34,22 +54,7 @@ export default function Product() {
             </div>
           ))}
         </div>
-        <button
-          className="product__cta"
-          onClick={() =>
-            dispatch({
-              type: "ADD",
-              item: {
-                id: p.id,
-                name: p.name,
-                price: p.price,
-                image: p.image,
-                brand: p.brand,
-                slug: p.slug,
-              },
-            })
-          }
-        >
+        <button className="product__cta" onClick={handleAdd}>
           Dodaj u korpu
         </button>
       </div>

@@ -1,16 +1,10 @@
-// ==============================
-// File: src/components/FeaturedSliderTW.jsx
-// Tailwind CSS + Framer‑Motion (image capped + centered)
-// ==============================
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-// eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from "framer-motion";
-import { useCart } from "../hooks/useCart.js"; // adjust path if different
+import { useCart } from "../hooks/useCart.js";
+import { useFlash } from "../hooks/useFlash.js"; // 👈 Import
+import "./FeaturedSlider.css";
 
-/**
- * ✅ CONFIG — dodaj/menjaj proizvode ovde (slug ide na /product/[slug])
- */
 const FEATURED_CONFIG = [
   {
     id: "casio-mtp-1314pl-8a",
@@ -48,7 +42,6 @@ const FEATURED_CONFIG = [
   },
 ];
 
-// 🧮 format cene
 const fmtPrice = (n) =>
   new Intl.NumberFormat("sr-RS", { maximumFractionDigits: 0 }).format(n);
 
@@ -70,7 +63,8 @@ export default function FeaturedSlider({
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [paused, setPaused] = useState(false);
-  const { dispatch } = useCart?.() || { dispatch: null }; // fail‑safe ako hook ne postoji
+  const { dispatch } = useCart?.() || { dispatch: null };
+  const { flash } = useFlash(); // 👈 Hook
   const slideRef = useRef(null);
 
   const safeItems = useMemo(
@@ -79,7 +73,6 @@ export default function FeaturedSlider({
   );
   const active = safeItems[index % safeItems.length];
 
-  // ⏱️ Auto‑play sa pauzom na hover/focus
   useEffect(() => {
     if (paused) return;
     const id = setInterval(() => {
@@ -94,30 +87,42 @@ export default function FeaturedSlider({
     setIndex((i) => (i + dir + safeItems.length) % safeItems.length);
   }
 
-  // 👆 Swipe drag
   function onDragEnd(_, info) {
     const threshold = 80;
     if (info.offset.x < -threshold) paginate(1);
     else if (info.offset.x > threshold) paginate(-1);
   }
 
+  const handleAdd = () => {
+    dispatch({
+      type: "ADD",
+      item: {
+        id: active.id,
+        name: active.name || active.title, // fallback ako title koristimo kao name
+        price: active.price,
+        image: active.image,
+        brand: active.brand,
+        slug: active.slug,
+      },
+    });
+    // ✅ Flash
+    flash("Dodato u korpu", `${active.title} je u korpi.`, "cart");
+  };
+
   return (
     <section
       className="relative mx-auto w-full px-4 sm:px-6 lg:px-8 py-8"
       aria-label="Izdvojeno"
     >
-      {/* Heading */}
       <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-neutral-900 mb-6">
         Izdvojeno
       </h2>
 
-      {/* Glass panel */}
       <div
         className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl ring-1 ring-white/50 shadow-2xl"
         onPointerEnter={() => setPaused(true)}
         onPointerLeave={() => setPaused(false)}
       >
-        {/* Arrows (desktop) */}
         <button
           aria-label="Prethodno"
           onClick={() => paginate(-1)}
@@ -157,10 +162,8 @@ export default function FeaturedSlider({
           </svg>
         </button>
 
-        {/* Content grid */}
         <div className="relative grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 p-6 md:p-4 md:px-20 md:items-center">
           <AnimatePresence initial={false} custom={direction}>
-            {/* LEFT: copy */}
             <motion.div
               key={`copy-${active.id}`}
               className="self-center md:space-y-4 space-y-1"
@@ -199,19 +202,7 @@ export default function FeaturedSlider({
                   Detalji
                 </Link>
                 <button
-                  onClick={() =>
-                    dispatch({
-                      type: "ADD",
-                      item: {
-                        id: active.id,
-                        name: active.name,
-                        price: active.price,
-                        image: active.image,
-                        brand: active.brand,
-                        slug: active.slug,
-                      },
-                    })
-                  }
+                  onClick={handleAdd} // 👈 Ažurirano
                   className="inline-flex h-11 items-center justify-center rounded-xl bg-white px-5 font-semibold text-neutral-900 ring-1 ring-black/10 shadow hover:bg-white/90 active:scale-95"
                 >
                   Dodaj
@@ -219,7 +210,6 @@ export default function FeaturedSlider({
               </div>
             </motion.div>
 
-            {/* RIGHT: image (capped + centered) */}
             <motion.div
               key={`img-${active.id}`}
               className="relative grid place-items-center h-[min(64vh,560px)] sm:h-[min(66vh,600px)] md:h-[min(68vh,640px)]"
@@ -243,7 +233,6 @@ export default function FeaturedSlider({
                 className="relative grid place-items-center overflow-hidden rounded-2xl bg-white ring-1 ring-black/5 shadow-inner w-full max-w-[520px] sm:max-w-[560px] md:max-w-[620px] h-full"
                 whileTap={{ cursor: "grabbing" }}
               >
-                {/* soft vignette overlay */}
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/40 via-transparent to-white/60" />
                 <img
                   src={active.image}
@@ -259,7 +248,6 @@ export default function FeaturedSlider({
           </AnimatePresence>
         </div>
 
-        {/* dots */}
         <div className="flex items-center justify-center gap-2 pb-5">
           {safeItems.map((_, i) => (
             <button
@@ -279,12 +267,3 @@ export default function FeaturedSlider({
     </section>
   );
 }
-
-/*
-  Promene u odnosu na prethodnu verziju:
-  - Grid centriran po visini: `md:items-center` (umesto stretch)
-  - Desna kolona dobija fiksni cap visine preko `h-[min(...)]` tako da slika NE povećava ceo panel
-  - Kartica slike je grid + `max-w-[620px]` + `h-full` => uvek centrirana i ograničena
-  - Popravljen overlay util: `bg-gradient-to-b` (umesto pogrešnog `bg-linear-to-b`)
-  - Tekst ima `max-w-[52ch]` radi lepšeg prelamanja
-*/
