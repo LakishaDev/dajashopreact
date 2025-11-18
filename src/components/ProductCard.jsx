@@ -3,12 +3,12 @@ import "./ProductCard.css";
 import { Link } from "react-router-dom";
 import { money } from "../utils/currency.js";
 import { useCart } from "../hooks/useCart.js";
+import { useFlash } from "../hooks/useFlash.js"; // 1. Importujemo hook
 import {
   saveProduct,
   uploadImages,
   removeImagesByPaths,
 } from "../services/products";
-import FlashModal from "./modals/FlashModal.jsx";
 import UploadProgressBar from "./UploadProgressBar.jsx";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import {
@@ -16,7 +16,6 @@ import {
   Save,
   X,
   XCircle,
-  CheckCircle2,
   ImagePlus,
   Trash2,
   Check,
@@ -47,6 +46,7 @@ const swipePower = (offset, velocity) => {
 
 export default function ProductCard({ p }) {
   const { dispatch } = useCart();
+  const { flash } = useFlash(); // 2. Inicijalizacija hook-a
 
   // Stanje za slider (stranica i smer)
   const [[page, direction], setPage] = useState([0, 0]);
@@ -107,16 +107,10 @@ export default function ProductCard({ p }) {
   const [uploadPct, setUploadPct] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
 
-  // flash modal
-  const [flash, setFlash] = useState({
-    open: false,
-    ok: true,
-    title: "",
-    subtitle: "",
-  });
+  // (Uklonjen lokalni [flash, setFlash] state jer koristimo globalni context)
 
   // ===== HANDLERS: KORPA =====
-  const addToCart = () =>
+  const addToCart = () => {
     dispatch({
       type: "ADD",
       item: {
@@ -128,6 +122,9 @@ export default function ProductCard({ p }) {
         slug: p.slug,
       },
     });
+    // 3. Flash za korpu
+    flash("Dodato u korpu", `${p.name} je u vašoj korpi.`, "cart");
+  };
 
   // ===== HANDLERS: EDIT =====
   const startEdit = () => {
@@ -164,25 +161,22 @@ export default function ProductCard({ p }) {
         novo: !!draft.novo,
         images: (draft.images ?? []).map((x) => ({ url: x.url, path: x.path })),
       });
-      setFlash({
-        open: true,
-        ok: true,
-        title: "Izmene sačuvane",
-        subtitle: "Proizvod je uspešno ažuriran.",
-      });
+
+      // 4. Flash za čuvanje
+      flash("Izmene sačuvane", "Proizvod je uspešno ažuriran.", "success");
+
       setIsEditing(false);
       setDraft(null);
-      // nakon snapshot-a, optimistic može mirno da ostane ili da se očisti
       setTimeout(() => setOptimistic(null), 300);
     } catch (e) {
       // revert
       setOptimistic(null);
-      setFlash({
-        open: true,
-        ok: false,
-        title: "Greška pri čuvanju",
-        subtitle: e?.message ?? "Pokušaj ponovo.",
-      });
+      // 5. Flash za grešku
+      flash(
+        "Greška pri čuvanju",
+        e?.message ?? "Pokušaj ponovo.",
+        <XCircle className="text-red-500" size={22} />
+      );
     }
   };
 
@@ -232,19 +226,19 @@ export default function ProductCard({ p }) {
         id: p.id,
         images: [...imgs, ...uploaded],
       });
-      setFlash({
-        open: true,
-        ok: true,
-        title: "Slike dodate",
-        subtitle: `${uploaded.length} fajl(a) uspešno otpremljeno.`,
-      });
+
+      // 6. Flash za upload
+      flash(
+        "Slike dodate",
+        `${uploaded.length} fajl(a) uspešno otpremljeno.`,
+        "success"
+      );
     } catch (err) {
-      setFlash({
-        open: true,
-        ok: false,
-        title: "Upload neuspešan",
-        subtitle: err?.message ?? "Pokušaj ponovo.",
-      });
+      flash(
+        "Upload neuspešan",
+        err?.message ?? "Pokušaj ponovo.",
+        <XCircle className="text-red-500" size={22} />
+      );
     } finally {
       setIsUploading(false);
       setUploadPct(0);
@@ -270,19 +264,19 @@ export default function ProductCard({ p }) {
     try {
       await removeImagesByPaths(p.id, selectedPaths);
       await saveProduct({ id: p.id, images: rest });
-      setFlash({
-        open: true,
-        ok: true,
-        title: "Slike obrisane",
-        subtitle: `${selectedPaths.length} fajl(a) uklonjeno.`,
-      });
+
+      // 7. Flash za brisanje
+      flash(
+        "Slike obrisane",
+        `${selectedPaths.length} fajl(a) uklonjeno.`,
+        "success"
+      );
     } catch (e) {
-      setFlash({
-        open: true,
-        ok: false,
-        title: "Brisanje neuspešno",
-        subtitle: e?.message ?? "Pokušaj ponovo.",
-      });
+      flash(
+        "Brisanje neuspešno",
+        e?.message ?? "Pokušaj ponovo.",
+        <XCircle className="text-red-500" size={22} />
+      );
     } finally {
       setSelectedPaths([]);
     }
@@ -292,13 +286,12 @@ export default function ProductCard({ p }) {
   const data = optimistic ? { ...p, ...optimistic } : p;
 
   return (
-    // KORISTIMO motion.div ALI BEZ layout PROPA DA IZBEGNEMO WARPING
     <motion.div
       className="product-card card relative overflow-hidden max-w-full md:max-w-full w-full bg-white dark:bg-zinc-900 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
-      initial={{ opacity: 0 }} // Počinje nevidljivo
-      animate={{ opacity: 1 }} // Elegantan Fade In
-      exit={{ opacity: 0 }} // Fade Out pri brisanju/filtriranju
-      transition={{ duration: 0.35, ease: "easeOut" }} // Glatka tranzicija
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
     >
       {/* NOVO bedž */}
       {(data.novo ?? false) && (
@@ -306,7 +299,8 @@ export default function ProductCard({ p }) {
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="rounded-full px-3 py-1 text-xs font-semibold backdrop-blur-xl bg-white/70 dark:bg-black/50 border border-white/40 shadow-sm text-zinc-800 dark:text-white"
+            className="rounded-full px-3 py-1 text-xs font-semibold backdrop-blur-xl 
+            bg-white/70 dark:bg-black/50 border border-white/40 shadow-sm text-zinc-800 dark:text-white"
           >
             ✨ NOVO
           </motion.div>
@@ -314,7 +308,7 @@ export default function ProductCard({ p }) {
       )}
 
       {/* Glavna slika + Slider */}
-      <div className="relative aspect-4/5 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+      <div className="relative aspect-4/5 w-full overflow-hidden bg-white">
         <AnimatePresence initial={false} custom={direction}>
           <motion.div
             key={page}
@@ -627,20 +621,10 @@ export default function ProductCard({ p }) {
         )}
       </div>
 
-      {/* FLASH MODAL */}
-      <FlashModal
-        open={flash.open}
-        title={flash.title}
-        subtitle={flash.subtitle}
-        onClose={() => setFlash((f) => ({ ...f, open: false }))}
-        icon={
-          flash.ok ? (
-            <CheckCircle2 className="text-emerald-600" />
-          ) : (
-            <XCircle className="text-red-600" />
-          )
-        }
-      />
+      {/* UKLONJEN: <FlashModal /> 
+        Razlog: Sada se FlashModal renderuje globalno u FlashProvider-u (App.jsx/Context),
+        a mi ga samo pozivamo preko useFlash() hook-a.
+      */}
     </motion.div>
   );
 }
