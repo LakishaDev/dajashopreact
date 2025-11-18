@@ -1,82 +1,184 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "./Catalog.css";
+import { useSearchParams, Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Loader2, AlertTriangle, ArrowLeft } from "lucide-react";
+
+// Komponente
 import Breadcrumbs from "../components/Breadcrumbs.jsx";
 import ProductGrid from "../components/ProductGrid.jsx";
 import Filters from "../components/Filters.jsx";
 import Pagination from "../components/Pagination.jsx";
-import FilterDrawer from "../components/FilterDrawer.jsx"; // koristi se SAMO na mobilnom
-import catalog from "../services/CatalogService.js";
-import { useSearchParams } from "react-router-dom";
+import FilterDrawer from "../components/FilterDrawer.jsx";
+
+// Hook za bazu
+import useProducts from "../hooks/useProducts.js";
 
 const PER_PAGE = 12;
 
 export default function Catalog() {
   const [sp] = useSearchParams();
 
-  // Parametri iz URL-a
-  const params = useMemo(
-    () => ({
-      q: sp.get("q") || "",
-      brand: sp.getAll("brand"),
-      gender: sp.getAll("gender"),
-      category: sp.getAll("category"),
-      min: sp.get("min") ? Number(sp.get("min")) : null,
-      max: sp.get("max") ? Number(sp.get("max")) : null,
-    }),
-    [sp]
-  );
+  // 1. Dohvatamo SVE proizvode iz baze
+  // Sortiramo ih u bazi po imenu ili ceni (ako je sort parametar prisutan)
+  const {
+    items: allItems,
+    loading,
+    err,
+  } = useProducts({
+    order: sp.get("sort") || "name",
+  });
 
-  // Filtrirani podaci
-  const data = useMemo(() => catalog.list(params), [params]);
+  // 2. Filtriranje podataka u memoriji (Client-side filtering)
+  // Ovo omogućava kombinovanje pretrage, brendova i cene bez grešaka u bazi
+  const filteredData = useMemo(() => {
+    if (!allItems) return [];
 
-  // Paginacija
+    let out = [...allItems];
+
+    const q = sp.get("q")?.toLowerCase() || "";
+    const brands = sp.getAll("brand");
+    const genders = sp.getAll("gender");
+    const categories = sp.getAll("category");
+    const min = sp.get("min") ? Number(sp.get("min")) : null;
+    const max = sp.get("max") ? Number(sp.get("max")) : null;
+
+    // A) Tekstualna pretraga (ime ili brend)
+    if (q) {
+      out = out.filter((p) =>
+        (p.brand + " " + p.name).toLowerCase().includes(q)
+      );
+    }
+
+    // B) Checkbox filteri
+    if (brands.length) out = out.filter((p) => brands.includes(p.brand));
+    if (genders.length) out = out.filter((p) => genders.includes(p.gender));
+    if (categories.length)
+      out = out.filter((p) => categories.includes(p.category));
+
+    // C) Cena
+    if (min !== null) out = out.filter((p) => p.price >= min);
+    if (max !== null) out = out.filter((p) => p.price <= max);
+
+    return out;
+  }, [allItems, sp]);
+
+  // 3. Paginacija na već filtriranim podacima
   const [page, setPage] = useState(1);
-  const start = (page - 1) * PER_PAGE;
-  const items = data.slice(start, start + PER_PAGE);
+  const totalCount = filteredData.length;
 
-  // Na promenu filtera → vrati na stranu 1
+  // Vrati na prvu stranu ako se promene filteri
   useEffect(() => {
     setPage(1);
-  }, [
-    params.q,
-    params.min,
-    params.max,
-    params.brand.join(","),
-    params.gender.join(","),
-    params.category.join(","),
-  ]);
+  }, [sp]);
 
-  return (
-    <div className="catalog-page">
-      {/* MOBILNI: dugme za otvaranje FilterDrawer-a (fullscreen) */}
-      <div className="catalog-mobile-trigger">
-        <FilterDrawer />
-      </div>
+  const start = (page - 1) * PER_PAGE;
+  const itemsToShow = filteredData.slice(start, start + PER_PAGE);
 
-      <div className="catalog-layout">
-        {/* DESKTOP: levi sidebar sa Filters */}
-        <aside className="sidebar-filters">
-          <Filters />
-        </aside>
+  // --- RENDER LOGIKA ---
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex justify-center items-center h-64 text-[var(--color-muted)]">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          >
+            <Loader2 size={32} className="text-[var(--color-primary)]" />
+          </motion.div>
+          <span className="ml-3 text-lg font-medium">
+            Učitavanje kataloga...
+          </span>
+        </div>
+      );
+    }
 
-        <main className="catalog-main">
-          <Breadcrumbs trail={[{ label: "Katalog", href: "/catalog" }]} />
+    if (err) {
+      return (
+        <div className="flex flex-col items-center justify-center h-64 p-6 rounded-2xl border border-red-500/30 bg-red-500/5 text-red-500">
+          <AlertTriangle size={32} />
+          <p className="mt-3 font-bold text-lg">Došlo je do greške</p>
+          <p className="text-sm opacity-80">Proverite internet konekciju.</p>
+        </div>
+      );
+    }
 
-          <div className="catalog__toprow">
-            <div className="catalog__count">Ukupno: {data.length}</div>
-            {/* (opciono) sort dropdown */}
-          </div>
+    if (totalCount === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center h-64 p-8 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] text-center">
+          <p className="text-xl font-semibold text-[var(--color-text)]">
+            Nema rezultata
+          </p>
+          <p className="text-[var(--color-muted)] mt-2 max-w-xs mx-auto">
+            Pokušajte da promenite filtere ili termin pretrage.
+          </p>
+          <Link
+            to="/catalog"
+            className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--color-primary)] text-[var(--color-onPrimary)] font-bold shadow-lg hover:opacity-90 transition-opacity"
+          >
+            <ArrowLeft size={18} /> Resetuj sve filtere
+          </Link>
+        </div>
+      );
+    }
 
-          <ProductGrid items={items} />
-
+    return (
+      <>
+        <ProductGrid items={itemsToShow} />
+        <div className="mt-8">
           <Pagination
             page={page}
-            total={data.length}
+            total={totalCount}
             perPage={PER_PAGE}
             onChange={setPage}
           />
+        </div>
+      </>
+    );
+  };
+
+  return (
+    <motion.div
+      className="catalog-page w-full max-w-7xl mx-auto px-4 sm:px-6 py-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+    >
+      {/* MOBILNI TRIGGER */}
+      <div className="catalog-mobile-trigger lg:hidden mb-4">
+        <FilterDrawer />
+      </div>
+
+      <div className="catalog-layout lg:grid lg:grid-cols-[260px_1fr] lg:gap-8 items-start">
+        {/* DESKTOP SIDEBAR */}
+        <aside className="sidebar-filters hidden lg:block sticky top-24">
+          <Filters />
+        </aside>
+
+        <main className="catalog-main min-w-0">
+          <div className="mb-6">
+            <Breadcrumbs trail={[{ label: "Katalog", href: "/catalog" }]} />
+
+            <div className="catalog__toprow flex items-center justify-between mt-4 pb-4 border-b border-[var(--color-border)]">
+              <h1 className="text-2xl font-bold text-[var(--color-text)]">
+                Svi proizvodi
+              </h1>
+              <div className="catalog__count text-sm font-semibold text-[var(--color-muted)] bg-[var(--color-surface)] px-3 py-1 rounded-full border border-[var(--color-border)]">
+                {totalCount} kom.
+              </div>
+            </div>
+          </div>
+
+          <motion.div
+            layout
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {renderContent()}
+          </motion.div>
         </main>
       </div>
-    </div>
+    </motion.div>
   );
 }

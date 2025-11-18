@@ -1,36 +1,56 @@
-// Firestore + Storage helpers za proizvode
+import { db } from "./firebase";
 import {
   collection,
-  doc,
-  onSnapshot,
-  updateDoc,
-  setDoc,
-  serverTimestamp,
   query,
   orderBy,
+  onSnapshot,
+  doc,
+  updateDoc,
+  setDoc,
+  getDocs,
+  where,
+  limit,
+  serverTimestamp,
 } from "firebase/firestore";
 import {
   ref,
   uploadBytesResumable,
   getDownloadURL,
   deleteObject,
+  getStorage,
 } from "firebase/storage";
-import { db, storage } from "../services/firebase";
 
 const COL = "products";
+const storage = getStorage();
 
+/**
+ * Sluša promene na kolekciji 'products' u realnom vremenu.
+ * @param {Object} options
+ * @param {Function} options.onData - Callback sa nizom proizvoda
+ * @param {Function} options.onError - Callback za grešku
+ * @param {string} options.order - Polje za sortiranje (default: 'name')
+ */
 export function subscribeProducts({ onData, onError, order = "name" } = {}) {
   const colRef = collection(db, COL);
+
+  // Oslanjamo se na osnovno sortiranje baze.
+  // Napredno filtriranje radimo na klijentu da izbegnemo "Missing Index" greške.
   const q = query(colRef, orderBy(order));
+
   return onSnapshot(
     q,
     (snap) => {
       const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       onData?.(items);
     },
-    (err) => onError?.(err)
+    (err) => {
+      console.error("Firestore error:", err);
+      onError?.(err);
+    }
   );
 }
+
+// --- Ostale funkcije za admina (save, upload, delete) ostaju iste ---
 
 export async function saveProduct(partial) {
   if (!partial?.id) throw new Error("saveProduct: nedostaje id");
@@ -38,7 +58,6 @@ export async function saveProduct(partial) {
   try {
     await updateDoc(refDoc, { ...partial, updatedAt: serverTimestamp() });
   } catch (e) {
-    // ako dokument ne postoji – kreiraj
     await setDoc(
       refDoc,
       {
@@ -77,27 +96,34 @@ export async function uploadImages(productId, files, onProgress) {
   return Promise.all(uploads);
 }
 
-export async function addImages(productId, images) {
-  const refDoc = doc(db, COL, productId);
-  // čitamo postojeće preko snapshot-a u UI; ovde samo merge
-  await updateDoc(refDoc, {
-    images: images.map((x) => ({ url: x.url, path: x.path })),
-    updatedAt: serverTimestamp(),
-  });
-}
-
 export async function removeImagesByPaths(productId, paths = []) {
-  // brišemo iz Storage, pa u UI osvežimo iz snapshot-a
   await Promise.all(
     paths.map(async (p) => {
       try {
-        const r = ref(storage, p); // radi i sa full URL i sa path
+        const r = ref(storage, p);
         await deleteObject(r);
       } catch (e) {
-        // ignore pojedinačne greške da bi se nastavilo
         console.error("Delete failed:", p, e);
       }
     })
   );
-  // Firestore kolekciju slika update radi UI (na osnovu snapshot-a posle re-uploada/brisanja)
+}
+
+export async function fetchProductBySlug(slug) {
+  try {
+    const q = query(
+      collection(db, "products"),
+      where("slug", "==", slug),
+      limit(1)
+    );
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) return null;
+
+    const doc = snapshot.docs[0];
+    return { id: doc.id, ...doc.data() };
+  } catch (error) {
+    console.error("Error fetching product:", error);
+    throw error;
+  }
 }

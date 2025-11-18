@@ -294,7 +294,7 @@ export default function ProductCard({ p }) {
   const data = optimistic ? { ...p, ...optimistic } : p;
 
   return (
-    <div className="product-card card relative overflow-hidden max-w-full md:max-w-56 w-full bg-white dark:bg-zinc-900 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+    <div className="product-card card relative overflow-hidden max-w-full md:max-w-full w-full bg-white dark:bg-zinc-900 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
       {/* NOVO bedž */}
       {(data.novo ?? false) && (
         <div className="pointer-events-none absolute left-2 top-2 z-20">

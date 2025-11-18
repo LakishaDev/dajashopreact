@@ -1,6 +1,25 @@
 @import "tailwindcss";
 @config "../../tailwind.config.js";
 
+@theme {
+  --color-primary: var(--color-primary);
+  --color-primary-dark: var(--color-primary-dark) || #7a7a7aff;
+  --color-accent: var(--color-accent);
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-text: var(--color-text);
+  --color-muted: var(--color-muted);
+  --color-onPrimary: var(--color-onPrimary);
+}
+
+/* primary: "#9b9b9bff", // crna za akcente/dugmad
+    accent: "#D2D2D7", // svetlosiva linije/ivice
+    bg: "#FFFFFF", // bela pozadina
+    surface: "#F5F5F7", // kartice/sekcije (apple siva)
+    text: "#111111", // skoro crna
+    muted: "#6E6E73", // apple siva za sekundarni tekst
+    onPrimary: "#FFFFFF", // tekst na primary (belo na crnoj) */
+
 :root {
   --color-primary: #c8a94e;
   --color-accent: #1f2937;
