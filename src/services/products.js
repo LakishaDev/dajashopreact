@@ -11,6 +11,8 @@ import {
   where,
   limit,
   serverTimestamp,
+  deleteDoc,
+  addDoc,
 } from "firebase/firestore";
 import {
   ref,
@@ -52,22 +54,36 @@ export function subscribeProducts({ onData, onError, order = "name" } = {}) {
 
 // --- Ostale funkcije za admina (save, upload, delete) ostaju iste ---
 
+// --- POPRAVLJENA FUNKCIJA ---
 export async function saveProduct(partial) {
-  if (!partial?.id) throw new Error("saveProduct: nedostaje id");
+  // 1. Ako NEMA ID -> Kreiraj novi dokument (addDoc)
+  if (!partial.id) {
+    const colRef = collection(db, COL);
+    const docRef = await addDoc(colRef, {
+      ...partial,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    return docRef.id; // Vraćamo novi ID
+  }
+
+  // 2. Ako IMA ID -> Ažuriraj postojeći (updateDoc / setDoc)
   const refDoc = doc(db, COL, partial.id);
   try {
     await updateDoc(refDoc, { ...partial, updatedAt: serverTimestamp() });
   } catch (e) {
+    // Ako dokument ne postoji, kreiraj ga sa tim ID-em (fallback)
     await setDoc(
       refDoc,
       {
         ...partial,
-        createdAt: serverTimestamp(),
+        createdAt: serverTimestamp(), // Ako je novi a ima ID
         updatedAt: serverTimestamp(),
       },
       { merge: true }
     );
   }
+  return partial.id;
 }
 
 export async function uploadImages(productId, files, onProgress) {
@@ -126,4 +142,11 @@ export async function fetchProductBySlug(slug) {
     console.error("Error fetching product:", error);
     throw error;
   }
+}
+
+// Nova funkcija za brisanje
+export async function deleteProduct(id) {
+  if (!id) throw new Error("ID proizvoda je obavezan");
+  const refDoc = doc(db, "products", id);
+  await deleteDoc(refDoc);
 }
