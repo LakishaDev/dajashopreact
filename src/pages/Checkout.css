@@ -22,6 +22,16 @@
   padding: 24px;
   margin-bottom: 20px;
   background: rgba(255,255,255,0.02); /* Malo tamnije od surface */
+  
+  /* FIX: Stacking context - mora biti relativan i vidljiv */
+  position: relative;
+  z-index: 1;
+  overflow: visible !important;
+}
+
+/* FIX: Podizanje sekcije kada je dropdown otvoren */
+.checkout-section.z-high {
+  z-index: 50 !important;
 }
 
 .section-header {
@@ -234,11 +244,6 @@
     grid-template-columns: 1fr; /* Jedna kolona */
     gap: 16px;
   }
-
-  /* Na mobilnom, zamenimo redosled tako da je summary gore ili dole?
-     Standard je forma pa summary, ali summary mora biti uvek vidljiv.
-     Ovde ostavljamo formu prvu, ali summary više nije sticky.
-  */
   .summary-card {
     position: static;
   }
@@ -248,37 +253,29 @@
   .form-grid {
     grid-template-columns: 1fr; /* Inputi jedan ispod drugog */
   }
-  
   .checkout-section {
     padding: 16px;
   }
-  
   .radio-info {
     gap: 10px;
   }
   .radio-title { font-size: 0.95rem; }
 }
-/* src/pages/Checkout.css */
-
-/* ... postojeći kod ... */
 
 /* =========================================
-   ERROR STATES (Validacija forme)
+   ERROR STATES (Validacija)
    ========================================= */
 
-/* 1. Crveni okvir i pozadina za input kada je greška */
 .input-group.input-error input {
-  border-color: #ef4444 !important;       /* Jaka crvena */
-  background: rgba(239, 68, 68, 0.05);    /* Veoma bleda crvena pozadina */
-  box-shadow: 0 0 0 1px #ef4444 inset;    /* Unutrašnji crveni sjaj */
+  border-color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.05);
+  box-shadow: 0 0 0 1px #ef4444 inset;
 }
 
-/* 2. Ikonica levo (User, Mail...) postaje crvena */
 .input-group.input-error .input-icon {
   color: #ef4444;
 }
 
-/* 3. Ikonica desno (Alert uzvičnik) */
 .error-icon {
   position: absolute;
   right: 14px;
@@ -287,7 +284,6 @@
   animation: fadeIn 0.2s ease;
 }
 
-/* 4. Tekst poruke ispod inputa */
 .error-msg {
   display: block;
   font-size: 0.8rem;
@@ -298,13 +294,11 @@
   animation: slideDown 0.2s ease forwards;
 }
 
-/* Fokus na grešci - jači sjaj */
 .input-group.input-error input:focus {
   box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
   border-color: #ef4444;
 }
 
-/* Animacije za lepši osećaj */
 @keyframes slideDown {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
@@ -314,3 +308,384 @@
   from { opacity: 0; transform: scale(0.8); }
   to { opacity: 1; transform: scale(1); }
 }
+
+/* =========================================
+   NOVO: Z-INDEX FIXES & EMAIL DROPDOWN
+   ========================================= */
+
+.relative-wrapper {
+  position: relative;
+}
+
+/* Podizanje wrappera da bude iznad inputa ispod */
+.relative-wrapper.z-50 {
+  z-index: 100; 
+}
+
+/* Dropdown Stil */
+.email-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%; /* Sada prati širinu input-group-a */
+  
+  z-index: 1000; 
+  
+  margin-top: 6px;
+  background: var(--color-surface, #151923);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  /* Jaka senka da se odvoji od pozadine */
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  
+  list-style: none;
+  padding: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  animation: slideDown 0.15s ease-out forwards;
+}
+
+.email-dropdown li {
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--color-text, #fff);
+  font-size: 0.95rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.15s;
+}
+
+.email-dropdown li:hover {
+  background: var(--color-primary, #c8a94e);
+  color: #000;
+}
+
+.email-dropdown .domain {
+  opacity: 0.6;
+  font-size: 0.85em;
+}
+.email-dropdown li:hover .domain {
+  opacity: 0.8;
+  color: #000;
+}
+
+/* Google Places Styling */
+.pac-container {
+  background-color: #151923;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  font-family: inherit;
+  margin-top: 6px;
+  z-index: 2000; 
+}
+.pac-item {
+  border-top: none;
+  padding: 10px 14px;
+  cursor: pointer;
+  color: #ececec;
+}
+.pac-item:hover { background-color: rgba(255, 255, 255, 0.1); }
+.pac-item-query { color: #fff; font-weight: 700; }
+.pac-item span { color: #9ca3af; }
+.pac-logo:after { filter: invert(1) opacity(0.5); margin: 8px 12px; }
+/* ... (postojeći kod za Checkout.css) ... */
+
+/* === FIX ZA PREKLAPANJE SEKCIJA (Z-INDEX FIX) === */
+
+/* Osnovno stanje za sve sekcije - mora biti relative */
+.checkout-section {
+  position: relative; 
+  z-index: 1; 
+  overflow: visible !important; 
+}
+
+/* Kada je dropdown otvoren, dižemo celu sekciju iznad sledeće */
+.checkout-section.z-high {
+  z-index: 50 !important; 
+}
+
+/* Email wrapper mora biti relativan i imati viši z-index unutar forme */
+.relative-wrapper {
+  position: relative;
+}
+
+/* Podizanje wrappera da bude iznad inputa ispod */
+.relative-wrapper.z-50 {
+  z-index: 100; 
+}
+
+/* --- ORDER CONFIRMATION MODAL --- */
+
+.order-overlay {
+  position: fixed; 
+  inset: 0; 
+  z-index: 9999; /* Mora biti najviši */
+  background: rgba(0,0,0,0.5); 
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: grid; 
+  place-items: center;
+  padding: 16px;
+}
+
+.order-card {
+  width: 100%; 
+  max-width: 600px; 
+  padding: 30px; 
+  position: relative;
+  border-radius: 20px;
+}
+
+.order-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.text-success-ico {
+    color: #4ade80; 
+    margin-inline: auto;
+    margin-bottom: 8px;
+    font-weight: 800;
+}
+
+.order-header h2 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin: 0 0 8px;
+    color: var(--text);
+}
+
+.order-lead {
+    font-size: 1rem;
+    color: var(--muted);
+    line-height: 1.5;
+}
+/* ... (Sav postojeći CSS) ... */
+
+/* =========================================
+   NOVO: Z-INDEX FIXES & EMAIL DROPDOWN
+   ========================================= */
+
+/* ... (postojeći CSS za dropdown i z-index) ... */
+
+/* --- ORDER CONFIRMATION MODAL & RECEIPT STYLES --- */
+
+/* Stil za dugme Prikaži na mapi u okviru Računa */
+.btn-map-receipt {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  /* Koristimo dark/glass stilove */
+  background: rgba(255, 255, 255, 0.08); 
+  color: var(--color-primary, #C8A94E); 
+  border: 1px solid var(--color-primary, #C8A94E);
+  margin-top: 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: background 0.2s, color 0.2s, transform 0.1s;
+}
+.btn-map-receipt:hover {
+  background: var(--color-primary, #C8A94E);
+  color: var(--color-bg); /* Obrnuti kontrast */
+  transform: translateY(-1px);
+}
+
+.order-overlay {
+  position: fixed; 
+  inset: 0; 
+  z-index: 9999;
+  background: rgba(0,0,0,0.5); 
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: grid; 
+  place-items: center;
+  padding: 16px;
+}
+
+.order-card {
+  width: 100%; 
+  max-width: 600px; 
+  padding: 30px; 
+  position: relative;
+  border-radius: 20px;
+}
+
+.order-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.text-success-ico {
+    color: #4ade80; 
+    margin-inline: auto;
+    margin-bottom: 8px;
+    font-weight: 800;
+}
+
+.order-header h2 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin: 0 0 8px;
+    color: var(--text);
+}
+
+.order-lead {
+    font-size: 1rem;
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+/* --- RECEIPT DETAILS --- */
+
+.receipt-details {
+    padding: 24px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.04);
+    border: 1px dashed rgba(255,255,255,0.1);
+}
+
+.details-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-top: 0;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.item-list {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.item-row {
+    display: grid;
+    grid-template-columns: 2fr auto 1fr;
+    gap: 10px;
+    align-items: baseline;
+    font-size: 0.95rem;
+}
+
+.item-name {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.item-qty {
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.item-price {
+    font-weight: 700;
+    justify-self: end;
+}
+
+/* Summary */
+.summary-section {
+    display: grid;
+    gap: 8px;
+}
+
+.summary-section .summary-row {
+    font-size: 1rem;
+}
+
+.summary-section .summary-row.total {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--primary);
+    margin-top: 8px;
+}
+
+.summary-section .hr {
+    height: 1px;
+    background: rgba(255,255,255,0.15);
+    margin: 10px 0;
+}
+
+/* Delivery Info */
+.delivery-info {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px dashed rgba(255,255,255,0.1);
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.delivery-info h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 8px;
+}
+
+.delivery-info p {
+    margin: 4px 0;
+}
+
+/* Actions */
+.order-actions {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.order-actions .checkout-btn {
+    display: inline-flex;
+    gap: 10px;
+    align-items: center;
+    padding: 14px 24px;
+    font-size: 1rem;
+    border-radius: 12px;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 520px) {
+    .order-card {
+        padding: 20px;
+    }
+    .order-header h2 {
+        font-size: 1.4rem;
+    }
+    .receipt-details {
+        padding: 16px;
+    }
+    .summary-section .summary-row.total {
+        font-size: 1.3rem;
+    }
+}
+/* ... (Sav postojeći CSS iz prethodnih koraka) ... */
+
+/* === IFRAME MAP STYLES === */
+
+/* Kontejner za responzivni iframe (4:3 aspect ratio) */
+.map-container {
+    position: relative;
+    width: 100%;
+    padding-top: 75%; /* 4:3 Aspect Ratio (3 / 4 * 100) */
+    background: var(--color-bg);
+}
+.map-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none; 
+    border-top: 1px solid rgba(255, 255, 255, 0.1); /* Separator od teksta adrese */
+}
+
+/* Uklanjamo stil starog linka/dugmeta koji je sada nepotreban, 
+   ali ostavljamo stil za dugme unutar receipt modala (.btn-map-receipt) */
+
+/* ... (Ostatak CSS-a za .btn-map-receipt, .pac-container, itd. ostaje nepromenjen) ... */
