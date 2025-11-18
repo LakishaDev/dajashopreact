@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 /* eslint-disable no-undef */
+const colors = require("tailwindcss/colors");
 module.exports = {
   content: ["./index.html", "./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
@@ -11,6 +12,10 @@ module.exports = {
       // },
       // (opciono) ako voliš runtime tokene:
       backdropBlur: { xxs: "var(--blur-xxs, 2px)" },
+      colors: {
+        "primary-kurac": colors.indigo,
+        // Dodaj sopstvene boje ako želiš
+      },
     },
   },
   plugins: [],
