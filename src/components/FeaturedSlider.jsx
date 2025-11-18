@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+// eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from "framer-motion";
 import { useCart } from "../hooks/useCart.js";
 import { useFlash } from "../hooks/useFlash.js"; // 👈 Import
@@ -233,7 +234,7 @@ export default function FeaturedSlider({
                 className="relative grid place-items-center overflow-hidden rounded-2xl bg-white ring-1 ring-black/5 shadow-inner w-full max-w-[520px] sm:max-w-[560px] md:max-w-[620px] h-full"
                 whileTap={{ cursor: "grabbing" }}
               >
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/40 via-transparent to-white/60" />
+                <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-white/40 via-transparent to-white/60" />
                 <img
                   src={active.image}
                   alt={`${active.brand} ${active.model}`}

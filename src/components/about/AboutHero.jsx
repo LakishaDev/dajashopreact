@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 
 const fade = (d=0)=>({ hidden:{opacity:0,y:18}, visible:{opacity:1,y:0,transition:{duration:.55,delay:d,ease:"easeOut"}} });
