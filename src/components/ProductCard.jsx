@@ -11,7 +11,7 @@ import {
 import FlashModal from "./modals/FlashModal.jsx";
 import UploadProgressBar from "./UploadProgressBar.jsx";
 // eslint-disable-next-line no-unused-vars
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import {
   Edit3,
   Save,
@@ -21,11 +21,68 @@ import {
   ImagePlus,
   Trash2,
   Plus,
+  Check,
 } from "lucide-react";
 import { auth, ADMIN_EMAILS } from "../services/firebase";
 
+const slideVariants = {
+  enter: (direction) => ({
+    x: direction > 0 ? 1000 : -1000,
+    opacity: 0,
+  }),
+  center: {
+    zIndex: 1,
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction) => ({
+    zIndex: 0,
+    x: direction < 0 ? 1000 : -1000,
+    opacity: 0,
+  }),
+};
+
+const swipeConfidenceThreshold = 10000;
+const swipePower = (offset, velocity) => {
+  return Math.abs(offset) * velocity;
+};
+
 export default function ProductCard({ p }) {
   const { dispatch } = useCart();
+
+  // Stanje za slider (stranica i smer)
+  const [[page, direction], setPage] = useState([0, 0]);
+  // ===== LOKALNA STANJA =====
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(null); // lokalni draft izmena
+  const [optimistic, setOptimistic] = useState(null); // za instant UI update
+  const [mainIdx, setMainIdx] = useState(0);
+
+  // slike
+  const imgs = useMemo(() => {
+    const arr =
+      optimistic?.images ?? p.images ?? (p.image ? [{ url: p.image }] : []);
+    return Array.isArray(arr) ? arr : [];
+  }, [p.images, p.image, optimistic]);
+
+  // Sinhronizacija page-a sa brojem slika (da ne odemo u minus ili previše)
+  // 'imgs' varijablu već imaš u svom kodu
+  const imageIndex = Math.abs(page % imgs.length);
+
+  // Funkcija za promenu slike (sledeća/prethodna)
+  const paginate = (newDirection) => {
+    if (imgs.length <= 1) return;
+    setPage([page + newDirection, newDirection]);
+  };
+
+  // Funkcija za klik na tačkicu (dots) ili thumbnail
+  const setIndex = (index) => {
+    const newDirection = index > imageIndex ? 1 : -1;
+    setPage([index, newDirection]);
+  };
+
+  // Da li prikazujemo kontrole za slider?
+  const showSliderControls = imgs.length > 1;
 
   // ===== ADMIN DETEKCIJA =====
   const [userEmail, setUserEmail] = useState(
@@ -41,19 +98,6 @@ export default function ProductCard({ p }) {
     () => !!userEmail && ADMIN_EMAILS.includes(userEmail.toLowerCase()),
     [userEmail]
   );
-
-  // ===== LOKALNA STANJA =====
-  const [isEditing, setIsEditing] = useState(false);
-  const [draft, setDraft] = useState(null); // lokalni draft izmena
-  const [optimistic, setOptimistic] = useState(null); // za instant UI update
-  const [mainIdx, setMainIdx] = useState(0);
-
-  // slike
-  const imgs = useMemo(() => {
-    const arr =
-      optimistic?.images ?? p.images ?? (p.image ? [{ url: p.image }] : []);
-    return Array.isArray(arr) ? arr : [];
-  }, [p.images, p.image, optimistic]);
 
   useEffect(() => {
     // reset glavne slike kad se promeni lista
@@ -250,37 +294,76 @@ export default function ProductCard({ p }) {
   const data = optimistic ? { ...p, ...optimistic } : p;
 
   return (
-    <div className="product-card card relative overflow-hidden max-w-3xs">
+    <div className="product-card card relative overflow-hidden max-w-full md:max-w-56 w-full bg-white dark:bg-zinc-900 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
       {/* NOVO bedž */}
       {(data.novo ?? false) && (
-        <div className="pointer-events-none absolute left-2 top-2 z-10">
-          <div className="rounded-full px-3 py-1 text-xs font-semibold backdrop-blur-xl bg-white/50 dark:bg-zinc-900/40 border border-white/40 shadow">
+        <div className="pointer-events-none absolute left-2 top-2 z-20">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="rounded-full px-3 py-1 text-xs font-semibold backdrop-blur-xl bg-white/70 dark:bg-black/50 border border-white/40 shadow-sm text-zinc-800 dark:text-white"
+          >
             ✨ NOVO
-          </div>
+          </motion.div>
         </div>
       )}
 
-      {/* Glavna slika + kontrole */}
-      <div className="product-card__img relative">
-        <Link to={`/product/${data.slug}`} className="block">
-          <img
-            src={imgs[mainIdx]?.url ?? data.image}
-            alt={data.name}
-            loading="lazy"
-            className="w-full h-full object-cover"
-          />
-        </Link>
+      {/* Glavna slika + Slider */}
+      <div className="relative aspect-4/5 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+        <AnimatePresence initial={false} custom={direction}>
+          <motion.div
+            key={page}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              x: { type: "spring", stiffness: 300, damping: 30 },
+              opacity: { duration: 0.2 },
+            }}
+            drag={showSliderControls ? "x" : false}
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={1}
+            onDragEnd={(e, { offset, velocity }) => {
+              const swipe = swipePower(offset.x, velocity.x);
+              if (swipe < -swipeConfidenceThreshold) {
+                paginate(1);
+              } else if (swipe > swipeConfidenceThreshold) {
+                paginate(-1);
+              }
+            }}
+            className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing"
+          >
+            <Link
+              to={`/product/${data.slug}`}
+              className="block w-full h-full"
+              draggable={false}
+            >
+              <img
+                src={imgs[imageIndex]?.url ?? data.image}
+                alt={data.name}
+                draggable={false}
+                className="w-full h-full object-cover pointer-events-none"
+              />
+            </Link>
+          </motion.div>
+        </AnimatePresence>
 
         {/* PLUS za dodavanje (samo admin, u edit modu) */}
         {isAdmin && isEditing && (
-          <button
+          <motion.button
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
             type="button"
             onClick={openFilePicker}
-            className="absolute right-2 top-2 z-10 rounded-full p-2 backdrop-blur-xl bg-white/60 dark:bg-zinc-900/60 border border-white/40 shadow hover:scale-105 transition"
+            className="absolute right-2 top-2 z-20 rounded-full p-2 backdrop-blur-xl bg-white/60 dark:bg-zinc-900/60 border border-white/40 shadow hover:shadow-lg transition text-zinc-800 dark:text-white"
             title="Dodaj slike"
           >
             <ImagePlus size={18} />
-          </button>
+          </motion.button>
         )}
 
         <input
@@ -292,73 +375,129 @@ export default function ProductCard({ p }) {
           className="hidden"
         />
 
-        {/* Tumbnails galerija */}
-        {imgs.length > 1 && (
-          <div className="absolute inset-x-2 bottom-2 z-10 flex gap-2 overflow-x-auto rounded-2xl backdrop-blur-xl bg-white/50 dark:bg-zinc-900/50 p-2 border border-white/40">
-            {imgs.map((ph, idx) => {
-              const selected = idx === mainIdx;
-              const pathKey = ph.path ?? ph.url;
-              const checked = selectedPaths.includes(pathKey);
-              return (
-                <div key={pathKey} className="relative shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setMainIdx(idx)}
-                    className={`h-12 w-12 overflow-hidden rounded-lg border ${
-                      selected
-                        ? "border-black/70 dark:border-white/70"
-                        : "border-white/40"
-                    }`}
-                    title="Prikaži"
-                  >
-                    <img
-                      src={ph.url}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
-                  </button>
+        {/* Upload progress */}
+        <AnimatePresence>
+          {isUploading && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              className="absolute left-2 right-2 top-14 z-20"
+            >
+              <UploadProgressBar progress={uploadPct} label="Otpremanje..." />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-                  {isAdmin && isEditing && (
-                    <label className="absolute -top-2 -right-2">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => toggleSelect(pathKey)}
-                        className="peer hidden"
-                      />
-                      <span className="peer-checked:scale-110 inline-flex items-center justify-center h-6 w-6 rounded-full border border-white/60 backdrop-blur-xl bg-white/70 dark:bg-zinc-900/70 shadow">
-                        <Plus size={14} className="rotate-45" />
-                      </span>
-                    </label>
-                  )}
-                </div>
-              );
-            })}
+        {/* NAVIGATION AREA (Dots or Thumbs) */}
+        <LayoutGroup>
+          <div className="absolute inset-x-0 bottom-0 z-20 p-3  from-black/60 to-transparent pointer-events-none">
+            <div className="pointer-events-auto">
+              <AnimatePresence mode="wait" initial={false}>
+                {/* CASE 1: ADMIN EDIT MODE - Thumbnails */}
+                {isAdmin && isEditing && imgs.length > 0 ? (
+                  <motion.div
+                    key="thumbs"
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    className="flex gap-2 overflow-x-auto pb-1 pt-2 scrollbar-hide justify-start"
+                  >
+                    {imgs.map((ph, idx) => {
+                      const selected = idx === imageIndex;
+                      const pathKey = ph.path ?? ph.url;
+                      const checked = selectedPaths.includes(pathKey);
+
+                      return (
+                        <motion.div
+                          key={pathKey}
+                          layoutId={`thumb-${pathKey}`}
+                          className="relative shrink-0 group"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setIndex(idx)}
+                            className={`h-12 w-12 overflow-hidden rounded-lg border-2 transition-all ${
+                              selected
+                                ? "border-blue-500 scale-105 shadow-md opacity-100"
+                                : "border-white/40 opacity-80 hover:opacity-100"
+                            }`}
+                          >
+                            <img
+                              src={ph.url}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          </button>
+
+                          {/* Modern Glass Checkbox */}
+                          <label className="absolute -top-2 -right-2 cursor-pointer z-30">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleSelect(pathKey)}
+                              className="peer hidden"
+                            />
+                            <div className="h-5 w-5 rounded-md backdrop-blur-md bg-white/30 dark:bg-black/30 border border-white/60 shadow-lg flex items-center justify-center transition-all duration-200 peer-checked:bg-red-500 peer-checked:border-red-600 peer-checked:shadow-red-500/30">
+                              <Check
+                                size={12}
+                                className="text-white opacity-0 peer-checked:opacity-100 scale-50 peer-checked:scale-100 transition-all"
+                                strokeWidth={4}
+                              />
+                            </div>
+                          </label>
+                        </motion.div>
+                      );
+                    })}
+                  </motion.div>
+                ) : (
+                  /* CASE 2: USER VIEW MODE - Dots */
+                  imgs.length > 1 && (
+                    <motion.div
+                      key="dots"
+                      layout
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex justify-center items-center gap-2"
+                    >
+                      {imgs.map((_, idx) => {
+                        const active = idx === imageIndex;
+                        return (
+                          <motion.button
+                            key={idx}
+                            layout
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setIndex(idx);
+                            }}
+                            className="relative h-2.5 rounded-full backdrop-blur-sm shadow-sm transition-all duration-300 border border-zinc-500"
+                            animate={{
+                              width: active ? 24 : 6,
+                              backgroundColor: active
+                                ? "rgba(255, 255, 255, 1)"
+                                : "rgba(255, 255, 255, 0.4)",
+                            }}
+                          />
+                        );
+                      })}
+                    </motion.div>
+                  )
+                )}
+              </AnimatePresence>
+            </div>
           </div>
-        )}
+        </LayoutGroup>
       </div>
 
-      {/* Upload progress */}
-      <AnimatePresence>
-        {isUploading && (
-          <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            className="absolute left-2 right-2 top-2 z-20"
-          >
-            <UploadProgressBar progress={uploadPct} label="Otpremanje slika" />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Telo kartice */}
-      <div className="product-card__body">
+      <div className="product-card__body relative bg-zinc-100 z-10 p-4">
         {/* BRAND */}
-        <div className="product-card__brand">
+        <div className="product-card__brand text-xs uppercase tracking-wider text-zinc-500 mb-1">
           {isAdmin && isEditing ? (
             <input
-              className="w-full rounded-lg border px-2 py-1 text-sm"
+              className="w-full rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-sm bg-transparent outline-none focus:border-blue-500"
               placeholder="Brend"
               {...bind("brand")}
             />
@@ -368,25 +507,28 @@ export default function ProductCard({ p }) {
         </div>
 
         {/* NAME */}
-        <div className="product-card__name">
+        <div className="product-card__name font-bold text-lg text-zinc-800 mb-1 leading-tight">
           {isAdmin && isEditing ? (
             <input
-              className="w-full rounded-lg border px-2 py-1"
+              className="w-full rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 bg-transparent outline-none focus:border-blue-500"
               placeholder="Naziv"
               {...bind("name")}
             />
           ) : (
-            <Link to={`/product/${data.slug}`}>
+            <Link
+              to={`/product/${data.slug}`}
+              className="hover:text-blue-600 transition-colors"
+            >
               {data.name}
             </Link>
           )}
         </div>
 
         {/* PRICE */}
-        <div className="product-card__price">
+        <div className="product-card__price text-zinc-900 dark:text-white font-medium">
           {isAdmin && isEditing ? (
             <input
-              className="w-full rounded-lg border px-2 py-1 text-right tabular-nums"
+              className="w-full rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-right tabular-nums bg-transparent outline-none focus:border-blue-500"
               placeholder="Cena (RSD)"
               {...bind("price")}
             />
@@ -397,12 +539,17 @@ export default function ProductCard({ p }) {
 
         {/* NOVO toggle (admin) */}
         {isAdmin && isEditing && (
-          <label className="mt-2 inline-flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={!!draft?.novo}
-              onChange={toggleNovo}
-            />
+          <label className="mt-3 inline-flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400 cursor-pointer">
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={!!draft?.novo}
+                onChange={toggleNovo}
+                className="peer hidden"
+              />
+              <div className="h-5 w-9 rounded-full bg-zinc-200 dark:bg-zinc-700 peer-checked:bg-blue-500 transition-colors"></div>
+              <div className="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform peer-checked:translate-x-4"></div>
+            </div>
             <span>
               Označi kao <strong>NOVO</strong>
             </span>
@@ -411,50 +558,64 @@ export default function ProductCard({ p }) {
 
         {/* DUGME KORPA */}
         {!isEditing && (
-          <button className="product-card__btn" onClick={addToCart}>
+          <button
+            className="product-card__btn mt-3 w-full py-2 bg-zinc-900 text-white dark:bg-white dark:text-black rounded-lg font-medium text-sm hover:opacity-90 transition-opacity"
+            onClick={addToCart}
+          >
             Dodaj u korpu
           </button>
         )}
 
         {/* ADMIN AKCIJE */}
         {isAdmin && (
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+          <div className="mt-4 border-t border-zinc-100 dark:border-zinc-800 pt-3 flex flex-wrap items-center gap-2">
             {!isEditing ? (
               <button
                 onClick={startEdit}
-                className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 backdrop-blur-xl bg-white/60 dark:bg-zinc-900/60"
+                className="flex-1 inline-flex justify-center items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition text-zinc-800 hover:text-zinc-50 "
               >
-                <Edit3 size={16} /> Izmeni proizvod
+                <Edit3 size={14} /> Izmeni
               </button>
             ) : (
               <>
                 <motion.button
                   whileTap={{ scale: 0.98 }}
                   onClick={applyOptimistic}
-                  className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 bg-emerald-600 text-white"
+                  className="flex-1 inline-flex justify-center items-center gap-2 rounded-lg bg-emerald-500 text-white px-3 py-2 text-sm shadow-md hover:bg-emerald-600"
                 >
-                  <Save size={16} /> Sačuvaj izmene
+                  <Save size={14} /> Sačuvaj
                 </motion.button>
 
                 <motion.button
                   whileTap={{ scale: 0.98 }}
                   onClick={cancelEdit}
-                  className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 text-zinc-800"
+                  className="inline-flex items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 >
-                  <X size={16} /> Prekini izmene
+                  <X size={16} />
                 </motion.button>
 
-                {selectedPaths.length > 0 && (
-                  <motion.button
-                    whileTap={{ scale: 0.98 }}
-                    onClick={removeSelected}
-                    className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 bg-red-600 text-white"
-                    title="Obriši izabrane slike"
-                  >
-                    <Trash2 size={16} /> Obriši izabrane ({selectedPaths.length}
-                    )
-                  </motion.button>
-                )}
+                <AnimatePresence>
+                  {selectedPaths.length > 0 && (
+                    <motion.button
+                      initial={{ width: 0, opacity: 0, padding: 0 }}
+                      animate={{
+                        width: "auto",
+                        opacity: 1,
+                        padding: "0.5rem 0.75rem",
+                      }}
+                      exit={{ width: 0, opacity: 0, padding: 0 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={removeSelected}
+                      className="inline-flex items-center gap-2 rounded-lg bg-red-500 text-white text-sm whitespace-nowrap overflow-hidden"
+                      title="Obriši izabrane slike"
+                    >
+                      <Trash2 size={14} />{" "}
+                      <span className="text-xs font-bold">
+                        {selectedPaths.length}
+                      </span>
+                    </motion.button>
+                  )}
+                </AnimatePresence>
               </>
             )}
           </div>
