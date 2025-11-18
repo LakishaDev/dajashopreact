@@ -2,6 +2,7 @@
 // Bela, staklasta pozadina, lucide-ikonice, ESC i klik van zatvara
 
 import React, { useEffect } from "react";
+// eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle2 } from "lucide-react";
 

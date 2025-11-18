@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation } from "react-router-dom";
+// eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from "framer-motion";
 import { useCart } from "../hooks/useCart.js";
 // 👇 Nove ikonice za footer menija
