@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import "./Cart.css";
 import { Link } from "react-router-dom";
 import { useCart } from "../hooks/useCart.js";
-import { useFlash } from "../hooks/useFlash.js";
+import { useUndo } from "../hooks/useUndo.js";
+import { usePromo } from "../hooks/usePromo.js"; // <--- 1. UVEZEN HOOK
 import { money } from "../utils/currency.js";
 import { motion, AnimatePresence } from "framer-motion";
 import ConfirmModal from "../components/modals/ConfirmModal.jsx";
@@ -15,8 +16,11 @@ import {
   Plus,
   Ticket,
   XCircle,
+  Truck,
+  X
 } from "lucide-react";
 
+// ... (QtyInput ostaje isti) ...
 function QtyInput({ value, id, dispatch }) {
   const [localVal, setLocalVal] = useState(value);
   const clampQty = (n) => Math.max(1, Math.min(99, n));
@@ -39,7 +43,7 @@ function QtyInput({ value, id, dispatch }) {
 
   return (
     <input
-      className="cart__qty no-spin" /* Dodata klasa no-spin */
+      className="cart__qty no-spin"
       type="number"
       min="1"
       max="99"
@@ -53,88 +57,123 @@ function QtyInput({ value, id, dispatch }) {
   );
 }
 
-function PromoCodeSection() {
+// ... (PromoCodeSection AŽURIRAN da prima error/success poruke) ...
+function PromoCodeSection({ onApply, activeCode, onRemove, error, success }) {
   const [code, setCode] = useState("");
-  const { flash } = useFlash();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (code.toLowerCase() === "daja20") {
-      flash("Kupon primenjen", "Popust je uspešno dodat.", "success");
-    } else {
-      flash("Kôd nije validan", "Proverite uneti kod za popust.", "info");
-    }
+    if (!code.trim()) return;
+    onApply(code);
     setCode("");
   };
 
-  return (
-    <form className="promo-box" onSubmit={handleSubmit}>
-      <div className="input-wrapper">
-        <Ticket size={18} className="icon" aria-hidden />
-        <input
-          type="text"
-          placeholder="Promo kod"
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-        />
+  if (activeCode) {
+    return (
+      <div className="promo-box applied">
+        <div className="input-wrapper applied-wrapper">
+          <div style={{ display: "flex", alignItems: "center", overflow: "hidden" }}>
+            <Ticket size={18} className="icon" style={{ color: "#4ade80" }} />
+            <span className="applied-text">
+              Kod <strong>{activeCode}</strong> aktivan
+            </span>
+          </div>
+          <button type="button" onClick={onRemove} className="btn-remove-code">
+            <X size={16} />
+          </button>
+        </div>
       </div>
-      <button 
-        type="submit"
-        className="btn btn-primary promo-btn"
-        disabled={code.length < 3}
-        aria-label="Primeni promo kod"
-      >
-        Potvrdi
-      </button>
-    </form>
+    );
+  }
+
+  return (
+    <div style={{ width: "100%" }}>
+      <form className="promo-box" onSubmit={handleSubmit}>
+        <div className={`input-wrapper ${error ? "border-red-500" : ""}`}>
+          <Ticket size={18} className={`icon ${error ? "text-red-500" : ""}`} />
+          <input
+            type="text"
+            placeholder="Promo kod"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+          />
+        </div>
+        <button type="submit" className="btn btn-primary promo-btn" disabled={code.length < 3}>
+          Potvrdi
+        </button>
+      </form>
+      {/* Ispis poruka ispod polja */}
+      {error && <p style={{ color: "#ef4444", fontSize: "0.8rem", marginTop: "-10px", marginBottom: "10px", paddingLeft: "4px" }}>{error}</p>}
+      {success && <p style={{ color: "#4ade80", fontSize: "0.8rem", marginTop: "-10px", marginBottom: "10px", paddingLeft: "4px" }}>{success}</p>}
+    </div>
   );
 }
 
 export default function Cart() {
   const { items, total, dispatch } = useCart();
-  const { flash } = useFlash();
+  const { showUndo } = useUndo();
   const [showClearModal, setShowClearModal] = useState(false);
+
+  // --- 2. KORISTIMO NOVI HOOK ---
+  const { appliedPromo, validateAndApply, removePromo, error, successMsg } = usePromo();
+
+  // --- 3. KALKULACIJE ---
+  const FREE_SHIPPING_LIMIT = 8000;
+  const SHIPPING_COST = 380;
+
+  // A) Prvo oduzmemo popust (ako postoji)
+  const discountAmount = appliedPromo ? appliedPromo.amount : 0;
+  const subtotalAfterDiscount = total - discountAmount;
+
+  // B) Zatim proveravamo da li je PREOSTALI iznos dovoljan za besplatnu dostavu
+  const isFreeShipping = subtotalAfterDiscount >= FREE_SHIPPING_LIMIT;
+  const missingForFree = FREE_SHIPPING_LIMIT - subtotalAfterDiscount;
+  const progressPct = Math.min(100, (subtotalAfterDiscount / FREE_SHIPPING_LIMIT) * 100);
+  
+  // C) Finalni zbir = (Cena - Popust) + (Postarina)
+  const finalTotal = subtotalAfterDiscount + (isFreeShipping ? 0 : SHIPPING_COST);
+
 
   const clampQty = (n) => Math.max(1, Math.min(99, n));
 
-  // LOGIKA ZA MINUS DUGME
+  const handleApplyPromo = (code) => {
+    validateAndApply(code, total, items);
+  };
+
+  const performRemove = (item) => {
+    dispatch({ type: "REMOVE", id: item.id });
+    // Ako želiš da se promo kod resetuje kad se menja korpa, otkomentariši:
+    // removePromo(); 
+    showUndo(item, () => {
+      dispatch({ type: "ADD", item: item, qty: item.qty });
+    });
+  };
+
   const handleDecrease = (item) => {
     if (item.qty > 1) {
-      // Standardno smanjenje
       dispatch({ type: "SET_QTY", id: item.id, qty: item.qty - 1 });
     } else {
-      // Brisanje sa UNDO opcijom
-      dispatch({ type: "REMOVE", id: item.id });
-      
-      flash(
-        "Uklonjeno", 
-        `${item.name} je obrisan.`, 
-        "trash",
-        {
-          label: "Vrati",
-          onClick: () => dispatch({ type: "ADD", item: item }) // Vraća item nazad
-        }
-      );
+      performRemove(item);
     }
   };
 
   const performClear = () => {
     dispatch({ type: "CLEAR" });
-    flash("Korpa ispražnjena", "Svi artikli su uklonjeni.", "info");
+    setShowClearModal(false);
+    removePromo(); // Resetujemo kod kad je korpa prazna
   };
 
   return (
     <div className="cart container">
-      <ConfirmModal
-        isOpen={showClearModal}
-        onClose={() => setShowClearModal(false)}
-        onConfirm={performClear}
-        title="Isprazni korpu?"
-        description="Da li ste sigurni da želite da uklonite sve proizvode?"
-        confirmText="Da, isprazni"
-        cancelText="Odustani"
-        isDanger={true}
-      />
+      {showClearModal && (
+        <ConfirmModal
+          open={showClearModal}
+          onClose={() => setShowClearModal(false)}
+          onConfirm={performClear}
+          title="Isprazni korpu?"
+          description="Da li ste sigurni da želite da uklonite sve proizvode?"
+        />
+      )}
 
       <div className="cart__header">
         <div className="cart__title">
@@ -172,7 +211,7 @@ export default function Cart() {
             animate={{ opacity: 1, y: 0 }}
           >
             <div className="cart__rows">
-              <AnimatePresence initial={false}>
+              <AnimatePresence initial={false} mode="popLayout">
                 {items.map((it) => (
                   <motion.div
                     key={it.id}
@@ -191,7 +230,6 @@ export default function Cart() {
                     </div>
 
                     <div className="cart__qtyWrap">
-                      {/* Pozivamo pametnu funkciju handleDecrease */}
                       <button className="qty__btn" onClick={() => handleDecrease(it)}>
                         <Minus size={14} />
                       </button>
@@ -205,7 +243,7 @@ export default function Cart() {
 
                     <div className="cart__price">{money(it.price * it.qty)}</div>
                     
-                    <button className="cart__remove" onClick={() => handleDecrease(it)} title="Ukloni">
+                    <button className="cart__remove" onClick={() => performRemove(it)} title="Ukloni">
                       <XCircle size={18} />
                     </button>
                   </motion.div>
@@ -227,16 +265,76 @@ export default function Cart() {
              transition={{ delay: 0.1 }}
           >
             <h3 className="summary-title">Pregled porudžbine</h3>
-            <div className="hr" />
             
-            <PromoCodeSection />
+            {/* FREE SHIPPING PROGRESS */}
+            {/* --- FREE SHIPPING PROGRESS --- */}
+<div className="shipping-progress">
+  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: 6 }}>
+    {isFreeShipping ? (
+      <span style={{ color: "var(--primary)", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+        <Truck size={14} color="#40a840" /> Imate besplatnu dostavu!
+      </span>
+    ) : (
+      <span style={{ color: "var(--color-text)" }}>
+        Još <strong>{money(missingForFree)}</strong> do besplatne dostave
+      </span>
+    )}
+    <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>{progressPct.toFixed(0)}%</span>
+  </div>
+  
+  <div style={{ height: 6, width: "100%", background: "rgba(255,255,255,0.2)", borderRadius: 99, overflow: "hidden" }}>
+    <motion.div 
+      initial={{ width: 0 }}
+      animate={{ width: `${progressPct}%` }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      style={{ 
+        height: "100%", 
+        background: isFreeShipping ? "#40a840" : "var(--color-muted)",
+        borderRadius: 99 
+      }} 
+    />
+  </div>
+</div>
+
+          
+            
+            <PromoCodeSection 
+              onApply={handleApplyPromo} 
+              activeCode={appliedPromo?.code} 
+              onRemove={removePromo}
+              error={error}
+              success={successMsg}
+            />
             
             <div className="summary-details">
-                <div className="summary-row subtotal"><span className="muted">Međuzbir:</span><span>{money(total)}</span></div>
-                <div className="summary-row shipping"><span className="muted">Isporuka:</span><span className="text-primary">Besplatna</span></div>
+                <div className="summary-row subtotal">
+                  <span className="muted">Međuzbir:</span>
+                  <span>{money(total)}</span>
+                </div>
+
+                {/* --- PRIKAZ POPUSTA --- */}
+                {appliedPromo && (
+                  <div className="summary-row discount" style={{ color: "#ef4444" }}>
+                    <span className="muted" style={{ color: "#ef4444" }}>Popust ({appliedPromo.percent * 100}%):</span>
+                    <span>-{money(discountAmount)}</span>
+                  </div>
+                )}
+
+                {/* --- ISPORUKA (Ostala je kako si tražio) --- */}
+                <div className="summary-row shipping">
+                  <span className="muted">Isporuka:</span>
+                  {isFreeShipping ? (
+                    <span style={{ color: "#40a840", fontWeight: 700 }}>Besplatna</span>
+                  ) : (
+                    <span>{money(SHIPPING_COST)}</span>
+                  )}
+                </div>
             </div>
             
-            <div className="cart__total"><span>Ukupno za uplatu</span><span className="cart__totalPrice">{money(total)}</span></div>
+            <div className="cart__total">
+              <span>Ukupno za plaćanje</span>
+              <span className="cart__totalPrice">{money(finalTotal)}</span>
+            </div>
             
             <Link to="/checkout" className="btn btn-primary checkout-btn">
               Nastavi na plaćanje <ArrowRight size={18} aria-hidden />

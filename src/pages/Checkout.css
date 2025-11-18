@@ -1,39 +1,316 @@
-.checkout__form,
-.checkout__summary {
-  padding: 14px;
+/* --- LAYOUT --- */
+.checkout-page {
+  padding-bottom: 60px;
 }
-.checkout__form input {
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: var(--color-surface);
-  color: var(--color-text);
+
+.checkout-title {
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-weight: 800;
+  margin-bottom: 24px;
+  color: var(--text);
 }
-.checkout__form .grid {
-  gap: 10px;
-  margin-bottom: 12px;
+
+.checkout-layout {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr; /* Forma je šira */
+  gap: 24px;
+  align-items: start;
 }
-.checkout__form .wide {
-  grid-column: 1/-1;
+
+/* --- SECTIONS (Left) --- */
+.checkout-section {
+  padding: 24px;
+  margin-bottom: 20px;
+  background: rgba(255,255,255,0.02); /* Malo tamnije od surface */
 }
-.checkout__btn {
-  margin-top: 12px;
-  padding: 12px 16px;
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.section-header h2 {
+  font-size: 1.25rem;
+  margin: 0;
+  font-weight: 700;
+}
+
+.step-badge {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 800;
+  display: grid; place-items: center;
+  font-size: 0.9rem;
+}
+
+/* --- FORM INPUTS --- */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--muted);
+  pointer-events: none;
+  transition: color 0.2s;
+}
+
+.checkout-section input {
+  width: 100%;
+  padding: 14px 16px 14px 44px; /* Levo padding za ikonicu */
   border-radius: 12px;
-  border: 0;
-  background: var(--color-primary);
-  color: #111;
-  font-weight: 900;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.2);
+  color: var(--text);
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
 }
-.checkout__summary h2 {
-  margin: 8px 0 12px;
+/* Inputi bez ikonice (grad, postanski) */
+.checkout-section input.pl-4 { padding-left: 16px; }
+
+.checkout-section input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: rgba(0,0,0,0.3);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary), transparent 85%);
 }
-.checkout__total {
+
+.input-group:focus-within .input-icon {
+  color: var(--primary);
+}
+
+/* --- RADIO CARDS --- */
+.radio-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.02);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.radio-card:hover {
+  background: rgba(255,255,255,0.04);
+}
+
+.radio-card.selected {
+  border-color: var(--primary);
+  background: color-mix(in oklab, var(--primary), transparent 92%);
+}
+
+.radio-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.radio-title {
+  display: block;
+  font-weight: 700;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.radio-desc {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.radio-price {
+  font-weight: 700;
+  margin-right: 12px;
+}
+.text-success { color: #4ade80; font-weight: 700; }
+.text-primary { color: var(--primary); }
+
+.radio-check {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--muted);
+  display: grid; place-items: center;
+  color: transparent;
+  transition: all 0.2s;
+}
+
+.radio-card.selected .radio-check {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+/* --- RIGHT COLUMN (Summary) --- */
+.summary-card {
+  position: sticky;
+  top: 100px; /* Da prati skrol */
+  padding: 24px;
+}
+
+.summary-card h2 {
+  font-size: 1.3rem;
+  margin: 0 0 20px 0;
+  font-weight: 700;
+}
+
+.summary-rows {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.summary-row {
   display: flex;
   justify-content: space-between;
-  font-weight: 800;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
-.muted {
-  color: var(--color-muted);
+
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 800;
+  font-size: 1.2rem;
+  margin-top: 12px;
+}
+
+.total-price {
+  font-size: 1.8rem;
+  color: var(--primary);
+}
+
+.checkout-btn {
+  width: 100%;
+  padding: 16px;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  transition: transform 0.1s;
+}
+.checkout-btn:active { transform: scale(0.98); }
+
+.secure-badge {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+/* =========================================
+   MOBILE RESPONSIVE
+   ========================================= */
+@media (max-width: 900px) {
+  .checkout-layout {
+    grid-template-columns: 1fr; /* Jedna kolona */
+    gap: 16px;
+  }
+
+  /* Na mobilnom, zamenimo redosled tako da je summary gore ili dole?
+     Standard je forma pa summary, ali summary mora biti uvek vidljiv.
+     Ovde ostavljamo formu prvu, ali summary više nije sticky.
+  */
+  .summary-card {
+    position: static;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-grid {
+    grid-template-columns: 1fr; /* Inputi jedan ispod drugog */
+  }
+  
+  .checkout-section {
+    padding: 16px;
+  }
+  
+  .radio-info {
+    gap: 10px;
+  }
+  .radio-title { font-size: 0.95rem; }
+}
+/* src/pages/Checkout.css */
+
+/* ... postojeći kod ... */
+
+/* =========================================
+   ERROR STATES (Validacija forme)
+   ========================================= */
+
+/* 1. Crveni okvir i pozadina za input kada je greška */
+.input-group.input-error input {
+  border-color: #ef4444 !important;       /* Jaka crvena */
+  background: rgba(239, 68, 68, 0.05);    /* Veoma bleda crvena pozadina */
+  box-shadow: 0 0 0 1px #ef4444 inset;    /* Unutrašnji crveni sjaj */
+}
+
+/* 2. Ikonica levo (User, Mail...) postaje crvena */
+.input-group.input-error .input-icon {
+  color: #ef4444;
+}
+
+/* 3. Ikonica desno (Alert uzvičnik) */
+.error-icon {
+  position: absolute;
+  right: 14px;
+  color: #ef4444;
+  pointer-events: none;
+  animation: fadeIn 0.2s ease;
+}
+
+/* 4. Tekst poruke ispod inputa */
+.error-msg {
+  display: block;
+  font-size: 0.8rem;
+  color: #ef4444;
+  font-weight: 600;
+  margin-top: 4px;
+  margin-left: 4px;
+  animation: slideDown 0.2s ease forwards;
+}
+
+/* Fokus na grešci - jači sjaj */
+.input-group.input-error input:focus {
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+}
+
+/* Animacije za lepši osećaj */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
 }

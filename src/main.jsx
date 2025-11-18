@@ -7,6 +7,7 @@ import { ThemeProvider } from "./context/ThemeProvider.jsx";
 import { CartProvider } from "./context/CarProvider.jsx";
 import { AuthProvider } from "./context/AuthProvider.jsx";
 import { FlashProvider } from "./context/FlashContext.jsx";
+import { UndoProvider } from "./context/UndoProvider.jsx";
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -14,9 +15,11 @@ createRoot(document.getElementById("root")).render(
       <ThemeProvider>
         <CartProvider>
           <FlashProvider>
+            <UndoProvider>
           <BrowserRouter>
             <App />
           </BrowserRouter>
+            </UndoProvider>
           </FlashProvider>
         </CartProvider>
       </ThemeProvider>
