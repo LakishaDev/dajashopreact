@@ -6,6 +6,7 @@ import { money } from "../utils/currency.js";
 import { useCart } from "../hooks/useCart.js";
 import { useFlash } from "../hooks/useFlash.js";
 import useProduct from "../hooks/useProduct.js"; // 👈 Novi hook za bazu
+import Watch3DViewer from "../components/Watch3DViewer.jsx";
 
 export default function Product() {
   const { slug } = useParams();
@@ -37,6 +38,9 @@ export default function Product() {
   // Trenutna slika za prikaz
   const currentImageSrc = images[activeImgIndex]?.url || p.image;
 
+  // Provera da li postoji 3D model
+  const has3DModel = !!p.model3DUrl;
+
   const handleAdd = () => {
     dispatch({
       type: "ADD",
@@ -63,24 +67,28 @@ export default function Product() {
         style={{ display: "flex", flexDirection: "column", gap: "12px" }}
       >
         {/* Glavna slika */}
-        <div
-          style={{
-            aspectRatio: "1/1",
-            overflow: "hidden",
-            borderRadius: "12px",
-          }}
-        >
-          <img
-            src={currentImageSrc}
-            alt={p.name}
+        {has3DModel ? (
+          <Watch3DViewer modelUrl={p.model3DUrl} />
+        ) : (
+          <div
             style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "contain",
-              display: "block",
+              aspectRatio: "1/1",
+              overflow: "hidden",
+              borderRadius: "12px",
             }}
-          />
-        </div>
+          >
+            <img
+              src={currentImageSrc}
+              alt={p.name}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
+                display: "block",
+              }}
+            />
+          </div>
+        )}
 
         {/* Thumbnail traka (samo ako ima više od 1 slike) */}
         {images.length > 1 && (

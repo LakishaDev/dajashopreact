@@ -10,6 +10,7 @@ export default class Product {
     category = null,
     image,
     specs = {},
+    model3DUrl = null,
   }) {
     this.id = id;
     this.brand = brand;
@@ -21,5 +22,6 @@ export default class Product {
     this.category = category;
     this.image = image;
     this.specs = specs;
+    this.model3DUrl = model3DUrl;
   }
 }
