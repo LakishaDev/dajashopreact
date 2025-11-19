@@ -80,7 +80,7 @@ export default function ManageList({ service, title, icon: Icon }) {
       {/* Add Form */}
       <form onSubmit={handleAdd} className="flex gap-2 mb-4">
         <input
-          className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:border-primary outline-none transition-colors"
+          className="flex-1 bg-white/5 border border-primary-dark rounded-xl px-4 py-2 text-sm focus:border-primary outline-none transition-colors"
           placeholder={`Novi ${title.toLowerCase()}...`}
           value={newItem}
           onChange={(e) => setNewItem(e.target.value)}
@@ -109,7 +109,7 @@ export default function ManageList({ service, title, icon: Icon }) {
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 group transition-colors"
+                className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-primary group transition-colors"
               >
                 {editingId === item.id ? (
                   <div className="flex flex-1 items-center gap-2">

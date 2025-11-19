@@ -91,7 +91,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen pb-20 bg-[#f5f5f7]">
+    <div className="min-h-screen pb-20 bg-[#f5f5f7] rounded-b-2xl">
       {" "}
       {/* Svetlija pozadina generalno */}
       {/* Header Admin Panela */}

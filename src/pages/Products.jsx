@@ -1,50 +1,76 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import "./Product.css";
 import { useParams } from "react-router-dom";
 import Breadcrumbs from "../components/Breadcrumbs.jsx";
 import { money } from "../utils/currency.js";
 import { useCart } from "../hooks/useCart.js";
 import { useFlash } from "../hooks/useFlash.js";
-import useProduct from "../hooks/useProduct.js"; // 👈 Novi hook za bazu
+import useProduct from "../hooks/useProduct.js";
 import Watch3DViewer from "../components/Watch3DViewer.jsx";
 import { useLenis } from "lenis/react";
+import { Box, Image as ImageIcon } from "lucide-react"; // Ikone za thumbnails
 
 export default function Product() {
   const { slug } = useParams();
   const lenis = useLenis();
 
-  // 1. Uzimamo podatke iz baze
+  // 1. Podaci iz baze
   const { product: p, loading, error } = useProduct(slug);
-
   const { dispatch } = useCart();
   const { flash } = useFlash();
 
-  // 2. State za trenutno izabranu sliku
-  const [activeImgIndex, setActiveImgIndex] = useState(0);
+  // 2. State za aktivni medij (3D ili Slika)
+  const [activeIndex, setActiveIndex] = useState(0);
 
-  // Resetuj index slike kad se promeni proizvod
+  // Reset indexa i scrolla pri promeni proizvoda
   useEffect(() => {
-    // Resetuj index slike na 0
-    setActiveImgIndex(0);
-    // Skroluj na vrh stranice kad se promeni proizvod
+    setActiveIndex(0);
     lenis?.scrollTo(0, { duration: 1.5 });
   }, [lenis, slug]);
 
-  // --- Loading / Error stanja (u tvom stilu) ---
-  if (loading) return <div style={{ padding: 20 }}>Učitavanje...</div>;
+  // 3. Objedinjena lista medija (3D Model + Slike)
+  const mediaList = useMemo(() => {
+    if (!p) return [];
+
+    const list = [];
+
+    // A) Ako postoji 3D model, on je prvi u nizu
+    if (p.model3DUrl) {
+      list.push({
+        type: "3d",
+        src: p.model3DUrl,
+        id: "model-3d",
+      });
+    }
+
+    // B) Slike iz niza ili fallback na single image string
+    const images =
+      p.images && p.images.length > 0
+        ? p.images
+        : p.image
+        ? [{ url: p.image }]
+        : [];
+
+    images.forEach((img, i) => {
+      list.push({
+        type: "image",
+        src: img.url,
+        id: `img-${i}`,
+      });
+    });
+
+    return list;
+  }, [p]);
+
+  // --- Loading / Error ---
+  if (loading)
+    return <div className="container product-loading">Učitavanje...</div>;
   if (error || !p)
-    return <div style={{ padding: 20 }}>Proizvod nije pronađen.</div>;
+    return (
+      <div className="container product-error">Proizvod nije pronađen.</div>
+    );
 
-  // 3. Normalizacija slika (da radi i sa starim 'image' stringom i sa novim 'images' nizom iz baze)
-  // Ako baza ima niz 'images', koristimo ga. Ako ne, pravimo niz od jedne slike 'image'.
-  const images =
-    p.images && p.images.length > 0 ? p.images : [{ url: p.image }];
-
-  // Trenutna slika za prikaz
-  const currentImageSrc = images[activeImgIndex]?.url || p.image;
-
-  // Provera da li postoji 3D model
-  const has3DModel = !!p.model3DUrl;
+  const activeItem = mediaList[activeIndex] || mediaList[0];
 
   const handleAdd = () => {
     dispatch({
@@ -53,7 +79,8 @@ export default function Product() {
         id: p.id,
         name: p.name,
         price: p.price,
-        image: images[0]?.url || p.image, // Uvek šaljemo prvu/glavnu sliku u korpu
+        // Uvek šaljemo prvu dostupnu SLIKU u korpu (ne 3D model)
+        image: p.images?.[0]?.url || p.image,
         brand: p.brand,
         slug: p.slug,
       },
@@ -62,105 +89,87 @@ export default function Product() {
   };
 
   return (
-    <div
-      className="product grid"
-      style={{ gridTemplateColumns: "1fr 1fr", alignItems: "start" }}
-    >
-      {/* LEVA STRANA - SLIKE */}
-      <div
-        className="card product__media"
-        style={{ display: "flex", flexDirection: "column", gap: "12px" }}
-      >
-        {/* Glavna slika */}
-        {has3DModel ? (
-          <Watch3DViewer modelUrl={p.model3DUrl} />
-        ) : (
-          <div
-            style={{
-              aspectRatio: "1/1",
-              overflow: "hidden",
-              borderRadius: "12px",
-            }}
-          >
-            <img
-              src={currentImageSrc}
-              alt={p.name}
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "contain",
-                display: "block",
-              }}
-            />
-          </div>
-        )}
+    <div className="product product-layout">
+      {/* LEVA KOLONA - MEDIJA (3D + SLIKE) */}
+      <div className="product__gallery">
+        {/* Glavni prikaz */}
+        <div className="product__main-view card">
+          {activeItem?.type === "3d" ? (
+            <div className="view-3d-wrapper" data-lenis-prevent>
+              <Watch3DViewer modelUrl={activeItem.src} />
+            </div>
+          ) : (
+            <div className="view-image-wrapper">
+              <img
+                src={activeItem?.src}
+                alt={p.name}
+                className="product__img-full"
+              />
+            </div>
+          )}
+        </div>
 
-        {/* Thumbnail traka (samo ako ima više od 1 slike) */}
-        {images.length > 1 && (
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              overflowX: "auto",
-              paddingBottom: "4px",
-            }}
-          >
-            {images.map((img, index) => (
-              <button
-                key={index}
-                onClick={() => setActiveImgIndex(index)}
-                style={{
-                  border:
-                    activeImgIndex === index
-                      ? "2px solid var(--color-primary)"
-                      : "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "8px",
-                  padding: 0,
-                  width: "60px",
-                  height: "60px",
-                  flexShrink: 0,
-                  cursor: "pointer",
-                  overflow: "hidden",
-                  background: "var(--color-surface)",
-                }}
-              >
-                <img
-                  src={img.url}
-                  alt=""
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    display: "block",
-                  }}
-                />
-              </button>
-            ))}
+        {/* Thumbnail traka (samo ako ima više od 1 stavke) */}
+        {mediaList.length > 1 && (
+          <div className="product__thumbs">
+            {mediaList.map((item, index) => {
+              const isActive = activeIndex === index;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveIndex(index)}
+                  className={`thumb-btn ${isActive ? "is-active" : ""}`}
+                  aria-label={
+                    item.type === "3d"
+                      ? "Prikaži 3D model"
+                      : `Prikaži sliku ${index}`
+                  }
+                >
+                  {item.type === "3d" ? (
+                    <div className="thumb-icon">
+                      <Box size={20} strokeWidth={1.5} />
+                      <span>3D</span>
+                    </div>
+                  ) : (
+                    <img src={item.src} alt="" className="thumb-img" />
+                  )}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* DESNA STRANA - INFO (Isto kao tvoj original) */}
-      <div>
+      {/* DESNA KOLONA - INFORMACIJE */}
+      <div className="product__info">
         <Breadcrumbs
           trail={[{ label: "Katalog", href: "/catalog" }, { label: p.brand }]}
         />
+
         <h1 className="product__title">
-          {p.brand} — {p.name}
+          <span className="product__brand-label">{p.brand}</span>
+          <span className="product__model-name">{p.name}</span>
         </h1>
+
         <div className="product__price">{money(p.price)}</div>
 
         <div className="product__specs card">
-          {Object.entries(p.specs || {}).map(([k, v]) => (
-            <div className="product__spec" key={k}>
-              <strong>{k}:</strong> {v}
-            </div>
-          ))}
+          <h3 className="specs-title">Specifikacije</h3>
+          <div className="specs-grid">
+            {Object.entries(p.specs || {}).map(([k, v]) => (
+              <div className="product__spec-row" key={k}>
+                <span className="spec-key">{k}:</span>
+                <span className="spec-val">{v}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <button className="product__cta" onClick={handleAdd}>
-          Dodaj u korpu
-        </button>
+        <div className="product__actions">
+          <button className="product__cta" onClick={handleAdd}>
+            Dodaj u korpu
+          </button>
+        </div>
       </div>
     </div>
   );

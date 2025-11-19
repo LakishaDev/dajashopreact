@@ -288,9 +288,14 @@ function MobileSheet({ open, onClose, user }) {
               </Link>
 
               {user ? (
-                <Link className="hm__link" to="/account" onClick={onClose}>
-                  Moj nalog
-                </Link>
+                <>
+                  <Link className="hm__link" to="/account" onClick={onClose}>
+                    Moj nalog
+                  </Link>
+                  <Link className="hm__link" to="/admin" onClick={onClose}>
+                    Admin Panel
+                  </Link>
+                </>
               ) : (
                 <Link className="hm__link" to="/login" onClick={onClose}>
                   Prijava / Registracija
