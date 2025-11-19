@@ -57,6 +57,8 @@
   font-size: 0.9rem;
 }
 
+/* src/pages/Checkout.css */
+
 /* --- FORM INPUTS --- */
 .form-grid {
   display: grid;
@@ -68,44 +70,65 @@
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .input-group.full-width {
   grid-column: 1 / -1;
 }
 
+/* IKONICA: Apsolutno pozicionirana, centrirana vertikalno */
 .input-icon {
   position: absolute;
-  left: 14px;
+  left: 16px; /* Malo veći razmak od ivice za eleganciju */
   color: var(--muted);
   pointer-events: none;
-  transition: color 0.2s;
+  transition: color 0.2s ease, transform 0.2s ease;
+  z-index: 10; /* Osiguravamo da je iznad input pozadine */
 }
 
+/* GENERALNI STIL ZA SVE INPUTE */
 .checkout-section input {
   width: 100%;
-  padding: 14px 16px 14px 44px; /* Levo padding za ikonicu */
+  height: 52px; /* Fiksna visina za konzistentnost (Apple style) */
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Suptilniji border */
+  background: rgba(0, 0, 0, 0.2); /* Tamnija, modernija pozadina */
   color: var(--text);
   font-size: 0.95rem;
-  transition: all 0.2s ease;
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* DEFAULT PADDING (za polja bez ikonice, npr. Grad) */
+  padding: 0 16px;
 }
-/* Inputi bez ikonice (grad, postanski) */
-.checkout-section input.pl-4 { padding-left: 16px; }
 
+/* SPECIFIČNO: Input koji ima ikonicu ispred sebe */
+/* Ovo je ključni fix: Selektujemo input koji je direktni sledbenik ikonice */
+.input-group .input-icon + input {
+  padding-left: 40px !important; /* 16px (left) + 24px (icon space) + 10px (gap) */
+}
+
+/* HOVER STATE */
+.checkout-section input:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* FOCUS STATE */
 .checkout-section input:focus {
   outline: none;
   border-color: var(--primary);
-  background: rgba(0,0,0,0.3);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary), transparent 85%);
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--primary), transparent 85%);
+  transform: translateY(-1px); /* Suptilan lift efekat */
 }
 
+/* Focus-within na grupi boji i ikonicu */
 .input-group:focus-within .input-icon {
   color: var(--primary);
+  transform: scale(1.1); /* Mali pop efekat ikonice */
 }
-
 /* --- RADIO CARDS --- */
 .radio-card {
   display: flex;
