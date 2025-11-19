@@ -9,6 +9,7 @@ import Account from "./pages/Account.jsx";
 import Orders from "./pages/Orders.jsx";
 import About from "./pages/About.jsx";
 import AdminDashboard from "./pages/Admin/AdminDashboard.jsx";
+import VerifyEmail from "./pages/VerifyEmail.jsx";
 
 export default function AppRoutes() {
   return (
@@ -22,6 +23,7 @@ export default function AppRoutes() {
       <Route path="/orders" element={<Orders />} />
       <Route path="/about" element={<About />} />
       <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
     </Routes>
   );
 }
