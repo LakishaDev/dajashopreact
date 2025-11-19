@@ -30,7 +30,8 @@ import {
   X,
   Smartphone,
   MessageSquare,
-  Save
+  Save,
+  ShieldCheck // 👈 Uvezen štit
 } from "lucide-react";
 import "./Account.css";
 
@@ -68,8 +69,8 @@ const ADDRESS_ICONS = {
 
 const getFlagUrl = (code) => `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
 
+// Lista evropskih zemalja
 const COUNTRY_CODES = [
-  // --- REGION & DIJASPORA (Prioritet) ---
   { code: "RS", dial: "+381", label: "Srbija" },
   { code: "ME", dial: "+382", label: "Crna Gora" },
   { code: "BA", dial: "+387", label: "BiH" },
@@ -79,8 +80,6 @@ const COUNTRY_CODES = [
   { code: "DE", dial: "+49", label: "Nemačka" },
   { code: "AT", dial: "+43", label: "Austrija" },
   { code: "CH", dial: "+41", label: "Švajcarska" },
-  
-  // --- OSTATAK EVROPE (Abecedno) ---
   { code: "AL", dial: "+355", label: "Albanija" },
   { code: "AD", dial: "+376", label: "Andora" },
   { code: "BE", dial: "+32", label: "Belgija" },
@@ -377,15 +376,23 @@ function ProfileSection({ user }) {
           <div className="info-value mt-1 truncate" title={user.email}>{user.email}</div>
         </div>
         
-        {/* --- KARTICA: TELEFON --- */}
-        {/* 👇 DODATO: data-lenis-prevent da spreči smooth scroll hijacking */}
+        {/* --- KARTICA: TELEFON (Sa SHIELD logikom) --- */}
         <div className="card glass info-card relative overflow-visible" data-lenis-prevent>
           <div className="flex justify-between items-start">
              <div className="info-label">Telefon</div>
-             {!isEditingPhone && (
-               <button className="text-[var(--color-muted)] hover:text-[var(--color-text)] transition p-1 rounded-md hover:bg-[var(--color-surface)]" onClick={() => setIsEditingPhone(true)}>
-                 {user.phoneNumber ? <Edit2 size={14}/> : <Plus size={14}/>}
-               </button>
+             
+             {/* 👇 LOGIKA: Ako postoji broj, prikaži zeleni bedž. Ako ne, prikaži plus. */}
+             {user.phoneNumber ? (
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-green-500/10 border border-green-500/20 text-green-500 text-xs font-bold uppercase tracking-wider cursor-default select-none">
+                  <ShieldCheck size={12} />
+                  <span>Verifikovan</span>
+                </div>
+             ) : (
+               !isEditingPhone && (
+                 <button className="text-[var(--color-muted)] hover:text-[var(--color-text)] transition p-1 rounded-md hover:bg-[var(--color-surface)]" onClick={() => setIsEditingPhone(true)}>
+                   <Plus size={14}/>
+                 </button>
+               )
              )}
           </div>
 
@@ -394,7 +401,6 @@ function ProfileSection({ user }) {
               <motion.div key="editing-phone" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="mt-1">
                 {phoneStep === "input" ? (
                    <div className="flex flex-col gap-3">
-                      
                       <div className="flex gap-2">
                         {/* DROPDOWN TRIGGER */}
                         <div className="relative" ref={dropdownRef}>
@@ -410,12 +416,11 @@ function ProfileSection({ user }) {
                              <ChevronDown size={14} className={`text-gray-400 transition-transform ${isCountryDropdownOpen ? 'rotate-180' : ''}`}/>
                            </button>
                            
-                           {/* DROPDOWN MENU */}
                            <AnimatePresence>
                              {isCountryDropdownOpen && (
                                <motion.div 
                                  initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 5 }}
-                                 className="absolute top-full left-0 mt-1 w-[280px] max-h-[250px] bg-white border border-gray-200 rounded-lg shadow-2xl z-[60] country-dropdown-scroll"
+                                 className="absolute top-full left-0 mt-1 w-[280px] max-h-[300px] bg-white border border-gray-200 rounded-lg shadow-2xl z-[60] country-dropdown-scroll"
                                >
                                  {COUNTRY_CODES.map((country) => (
                                    <button
@@ -437,7 +442,6 @@ function ProfileSection({ user }) {
                            </AnimatePresence>
                         </div>
 
-                        {/* NUMBER INPUT */}
                         <div className="relative flex-1 min-w-0">
                           <input 
                             type="tel" 
