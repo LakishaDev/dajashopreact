@@ -82,3 +82,25 @@ button {
   display: grid;
   gap: 16px;
 }
+
+/* Lenis preporučeni stilovi */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important; /* Isključujemo native smooth scroll da se ne sudaraju */
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none; /* Poboljšava performanse dok se skroluje preko mapa itd. */
+}

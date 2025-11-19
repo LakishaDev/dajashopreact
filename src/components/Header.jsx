@@ -17,7 +17,6 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const anchorRef = useRef(null);
-  const isAdmin = user && ADMIN_EMAILS.includes(user.email?.toLowerCase());
 
   return (
     <header className="header card shadow">
@@ -38,27 +37,6 @@ export default function Header() {
           <Link className="header__cart" to="/cart">
             Korpa <span className="badge">{count}</span>
           </Link>
-
-          {/* ACCOUNT LINK */}
-          {user && (
-            <Link to="/account" className="header__account">
-              Moj nalog
-            </Link>
-          )}
-
-          {/* ADMIN LINK */}
-          {isAdmin && (
-            <Link
-              to="/admin"
-              className="header__account"
-              style={{
-                borderColor: "var(--color-primary)",
-                color: "var(--color-primary)",
-              }}
-            >
-              Admin Panel
-            </Link>
-          )}
 
           {/* LOGIN BUTTON */}
           <HeaderLoginButton />
