@@ -7,9 +7,11 @@ import { useCart } from "../hooks/useCart.js";
 import { useFlash } from "../hooks/useFlash.js";
 import useProduct from "../hooks/useProduct.js"; // 👈 Novi hook za bazu
 import Watch3DViewer from "../components/Watch3DViewer.jsx";
+import { useLenis } from "lenis/react";
 
 export default function Product() {
   const { slug } = useParams();
+  const lenis = useLenis();
 
   // 1. Uzimamo podatke iz baze
   const { product: p, loading, error } = useProduct(slug);
@@ -22,8 +24,11 @@ export default function Product() {
 
   // Resetuj index slike kad se promeni proizvod
   useEffect(() => {
+    // Resetuj index slike na 0
     setActiveImgIndex(0);
-  }, [slug]);
+    // Skroluj na vrh stranice kad se promeni proizvod
+    lenis?.scrollTo(0, { duration: 1.5 });
+  }, [lenis, slug]);
 
   // --- Loading / Error stanja (u tvom stilu) ---
   if (loading) return <div style={{ padding: 20 }}>Učitavanje...</div>;
