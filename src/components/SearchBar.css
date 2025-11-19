@@ -141,5 +141,5 @@
 }
 
 /* iOS/Safari reset & a11y */
-.s2__submit, .s2__clear { -webkit-appearance: none; }
+.s2__submit, .s2__clear { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
 .s2__input:focus-visible { outline: none; }

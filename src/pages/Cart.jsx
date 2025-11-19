@@ -5,6 +5,7 @@ import { useCart } from "../hooks/useCart.js";
 import { useUndo } from "../hooks/useUndo.js";
 import { usePromo } from "../hooks/usePromo.js"; // <--- 1. UVEZEN HOOK
 import { money } from "../utils/currency.js";
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 import ConfirmModal from "../components/modals/ConfirmModal.jsx";
 import {

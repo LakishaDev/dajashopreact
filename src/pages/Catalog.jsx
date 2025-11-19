@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "./Catalog.css";
 import { useSearchParams, Link } from "react-router-dom";
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { Loader2, AlertTriangle, ArrowLeft } from "lucide-react";
 
@@ -77,12 +78,12 @@ export default function Catalog() {
   const renderContent = () => {
     if (loading) {
       return (
-        <div className="flex justify-center items-center h-64 text-[var(--color-muted)]">
+        <div className="flex justify-center items-center h-64 text-muted">
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           >
-            <Loader2 size={32} className="text-[var(--color-primary)]" />
+            <Loader2 size={32} className="text-primary" />
           </motion.div>
           <span className="ml-3 text-lg font-medium">
             Učitavanje kataloga...
@@ -103,16 +104,16 @@ export default function Catalog() {
 
     if (totalCount === 0) {
       return (
-        <div className="flex flex-col items-center justify-center h-64 p-8 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] text-center">
-          <p className="text-xl font-semibold text-[var(--color-text)]">
+        <div className="flex flex-col items-center justify-center h-64 p-8 rounded-2xl border border-(--color-border) bg-surface text-center">
+          <p className="text-xl font-semibold text-text">
             Nema rezultata
           </p>
-          <p className="text-[var(--color-muted)] mt-2 max-w-xs mx-auto">
+          <p className="text-muted mt-2 max-w-xs mx-auto">
             Pokušajte da promenite filtere ili termin pretrage.
           </p>
           <Link
             to="/catalog"
-            className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--color-primary)] text-[var(--color-onPrimary)] font-bold shadow-lg hover:opacity-90 transition-opacity"
+            className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-onPrimary font-bold shadow-lg hover:opacity-90 transition-opacity"
           >
             <ArrowLeft size={18} /> Resetuj sve filtere
           </Link>
@@ -157,11 +158,11 @@ export default function Catalog() {
           <div className="mb-6">
             <Breadcrumbs trail={[{ label: "Katalog", href: "/catalog" }]} />
 
-            <div className="catalog__toprow flex items-center justify-between mt-4 pb-4 border-b border-[var(--color-border)]">
-              <h1 className="text-2xl font-bold text-[var(--color-text)]">
+            <div className="catalog__toprow flex items-center justify-between mt-4 pb-4 border-b border-(--color-border)">
+              <h1 className="text-2xl font-bold text-text">
                 Svi proizvodi
               </h1>
-              <div className="catalog__count text-sm font-semibold text-[var(--color-muted)] bg-[var(--color-surface)] px-3 py-1 rounded-full border border-[var(--color-border)]">
+              <div className="catalog__count text-sm font-semibold text-muted bg-surface px-3 py-1 rounded-full border border-(--color-border)">
                 {totalCount} kom.
               </div>
             </div>

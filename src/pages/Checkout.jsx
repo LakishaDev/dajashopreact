@@ -4,9 +4,10 @@ import { useCart } from "../hooks/useCart.js";
 import { useFormValidator } from "../hooks/useFormValidator.js";
 import { money } from "../utils/currency.js";
 import { 
-  User, MapPin, Phone, Mail, Truck, CreditCard, 
+  User, MapPin, Phone, Mail, Truck, 
   CheckCircle2, ShieldCheck, ArrowRight, AlertCircle, Loader2, ShoppingBag
 } from "lucide-react";
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 
 // Lista popularnih domena za autocompletion
@@ -19,7 +20,8 @@ const POPULAR_DOMAINS = [
   "yahoo.co.uk"
 ];
 
-// KONSTANTE ZA MAPU: Koristimo ključ iz index.html
+// KONSTANTE ZA MAPU
+// Preporuka: Kasnije premesti ovaj ključ u .env fajl kao VITE_GOOGLE_MAPS_KEY
 const MAP_API_KEY = "AIzaSyCwDMD-56pwnAqgEDqNCT8uMxFy_mPbAe0";
 const SHOP_ADDRESS_QUERY = "Daja Shop, TPC Gorca lokal C31, Nis, Srbija";
 const MAP_EMBED_URL = `https://www.google.com/maps/embed/v1/place?key=${MAP_API_KEY}&q=${encodeURIComponent(SHOP_ADDRESS_QUERY)}`;
@@ -31,14 +33,30 @@ function OrderConfirmationModal({ order, money, onClose }) {
   const initialFocusRef = useRef(null);
   const orderId = order.id;
 
-  // Escape zatvara
+  // Novo stanje za prikaz/sakrivanje mape
+  const [showMap, setShowMap] = useState(false);
+
+  // 1. NOVO: Zaključavanje skrola pozadine (body) dok je modal otvoren
+  useEffect(() => {
+    // Sačuvamo trenutni stil
+    const originalOverflow = document.body.style.overflow;
+    // Onemogućimo skrol
+    document.body.style.overflow = "hidden";
+
+    // Vraćamo na staro kada se komponenta unmount-uje (modal zatvori)
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
+  // Escape zatvara modal
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose?.();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  // Fokus na dugme
+  // Fokus na dugme za pristupačnost
   useEffect(() => {
     const t = setTimeout(() => initialFocusRef.current?.focus(), 50);
     return () => clearTimeout(t);
@@ -55,6 +73,7 @@ function OrderConfirmationModal({ order, money, onClose }) {
       exit={{ opacity: 0 }}
       onClick={onClose}
     >
+      {/* .order-card ima max-height i overflow-y: auto iz CSS-a za skrolovanje dugačkog sadržaja */}
       <motion.div
         className="order-card glass"
         role="dialog"
@@ -108,22 +127,50 @@ function OrderConfirmationModal({ order, money, onClose }) {
                 </div>
             </div>
 
-            {/* ADRESA DOSTAVE */}
+            {/* ADRESA DOSTAVE ILI PREUZIMANJA */}
             <div className="delivery-info">
                 <h4>{isPickup ? 'Adresa preuzimanja:' : 'Adresa dostave:'}</h4>
                 {isPickup ? (
                     <>
                         <p>Niš, TPC Gorča lokal C31</p>
-                        {/* FIKSNI LINK ZA MAPU U MODALU */}
-                        <a 
-                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(SHOP_ADDRESS_QUERY)}`} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
+                        
+                        {/* Dugme za prikaz mape umesto linka */}
+                        <button
+                          type="button"
                           className="btn-map-receipt"
-                          onClick={(e) => e.stopPropagation()} 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowMap(!showMap);
+                          }}
+                          style={{ cursor: 'pointer', width: '100%', justifyContent: 'center', marginTop: '12px' }}
                         >
-                            <MapPin size={16} /> Prikaži lokaciju na mapi
-                        </a>
+                            <MapPin size={16} /> 
+                            {showMap ? "Sakrij mapu" : "Prikaži lokaciju na mapi"}
+                        </button>
+
+                        {/* Embedovana mapa sa animacijom */}
+                        <AnimatePresence>
+                          {showMap && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                              animate={{ opacity: 1, height: 250, marginTop: 12 }}
+                              exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                              className="map-container rounded-xl overflow-hidden"
+                              style={{ position: 'relative', width: '100%' }}
+                            >
+                              <iframe
+                                className="map-iframe"
+                                title="Lokacija preuzimanja"
+                                width="100%"
+                                height="100%"
+                                style={{ border: 0 }}
+                                loading="lazy"
+                                allowFullScreen
+                                src={MAP_EMBED_URL}
+                              ></iframe>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                     </>
                 ) : (
                     <>
@@ -508,7 +555,7 @@ export default function Checkout() {
                   </div>
                 </div>
                 
-                {/* IFRAME MAP EMBED - Koristi se API ključ iz index.html */}
+                {/* IFRAME MAP EMBED - Prikazuje se odmah ovde, ali i u modalu kasnije */}
                 <div className="map-container">
                   <iframe
                     className="map-iframe"

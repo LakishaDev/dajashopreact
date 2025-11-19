@@ -4,6 +4,7 @@ import ProductModal from "./modals/ProductModal.jsx";
 import useProducts from "../hooks/useProducts";
 import { Plus } from "lucide-react";
 import { auth, ADMIN_EMAILS } from "../services/firebase"; // Proveri putanju do firebase.js
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 
 export default function ProductGrid({ items: propItems }) {

@@ -313,9 +313,8 @@ input.no-spin {
 /* --- APPLIED STATE (Kada je kod unet) --- */
 
 /* Ključno: Ne menjamo visinu, ostaje ista kao standardni promo-box */
-.promo-box.applied {
-  /* Nema height: auto, nasleđuje 48px (desktop) ili 44px (mobile) */
-}
+ /* Nema height: auto, nasleđuje 48px (desktop) ili 44px (mobile) */
+
 
 .applied-wrapper {
   width: 100%; /* Zauzima celu širinu jer nema dugmeta sa strane */

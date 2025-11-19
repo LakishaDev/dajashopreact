@@ -52,11 +52,11 @@ export default function TrustBar({
         {items.map(({ icon: Icon, title, desc }, i) => (
           <li
             key={i}
-            className="group flex items-center gap-3 sm:gap-4 rounded-xl p-3 sm:p-4 bg-[color:color-mix(in_oklab,var(--color-surface)_86%,transparent)] hover:bg-[color:color-mix(in_oklab,var(--color-surface)_96%,transparent)] transition"
+            className="group flex items-center gap-3 sm:gap-4 rounded-xl p-3 sm:p-4 bg-[color-mix(in_oklab,var(--color-surface)_86%,transparent)] hover:bg-[color-mix(in_oklab,var(--color-surface)_96%,transparent)] transition"
           >
-            <span className="relative grid place-items-center h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-[color:color-mix(in_oklab,var(--color-primary)_14%,transparent)] ring-1 ring-[color:color-mix(in_oklab,var(--color-primary)_28%,transparent)]">
+            <span className="relative grid place-items-center h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-[color-mix(in_oklab,var(--color-primary)_14%,transparent)] ring-1 ring-[color-mix(in_oklab,var(--color-primary)_28%,transparent)]">
               <Icon
-                className="h-5 w-5 sm:h-6 sm:w-6 text-[color:var(--color-primary)]"
+                className="h-5 w-5 sm:h-6 sm:w-6 text-primary"
                 strokeWidth={2.2}
               />
             </span>
@@ -92,11 +92,11 @@ export default function TrustBar({
         {items.map(({ icon: Icon, title, desc }, i) => (
           <li
             key={i}
-            className="snap-start min-w-[230px] max-w-[260px] flex items-center gap-3 rounded-xl p-3 bg-[color:color-mix(in_oklab,var(--color-surface)_92%,transparent)] ring-1 ring-accent/10"
+            className="snap-start min-w-[230px] max-w-[260px] flex items-center gap-3 rounded-xl p-3 bg-[color-mix(in_oklab,var(--color-surface)_92%,transparent)] ring-1 ring-accent/10"
           >
-            <span className="grid place-items-center h-9 w-9 rounded-lg bg-[color:color-mix(in_oklab,var(--color-primary)_14%,transparent)] ring-1 ring-[color:color-mix(in_oklab,var(--color-primary)_28%,transparent)]">
+            <span className="grid place-items-center h-9 w-9 rounded-lg bg-[color-mix(in_oklab,var(--color-primary)_14%,transparent)] ring-1 ring-[color-mix(in_oklab,var(--color-primary)_28%,transparent)]">
               <Icon
-                className="h-5 w-5 text-[color:var(--color-primary)]"
+                className="h-5 w-5 text-primary"
                 strokeWidth={2.2}
               />
             </span>
@@ -130,12 +130,12 @@ export default function TrustBar({
         {items.map(({ icon: Icon, title, desc }, i) => (
           <li
             key={i}
-            className="rounded-xl p-3 ring-1 ring-accent/10 bg-[color:color-mix(in_oklab,var(--color-surface)_92%,transparent)]"
+            className="rounded-xl p-3 ring-1 ring-accent/10 bg-[color-mix(in_oklab,var(--color-surface)_92%,transparent)]"
           >
             <div className="flex flex-col items-start gap-2">
-              <span className="grid place-items-center h-9 w-9 rounded-lg bg-[color:color-mix(in_oklab,var(--color-primary)_14%,transparent)] ring-1 ring-[color:color-mix(in_oklab,var(--color-primary)_28%,transparent)]">
+              <span className="grid place-items-center h-9 w-9 rounded-lg bg-[color-mix(in_oklab,var(--color-primary)_14%,transparent)] ring-1 ring-[color-mix(in_oklab,var(--color-primary)_28%,transparent)]">
                 <Icon
-                  className="h-5 w-5 text-[color:var(--color-primary)]"
+                  className="h-5 w-5 text-primary"
                   strokeWidth={2.2}
                 />
               </span>
@@ -171,7 +171,7 @@ export default function TrustBar({
             className="flex items-center gap-2 rounded-lg px-2 py-1.5"
           >
             <Icon
-              className="h-4 w-4 text-[color:var(--color-primary)]"
+              className="h-4 w-4 text-primary"
               strokeWidth={2.2}
             />
             <span className="text-sm text-text">{title}</span>

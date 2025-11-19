@@ -10,6 +10,7 @@ import {
   removeImagesByPaths,
 } from "../services/products";
 import UploadProgressBar from "./UploadProgressBar.jsx";
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import {
   Edit3,
@@ -55,6 +56,7 @@ export default function ProductCard({ p }) {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(null); // lokalni draft izmena
   const [optimistic, setOptimistic] = useState(null); // za instant UI update
+  // eslint-disable-next-line no-unused-vars
   const [mainIdx, setMainIdx] = useState(0);
 
   // slike
