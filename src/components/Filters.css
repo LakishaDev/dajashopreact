@@ -216,6 +216,7 @@
   padding: 6px 0;
   outline: none;
   text-overflow: ellipsis;
+  font-size: 1rem;
 }
 
 /* ===== Buttons ===== */
