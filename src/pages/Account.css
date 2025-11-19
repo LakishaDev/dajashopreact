@@ -1,28 +1,37 @@
-/* ===== src/pages/Account.css ===== */
+/* ==========================================================================
+   1. GLOBALNI STILOVI & DESKTOP LAYOUT
+   ========================================================================== */
 
-/* --- Layout Dashboard-a --- */
 .account-dashboard {
   display: grid;
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: 260px minmax(0, 1fr);
   gap: 32px;
   padding-top: 40px;
   padding-bottom: 80px;
   align-items: start;
+  width: 100%;
 }
 
 .account-main {
   min-width: 0;
+  width: 100%;
 }
 
-/* --- Sidebar Navigacija --- */
-.account-nav {
+/* --- DESKTOP NAVIGACIJA --- */
+.desktop-nav {
   position: sticky;
   top: 100px;
-  overflow: hidden;
-  padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  height: fit-content;
+  min-height: 400px;
+  overflow: hidden;
+  padding: 8px;
+}
+
+/* Sakrivamo mobilni meni na desktopu */
+.mobile-nav-wrapper {
+  display: none;
 }
 
 .nav-header {
@@ -47,6 +56,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1;
 }
 
 .nav-btn {
@@ -86,512 +96,238 @@
   border-radius: 0 4px 4px 0;
 }
 
-.nav-footer {
-  margin-top: 16px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+/* Logout na desktopu */
+.nav-item-logout {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(255,255,255,0.1);
 }
 
 .logout-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  color: #ef4444;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9rem;
-  border-radius: 12px;
-  transition: background 0.2s;
+  color: #ef4444 !important;
 }
-
 .logout-btn:hover {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(239, 68, 68, 0.1) !important;
 }
 
-/* --- Glavni Sadržaj --- */
-.section-content {
-  display: grid;
-  gap: 24px;
-}
+/* ==========================================================================
+   2. SEKCIJE (PROFIL, ADRESE...)
+   ========================================================================== */
+/* Ovi stilovi ostaju isti kao pre */
 
-.section-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
+.section-content { display: grid; gap: 24px; width: 100%; }
+.section-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 10px; }
+.section-header-row h3 { font-size: 1.5rem; font-weight: 800; margin: 0; }
+.btn-primary.small { padding: 8px 14px; font-size: 0.85rem; gap: 6px; height: auto; }
 
-.section-header-row h3 {
-  font-size: 1.5rem;
-  font-weight: 800;
-  margin: 0;
-}
+/* Profil */
+.profile-header { display: flex; align-items: center; gap: 20px; padding: 24px; width: 100%; }
+.profile-avatar { width: 72px; height: 72px; border-radius: 50%; background: var(--color-surface); border: 2px solid var(--color-primary); color: var(--color-primary); font-size: 28px; font-weight: 800; display: grid; place-items: center; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); flex-shrink: 0; }
+.profile-info { min-width: 0; flex: 1; }
+.profile-info h2 { margin: 0 0 4px; font-size: 1.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.profile-info .muted { word-break: break-all; }
+.profile-info .badge { margin-top: 8px; display: inline-block; background: color-mix(in oklab, var(--color-primary) 15%, transparent); color: var(--color-primary); border: 1px solid color-mix(in oklab, var(--color-primary) 30%, transparent); font-weight: 700; }
 
-.btn-primary.small {
-  padding: 8px 14px;
-  font-size: 0.85rem;
-  gap: 6px;
-  height: auto;
-}
+.info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.info-card { padding: 20px; position: relative; }
+.info-label { font-size: 0.8rem; color: var(--color-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+.info-value { font-size: 1.1rem; font-weight: 600; color: var(--color-text); word-break: break-word; }
+.edit-mini { position: absolute; top: 16px; right: 16px; border: 0; background: transparent; color: var(--color-muted); cursor: pointer; padding: 4px; border-radius: 6px; transition: 0.2s; }
+.edit-mini:hover { background: rgba(255, 255, 255, 0.05); color: var(--color-text); }
 
-/* --- Profil --- */
-.profile-header {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 24px;
-}
+/* Adrese */
+.addresses-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.address-card { padding: 20px; position: relative; transition: transform 0.2s; }
+.addr-header { display: flex; justify-content: space-between; margin-bottom: 14px; }
+.addr-label { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.06); font-size: 0.8rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; }
+.btn-icon-danger { background: transparent; border: 0; color: var(--color-muted); cursor: pointer; padding: 6px; border-radius: 6px; transition: 0.2s; }
+.addr-body strong { display: block; margin-bottom: 6px; font-size: 1.1rem; }
+.addr-body p { margin: 2px 0; font-size: 0.95rem; color: var(--color-muted); line-height: 1.4; }
+.addr-phone { margin-top: 10px !important; font-size: 0.9rem; font-weight: 600; color: var(--color-text) !important; display: flex; align-items: center; gap: 6px; }
 
-.profile-avatar {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  background: var(--color-surface);
-  border: 2px solid var(--color-primary);
-  color: var(--color-primary);
-  font-size: 28px;
-  font-weight: 800;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
+/* Address Form */
+.address-form { padding: 24px; border: 1px solid color-mix(in oklab, var(--color-primary) 50%, transparent); margin-bottom: 24px; background: color-mix(in oklab, var(--color-surface) 50%, transparent); }
+.address-form h4 { margin-top: 0; margin-bottom: 20px; font-size: 1.2rem; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.form-grid label { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.form-grid label.full { grid-column: 1 / -1; }
+.form-grid span { font-size: 0.85rem; font-weight: 700; color: var(--color-muted); }
+.form-grid input { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(0, 0, 0, 0.2); color: var(--color-text); font-size: 0.95rem; transition: 0.2s; }
+.form-grid input:focus { outline: none; border-color: var(--color-primary); background: rgba(0, 0, 0, 0.3); box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary), transparent 85%); }
+.input-with-icon { position: relative; width: 100%; display: flex; align-items: center; }
+.input-icon-left { position: absolute; left: 12px; color: var(--color-muted); pointer-events: none; transition: color 0.2s; z-index: 2; }
+.input-with-icon:focus-within .input-icon-left { color: var(--color-primary); }
+.input-with-icon input { padding-left: 40px !important; }
+.radio-group { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.15); background: transparent; color: var(--color-text); cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; }
+.chip.active { background: var(--color-primary); color: var(--color-on-primary, #000); border-color: var(--color-primary); }
+.form-actions { display: flex; justify-content: flex-end; gap: 12px; }
 
-.profile-info h2 {
-  margin: 0 0 4px;
-  font-size: 1.4rem;
-}
+/* Orders */
+.orders-list { display: grid; gap: 16px; }
+.order-item { display: flex; align-items: center; gap: 20px; padding: 20px; width: 100%; }
+.order-icon { width: 56px; height: 56px; border-radius: 14px; background: rgba(255, 255, 255, 0.04); display: grid; place-items: center; color: var(--color-primary); flex-shrink: 0; }
+.order-details { flex: 1; min-width: 0; }
+.order-top { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
+.order-top h4 { margin: 0; font-family: monospace; font-size: 1.05rem; font-weight: 700; }
+.status-badge { font-size: 0.7rem; padding: 4px 10px; border-radius: 99px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+.status-badge.success { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
+.status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
+.order-meta { font-size: 0.9rem; color: var(--color-muted); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.order-right { text-align: right; display: flex; align-items: center; gap: 16px; }
+.order-total { font-weight: 800; font-size: 1.15rem; color: var(--color-text); white-space: nowrap; }
+.empty-state, .loading-state, .empty-state-small { text-align: center; padding: 40px 20px; color: var(--color-muted); }
 
-.profile-info .badge {
-  margin-top: 8px;
-  background: color-mix(in oklab, var(--color-primary) 15%, transparent);
-  color: var(--color-primary);
-  border: 1px solid color-mix(in oklab, var(--color-primary) 30%, transparent);
-  font-weight: 700;
-}
+/* ==========================================================================
+   3. MEDIA QUERIES (MOBILE / RESPONSIVE)
+   ========================================================================== */
 
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px;
-}
-
-.info-card {
-  padding: 20px;
-  position: relative;
-}
-
-.info-label {
-  font-size: 0.8rem;
-  color: var(--color-muted);
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 700;
-}
-
-.info-value {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.edit-mini {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  border: 0;
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 6px;
-  transition: background 0.2s, color 0.2s;
-}
-
-.edit-mini:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--color-text);
-}
-
-/* --- ADRESE FORMA --- */
-.address-form {
-  padding: 24px;
-  border: 1px solid color-mix(in oklab, var(--color-primary) 50%, transparent);
-  margin-bottom: 24px;
-  background: color-mix(in oklab, var(--color-surface) 50%, transparent);
-}
-
-.address-form h4 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  font-size: 1.2rem;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.form-grid label {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* FULL WIDTH KLASA - Razvlači preko celog grida */
-.form-grid label.full {
-  grid-column: 1 / -1;
-}
-
-.form-grid span {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--color-muted);
-}
-
-.form-grid input {
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.2);
-  color: var(--color-text);
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-}
-
-.form-grid input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  background: rgba(0, 0, 0, 0.3);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary), transparent 85%);
-}
-
-/* --- NOVO: LEPŠI INPUT SA IKONICOM (Google Address) --- */
-.input-with-icon {
-  position: relative;
-  width: 100%;
-  display: flex;
-  align-items: center;
-}
-
-.input-icon-left {
-  position: absolute;
-  left: 12px;
-  color: var(--color-muted);
-  pointer-events: none;
-  transition: color 0.2s;
-  z-index: 2;
-}
-
-.input-with-icon:focus-within .input-icon-left {
-  color: var(--color-primary);
-}
-
-/* Input unutar wrappera mora da ima padding levo da tekst ne gazi ikonicu */
-.input-with-icon input {
-  padding-left: 40px !important;
-}
-
-/* --- Radio Chips --- */
-.radio-group {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.chip {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: transparent;
-  color: var(--color-text);
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 600;
-  transition: all 0.2s;
-}
-
-.chip:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.chip.active {
-  background: var(--color-primary);
-  color: var(--color-on-primary, #000);
-  border-color: var(--color-primary);
-  box-shadow: 0 4px 12px color-mix(in oklab, var(--color-primary), transparent 60%);
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-/* --- Addresses Grid --- */
-.addresses-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
-}
-
-.address-card {
-  padding: 20px;
-  position: relative;
-  transition: transform 0.2s, border-color 0.2s;
-}
-
-.address-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.addr-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-
-.addr-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--color-primary);
-  text-transform: uppercase;
-}
-
-.btn-icon-danger {
-  background: transparent;
-  border: 0;
-  color: var(--color-muted);
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
-  transition: all 0.2s;
-}
-
-.btn-icon-danger:hover {
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
-}
-
-.addr-body strong {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 1.1rem;
-}
-
-.addr-body p {
-  margin: 2px 0;
-  font-size: 0.95rem;
-  color: var(--color-muted);
-  line-height: 1.4;
-}
-
-.addr-phone {
-  margin-top: 10px !important;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--color-text) !important;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.empty-state {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--color-muted);
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 16px;
-  border: 1px dashed rgba(255, 255, 255, 0.1);
-}
-
-.loading-state {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  color: var(--color-muted);
-  gap: 12px;
-}
-
-/* --- Porudžbine --- */
-.orders-list {
-  display: grid;
-  gap: 16px;
-}
-
-.order-item {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 20px;
-  transition: background 0.2s;
-}
-
-.order-item:hover {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.order-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.04);
-  display: grid;
-  place-items: center;
-  color: var(--color-primary);
-  flex-shrink: 0;
-}
-
-.order-details {
-  flex: 1;
-  min-width: 0;
-}
-
-.order-top {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 6px;
-  flex-wrap: wrap;
-}
-
-.order-top h4 {
-  margin: 0;
-  font-family: monospace;
-  font-size: 1.05rem;
-  font-weight: 700;
-}
-
-.status-badge {
-  font-size: 0.7rem;
-  padding: 4px 10px;
-  border-radius: 99px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.status-badge.success {
-  background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.2);
-}
-
-.status-badge.pending {
-  background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.2);
-}
-
-.order-meta {
-  font-size: 0.9rem;
-  color: var(--color-muted);
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.order-right {
-  text-align: right;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.order-total {
-  font-weight: 800;
-  font-size: 1.15rem;
-  color: var(--color-text);
-}
-
-.empty-state-small {
-  text-align: center;
-  padding: 20px;
-  opacity: 0.6;
-  font-size: 0.9rem;
-  border-top: 1px dashed rgba(255, 255, 255, 0.1);
-  margin-top: 10px;
-}
-
-/* Mobile Responsive */
 @media (max-width: 900px) {
+  
+  /* 1. Promena Layout-a */
   .account-dashboard {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr); /* Jedna kolona */
     gap: 24px;
+    padding-top: 20px;
   }
-  
-  .account-nav {
-    position: static;
-    top: auto;
+
+  /* 2. Sakrij Desktop Sidebar */
+  .desktop-nav {
+    display: none;
+  }
+
+  /* 3. Prikaži Mobile Dropdown Wrapper */
+  .mobile-nav-wrapper {
+    display: block;
+    position: relative;
     margin-bottom: 16px;
+    z-index: 50;
   }
 
-  .nav-list {
-    flex-direction: row;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    scrollbar-width: none; 
-  }
-  .nav-list::-webkit-scrollbar {
-    display: none;
-  }
-
-  .nav-btn {
-    white-space: nowrap;
-    padding: 10px 16px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-  }
-  
-  .nav-btn.active {
-    background: var(--color-primary);
-    color: var(--color-on-primary, #000);
-  }
-  
-  .active-indicator { display: none; }
-  
-  .nav-footer { display: none; }
-
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .order-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-  
-  .order-icon {
-    display: none;
-  }
-  
-  .order-right {
+  /* Dugme za otvaranje menija */
+  .mobile-dropdown-trigger {
     width: 100%;
+    padding: 16px;
+    display: flex;
+    align-items: center;
     justify-content: space-between;
-    padding-top: 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    margin-top: 4px;
+    background: var(--color-surface);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .mobile-dropdown-trigger:hover, .mobile-dropdown-trigger.open {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .trigger-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .trigger-label {
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  .chevron {
+    transition: transform 0.2s ease;
+    color: var(--color-muted);
+  }
+  .chevron.rotate {
+    transform: rotate(180deg);
+  }
+
+  /* Padajući meni */
+  .mobile-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    background: #18181b; /* Malo tamnija pozadina za meni */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .mobile-menu-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    color: var(--color-text);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .mobile-menu-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .mobile-menu-item.active {
+    background: color-mix(in oklab, var(--color-primary) 15%, transparent);
+    color: var(--color-primary);
+    font-weight: 700;
+  }
+
+  .mobile-menu-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 4px 0;
+  }
+
+  .mobile-menu-item.logout {
+    color: #ef4444;
+  }
+  .mobile-menu-item.logout:hover {
+    background: rgba(239, 68, 68, 0.1);
+  }
+
+  /* --- Prilagođavanje Sadržaja --- */
+  .form-grid { grid-template-columns: 1fr; }
+  
+  .profile-header { 
+    flex-direction: column; 
+    text-align: center; 
+    padding: 20px; 
+  }
+
+  .info-grid { grid-template-columns: 1fr; }
+
+  .order-item { 
+    flex-direction: column; 
+    align-items: flex-start; 
+    gap: 12px; 
+  }
+  .order-icon { display: none; }
+  
+  .order-right { 
+    width: 100%; 
+    justify-content: space-between; 
+    padding-top: 16px; 
+    border-top: 1px solid rgba(255,255,255,0.06); 
+    margin-top: 4px; 
+  }
+  
+  .addr-header { 
+    align-items: center; 
+  }
+  
+  .addresses-grid {
+    grid-template-columns: 1fr;
   }
 }
