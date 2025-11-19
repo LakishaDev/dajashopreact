@@ -255,7 +255,7 @@
   align-items: center;
   gap: 8px;
   font-size: 0.85rem;
-  color: var(--muted);
+  color: "#40a840";
   opacity: 0.8;
 }
 
@@ -726,3 +726,149 @@
    ali ostavljamo stil za dugme unutar receipt modala (.btn-map-receipt) */
 
 /* ... (Ostatak CSS-a za .btn-map-receipt, .pac-container, itd. ostaje nepromenjen) ... */
+/* src/pages/Checkout.css */
+
+/* --- REGISTRATION POPOUT (NOTIFICATION STYLE) --- */
+
+.reg-popover {
+  position: relative;
+  width: 100%;
+  margin-top: 24px; /* Odvaja ga od forme */
+  
+  /* Tamna pozadina koja se ističe na staklu */
+  background: #18181b; 
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 20px;
+  
+  /* Jaka senka da izgleda kao da lebdi iznad */
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+  
+  /* Animacija ulaska */
+  transform-origin: top left;
+  animation: popin 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* STRELICA NA VRHU (Arrow Tip) */
+.reg-popover::before {
+  content: "";
+  position: absolute;
+  top: -8px;       /* Izađe malo iznad */
+  left: 32px;      /* Poravnato sa inputima */
+  width: 16px;
+  height: 16px;
+  
+  /* Mora biti iste boje kao pozadina popovera */
+  background: #18181b; 
+  
+  /* Iste ivice kao popover */
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  
+  /* Rotacija da napravi trougao */
+  transform: rotate(45deg);
+}
+
+/* Header sa naslovom i X dugmetom */
+.reg-popover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.reg-popover-title {
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reg-popover-desc {
+  color: #a1a1aa;
+  font-size: 0.85rem;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* X Dugme */
+.reg-close-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  color: #71717a;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  display: grid;
+  place-items: center;
+}
+.reg-close-btn:hover { 
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff; 
+}
+
+/* Input za lozinku */
+.reg-popover input {
+  background: rgba(0,0,0,0.3) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #fff !important;
+  font-size: 0.95rem;
+  height: 46px;
+  border-radius: 10px;
+  width: 100%;
+  padding-left: 42px; /* Mesto za ikonicu */
+}
+.reg-popover input:focus {
+  border-color: var(--primary) !important;
+  background: rgba(0,0,0,0.5) !important;
+  box-shadow: 0 0 0 2px rgba(200, 169, 78, 0.2);
+}
+
+/* Dugme Potvrdi */
+.reg-confirm-btn {
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: var(--primary);
+  color: #000;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.1s, filter 0.2s;
+}
+.reg-confirm-btn:hover { filter: brightness(1.1); }
+.reg-confirm-btn:active { transform: scale(0.98); }
+
+@keyframes popin {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Bedž "Nalog" u email polju */
+.account-ready-badge {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #4ade80;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(74, 222, 128, 0.15);
+  padding: 6px 10px;
+  border-radius: 6px;
+  pointer-events: none;
+  border: 1px solid rgba(74, 222, 128, 0.2);
+}
