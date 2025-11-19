@@ -16,6 +16,7 @@ import { useCart } from "../hooks/useCart.js";
 // 👇 Nove ikonice za footer menija
 import { Phone, HelpCircle, Facebook, Instagram, MapPin } from "lucide-react";
 import "./HamburgerMenu.css";
+import { ADMIN_EMAILS } from "../services/firebase.js";
 
 const DROPDOWN_WIDTH = 220;
 
@@ -72,6 +73,7 @@ function useIsDesktop() {
 function DesktopDropdown({ open, onClose, count, user, anchorEl }) {
   const ddRef = useRef(null);
   const [pos, setPos] = useState({ top: 0, left: 0 });
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email?.toLowerCase());
 
   const recalc = useCallback(() => {
     if (!anchorEl?.current) return;
@@ -144,6 +146,9 @@ function DesktopDropdown({ open, onClose, count, user, anchorEl }) {
             <DDItem to="/about" label="O nama" onClose={onClose} />
             <DDItem to="/catalog" label="Prodavnica" onClose={onClose} />
             <DDItem to="/usluge" label="Usluge" onClose={onClose} />
+            {isAdmin && (
+              <DDItem to="/admin" label="Admin Panel" onClose={onClose} />
+            )}
             {user ? (
               <DDItem to="/account" label="Moj nalog" onClose={onClose} />
             ) : (
@@ -293,9 +298,7 @@ function MobileSheet({ open, onClose, user }) {
               )}
 
               <Link className="hm__link hm__cart" to="/cart" onClick={onClose}>
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: 8 }}
-                >
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span className="hm__cartIcon" style={{ margin: 0 }}>
                     🛒
                   </span>
@@ -338,13 +341,29 @@ function MobileSheet({ open, onClose, user }) {
                   <MapPin size={16} /> Lokacija
                 </Link>
               </div>
-              
+
               <div className="hm__f-bottom">
                 <div className="hm__f-socials">
-                   <a href="https://facebook.com" target="_blank" rel="noreferrer" aria-label="Facebook"><Facebook size={18} /></a>
-                   <a href="https://instagram.com" target="_blank" rel="noreferrer" aria-label="Instagram"><Instagram size={18} /></a>
+                  <a
+                    href="https://facebook.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Facebook"
+                  >
+                    <Facebook size={18} />
+                  </a>
+                  <a
+                    href="https://instagram.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Instagram"
+                  >
+                    <Instagram size={18} />
+                  </a>
                 </div>
-                <div className="hm__f-copy">Daja Shop © {new Date().getFullYear()}</div>
+                <div className="hm__f-copy">
+                  Daja Shop © {new Date().getFullYear()}
+                </div>
               </div>
             </div>
           </motion.aside>
