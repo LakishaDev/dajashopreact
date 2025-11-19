@@ -124,11 +124,11 @@ html.lenis body {
   /* Tamna siva, polu-providna */
   background-color: rgba(100, 100, 100, 0.4);
   border-radius: 99px;
-  
+
   /* Trik za "lebdeći" efekat (border pravi razmak) */
   border: 3px solid transparent;
   background-clip: content-box;
-  
+
   transition: background-color 0.2s ease;
 }
 
@@ -140,7 +140,7 @@ html.lenis body {
 /* Aktivno stanje - Tvoja ZLATNA boja */
 ::-webkit-scrollbar-thumb:active {
   /* Direktno koristimo boju jer CSS varijable nekad kasne u pseudo-elementima */
-  background-color: #C8A94E; 
+  background-color: #c8a94e;
   border-width: 2px; /* Malo deblji kad se uhvati */
 }
 
