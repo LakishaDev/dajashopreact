@@ -1,0 +1,44 @@
+# EditorConfig je odličan način da održimo konzistentnost u stilovima kodiranja
+# između različitih editora i IDE-ova. Saznajte više na https://editorconfig.org
+
+# Označi ovo kao vrhovni EditorConfig fajl
+root = true
+
+# Opšta pravila za sve fajlove
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# JavaScript i JSX fajlovi
+[*.{js,jsx}]
+indent_size = 2
+quote_type = single
+
+# JSON fajlovi
+[*.json]
+indent_size = 2
+
+# CSS i SCSS fajlovi
+[*.{css,scss}]
+indent_size = 2
+
+# Markdown fajlovi
+[*.md]
+trim_trailing_whitespace = false
+indent_size = 2
+
+# HTML fajlovi
+[*.html]
+indent_size = 2
+
+# YAML fajlovi
+[*.{yml,yaml}]
+indent_size = 2
+
+# Package.json
+[package.json]
+indent_size = 2
