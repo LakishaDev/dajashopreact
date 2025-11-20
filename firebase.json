@@ -1,0 +1,17 @@
+{
+  "functions": [
+    {
+      "codebase": "default",
+      "source": "functions",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ]
+    }
+  ],
+  "extensions": {
+    "firebase-web-authn": "./node_modules/@firebase-web-authn/extension"
+  }
+}

@@ -14,6 +14,7 @@ import {
   AlertCircle,
   ChevronDown,
   Check,
+  Fingerprint,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth.js';
 import './AuthModal.css';
@@ -74,6 +75,8 @@ export default function AuthModal() {
     oauth,
     pendingEmailVerify,
     detectIdentity,
+    passkeyLogin,
+    passkeyRegister,
   } = useAuth();
 
   const isLogin = mode === 'login';
@@ -433,6 +436,31 @@ export default function AuthModal() {
     }
   }
 
+  async function handlePasskey() {
+    setLoading(true);
+    try {
+      if (isLogin) {
+        await passkeyLogin();
+        hideAuth();
+        openFlash('Uspeh', 'Prijavljeni ste putem Passkey-a! 🔑');
+      } else {
+        // Za registraciju nam treba ime. Ako je polje prazno, tražimo ga.
+        if (!name && idType !== 'username') {
+          alert('Molimo unesite ime pre kreiranja Passkey-a.');
+          setLoading(false);
+          return;
+        }
+        await passkeyRegister(name || identity); // Koristi ime ili email kao identifikator
+        hideAuth();
+        openFlash('Uspeh', 'Passkey kreiran! 🛡️');
+      }
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <>
       <FlashModal
@@ -493,6 +521,14 @@ export default function AuthModal() {
                   className={`tab ${!isLogin ? 'active' : ''}`}
                   onClick={() => go('register')}
                   whileTap={{ scale: 0.96 }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 800,
+
+                    damping: 35,
+
+                    mass: 0.35,
+                  }}
                 >
                   <span className="tab-label">Registracija</span>
                   {!isLogin && (
