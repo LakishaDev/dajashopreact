@@ -1688,6 +1688,8 @@ function SecuritySection({ user }) {
 export default function Account() {
   const { user, logout, showAuth } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
+  // Zamenite postojeći if (!user) blok sa ovim:
+
   if (!user) {
     return (
       <div className="container account-page centered">
@@ -1695,23 +1697,33 @@ export default function Account() {
           className="glass account-empty-card"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 20 }}
         >
-          <div className="empty-icon-wrap">
-            <User size={48} />
+          {/* Nova klasa za ikonu - veća i u primarnoj boji */}
+          <div className="empty-icon-wrap large">
+            <User size={64} />
           </div>
-          <h1>Moj nalog</h1>
+
+          <h1>Dobrodošli u Daja Shop Nalog</h1>
           <p className="lead">
-            Prijavite se da biste pratili porudžbine i upravljali adresama.
+            Prijavom dobijate pristup praćenju statusa porudžbina, čuvanju
+            adresa i kreiranju liste želja.
           </p>
+
           <div className="auth-actions">
-            <button className="btn-primary" onClick={() => showAuth('login')}>
-              Prijavi se
-            </button>
+            {/* Primarno dugme za logovanje je sada fokus */}
             <button
-              className="btn-secondary"
+              className="btn-primary large"
+              onClick={() => showAuth('login')}
+            >
+              Prijavi se odmah
+            </button>
+            {/* Sekundarno dugme sa novom klasom */}
+            <button
+              className="btn-link-primary"
               onClick={() => showAuth('register')}
             >
-              Registruj se
+              Novi korisnik? Registruj se
             </button>
           </div>
         </motion.div>
