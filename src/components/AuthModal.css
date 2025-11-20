@@ -447,10 +447,42 @@
   border-radius: 10px;
 }
 
+/* Postojeći media query za modal */
 @media (max-width: 480px) {
   .auth-card {
     max-width: 90dvw;
     padding: 18px;
     padding-top: 40px;
+  }
+
+  /* NOVE IZMENE ZA RESPONZIVNOST UNUTRAŠNJIH ELEMENATA: */
+
+  /* Stavlja Google i Facebook dugmad vertikalno */
+  .oauth-row {
+    grid-auto-flow: row;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* Osigurava da se OAuth dugmad protežu celom širinom */
+  .btn-oauth {
+    width: 100%;
+  }
+
+  /* Prilagođavanje izgleda dugmadi za bolji UX na mobilnom */
+  .btn-primary,
+  .btn-oauth {
+    font-size: 0.95rem; /* Malo veći font za bolju čitljivost */
+    padding: 12px 14px; /* Malo veći padding za lakši klik prstom */
+  }
+
+  /* Malo smanjenje margina i paddinga na inputima za kompaktniji izgled */
+  .input {
+    padding: 11px 13px;
+  }
+
+  .ghost-overlay {
+    padding: 11px 13px; /* Prilagođava i ghost overlay */
+    padding-left: 42px;
   }
 }
