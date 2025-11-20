@@ -1,15 +1,17 @@
-import React from "react";
-import { Routes, Route } from "react-router-dom";
-import Home from "./pages/Home.jsx";
-import Catalog from "./pages/Catalog.jsx";
-import Product from "./pages/Products.jsx";
-import Cart from "./pages/Cart.jsx";
-import Checkout from "./pages/Checkout.jsx";
-import Account from "./pages/Account.jsx";
-import Orders from "./pages/Orders.jsx";
-import About from "./pages/About.jsx";
-import AdminDashboard from "./pages/Admin/AdminDashboard.jsx";
-import VerifyEmail from "./pages/VerifyEmail.jsx";
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import Home from './pages/Home.jsx';
+import Catalog from './pages/Catalog.jsx';
+import Product from './pages/Products.jsx';
+import Cart from './pages/Cart.jsx';
+import Checkout from './pages/Checkout.jsx';
+import Account from './pages/Account.jsx';
+import Orders from './pages/Orders.jsx';
+import About from './pages/About.jsx';
+import AdminDashboard from './pages/Admin/AdminDashboard.jsx';
+import VerifyEmail from './pages/VerifyEmail.jsx';
+import FAQ from './pages/FAQ.jsx';
+import Contact from './pages/Contact.jsx';
 
 export default function AppRoutes() {
   return (
@@ -24,6 +26,8 @@ export default function AppRoutes() {
       <Route path="/about" element={<About />} />
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="/faq" element={<FAQ />} />
+      <Route path="/contact" element={<Contact />} />
     </Routes>
   );
 }

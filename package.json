@@ -12,6 +12,7 @@
   "dependencies": {
     "@dataconnect/generated": "file:src/dataconnect-generated",
     "@firebase-web-authn/browser": "^10.4.4",
+    "@react-google-maps/api": "^2.20.7",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.0",
     "@tailwindcss/vite": "^4.1.17",

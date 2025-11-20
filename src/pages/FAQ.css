@@ -1,0 +1,110 @@
+/* src/pages/FAQ.css */
+
+.faq-page {
+  padding-top: 40px;
+  padding-bottom: 80px;
+}
+
+.faq__title {
+  margin-bottom: 8px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.faq__subtitle {
+  color: var(--color-muted);
+  max-width: 700px;
+  margin-bottom: 40px;
+  font-size: 1.1rem;
+}
+
+/* === Akordeon Lista === */
+.faq__list {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 60px;
+}
+
+.faq__item {
+  border: 1px solid var(--color-border, #e5e7eb);
+  overflow: hidden;
+  border-radius: 14px;
+  padding: 0;
+  background: var(--color-surface);
+}
+
+.faq__question {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: 18px 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.faq__question:hover {
+  background: color-mix(in oklab, var(--color-surface) 95%, black);
+}
+
+.faq__q-text {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.faq__icon {
+  flex-shrink: 0;
+  margin-left: 16px;
+  transition: transform 0.3s ease;
+  color: var(--color-muted);
+}
+
+.faq__icon.is-open {
+  transform: rotate(180deg);
+  color: var(--color-primary);
+}
+
+/* === Odgovor (Akordeon Efekat) === */
+.faq__answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease-out, padding 0.4s ease-out;
+  padding: 0 20px;
+}
+
+.faq__answer.is-visible {
+  max-height: 500px; /* Dovoljno velika visina za sav tekst */
+  padding: 0 20px 20px 20px;
+}
+
+.faq__answer p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--color-text);
+}
+
+/* === CTA za Kontakt === */
+.faq__contact-prompt {
+  padding: 30px;
+  text-align: center;
+  /* Koristimo boju pozadine iz teme */
+  background: color-mix(in oklab, var(--color-surface) 90%, black);
+  border: 1px solid var(--color-border);
+}
+.faq__contact-prompt h2 {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+  color: var(--color-text);
+}
+.faq__contact-prompt p {
+  color: var(--color-muted);
+  margin-bottom: 24px;
+  font-size: 1rem;
+}
