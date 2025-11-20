@@ -26,7 +26,7 @@ export const FORM_RULES = {
   },
   // --- DODATO ---
   city: {
-    regex: /^[a-zA-Z\u00C0-\u024F\s]{2,}$/,
+    regex: /^.{2,}$/,
     message: 'Unesite naziv grada.',
   },
 };
