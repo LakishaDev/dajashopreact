@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-
+// eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from 'framer-motion';
-
 import {
   Mail,
   Lock,
@@ -13,12 +12,10 @@ import {
   Smartphone,
   AtSign,
   ShieldCheck,
+  Fingerprint,
 } from 'lucide-react';
-
 import { useAuth } from '../hooks/useAuth.js';
-
 import './AuthModal.css';
-
 import FlashModal from './modals/FlashModal.jsx';
 
 export default function AuthModal() {
@@ -42,6 +39,8 @@ export default function AuthModal() {
     pendingEmailVerify,
 
     detectIdentity,
+    passkeyLogin,
+    passkeyRegister,
   } = useAuth();
 
   const isLogin = mode === 'login';
@@ -140,7 +139,6 @@ export default function AuthModal() {
         }
       } else {
         const r = await register({ identity, password, name });
-
         if (r === 'phone-code') {
           setAwaitPhoneCode(true);
 
@@ -149,7 +147,6 @@ export default function AuthModal() {
           // ostaje u modalu i prikazuje "Proveri email"
         } else {
           hideAuth();
-
           openFlash('Registracija uspešna', 'Srećna kupovina! 🛍️');
         }
       }
@@ -172,7 +169,6 @@ export default function AuthModal() {
 
       openFlash(
         isLogin ? 'Prijava uspešna' : 'Registracija uspešna',
-
         'Broj telefona verifikovan ✅'
       );
     } catch (err) {
@@ -192,13 +188,37 @@ export default function AuthModal() {
 
       openFlash(
         'Uspeh',
-
         provider === 'google'
           ? 'Google prijava je prošla.'
           : 'Facebook prijava je prošla.'
       );
     } catch (err) {
       alert(err?.message || 'Greška pri OAuth prijavi.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handlePasskey() {
+    setLoading(true);
+    try {
+      if (isLogin) {
+        await passkeyLogin();
+        hideAuth();
+        openFlash('Uspeh', 'Prijavljeni ste putem Passkey-a! 🔑');
+      } else {
+        // Za registraciju nam treba ime. Ako je polje prazno, tražimo ga.
+        if (!name && idType !== 'username') {
+          alert('Molimo unesite ime pre kreiranja Passkey-a.');
+          setLoading(false);
+          return;
+        }
+        await passkeyRegister(name || identity); // Koristi ime ili email kao identifikator
+        hideAuth();
+        openFlash('Uspeh', 'Passkey kreiran! 🛡️');
+      }
+    } catch (err) {
+      alert(err.message);
     } finally {
       setLoading(false);
     }
@@ -266,7 +286,6 @@ export default function AuthModal() {
                       className="tab-pill"
                       transition={{
                         type: 'spring',
-
                         stiffness: 700,
 
                         damping: 40,
@@ -283,7 +302,6 @@ export default function AuthModal() {
                   whileTap={{ scale: 0.96 }}
                   transition={{
                     type: 'spring',
-
                     stiffness: 800,
 
                     damping: 35,
@@ -299,7 +317,6 @@ export default function AuthModal() {
                       className="tab-pill"
                       transition={{
                         type: 'spring',
-
                         stiffness: 700,
 
                         damping: 40,
@@ -319,7 +336,6 @@ export default function AuthModal() {
                   animate={{ x: isLogin ? '0%' : '-100%' }}
                   transition={{
                     type: 'spring',
-
                     stiffness: 520,
 
                     damping: 38,
@@ -402,7 +418,6 @@ export default function AuthModal() {
                             whileTap={{ scale: 0.97 }}
                             transition={{
                               type: 'spring',
-
                               stiffness: 700,
 
                               damping: 30,
@@ -443,6 +458,23 @@ export default function AuthModal() {
 
                               <span>Facebook</span>
                             </button>
+                            <button
+                              type="button"
+                              className="btn-oauth"
+                              onClick={handlePasskey}
+                              style={{
+                                width: '100%',
+                                justifyContent: 'center',
+                                gap: '10px',
+                              }}
+                            >
+                              <Fingerprint size={20} className="text-primary" />
+                              <span>
+                                {isLogin
+                                  ? 'Prijavi se Passkey-om'
+                                  : 'Registruj se Passkey-om'}
+                              </span>
+                            </button>
                           </div>
                         </form>
                       ) : (
@@ -479,7 +511,6 @@ export default function AuthModal() {
                             whileTap={{ scale: 0.97 }}
                             transition={{
                               type: 'spring',
-
                               stiffness: 700,
 
                               damping: 30,
@@ -581,7 +612,6 @@ export default function AuthModal() {
                             whileTap={{ scale: 0.97 }}
                             transition={{
                               type: 'spring',
-
                               stiffness: 700,
 
                               damping: 30,
@@ -621,6 +651,23 @@ export default function AuthModal() {
                               <Facebook size={18} />
 
                               <span>Facebook</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-oauth"
+                              onClick={handlePasskey}
+                              style={{
+                                width: '100%',
+                                justifyContent: 'center',
+                                gap: '10px',
+                              }}
+                            >
+                              <Fingerprint size={20} className="text-primary" />
+                              <span>
+                                {isLogin
+                                  ? 'Prijavi se Passkey-om'
+                                  : 'Registruj se Passkey-om'}
+                              </span>
                             </button>
                           </div>
                         </form>
@@ -667,7 +714,6 @@ export default function AuthModal() {
                             whileTap={{ scale: 0.97 }}
                             transition={{
                               type: 'spring',
-
                               stiffness: 700,
 
                               damping: 30,
