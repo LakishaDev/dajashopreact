@@ -1,15 +1,16 @@
 // npm i firebase
-import { initializeApp } from "firebase/app";
+import { initializeApp } from 'firebase/app';
 import {
   getAuth,
   GoogleAuthProvider,
   FacebookAuthProvider,
   RecaptchaVerifier,
-} from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
-import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
-import { getAnalytics } from "firebase/analytics";
+} from 'firebase/auth';
+import { getFunctions } from 'firebase/functions';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+import { getAnalytics } from 'firebase/analytics';
 
 // ---- Config iz .env (Vite) ----
 const cfg = {
@@ -27,6 +28,7 @@ export const app = initializeApp(cfg);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+export const functions = getFunctions(app, 'europe-west1');
 
 // ---- App Check (reCAPTCHA v3) ----
 // Debug token samo u DEV okruženju:
@@ -42,12 +44,12 @@ if (siteKey) {
     isTokenAutoRefreshEnabled: true,
   });
 } else {
-  console.warn("[AppCheck] VITE_FIREBASE_RECAPTCHA_SITE_KEY nije setovan.");
+  console.warn('[AppCheck] VITE_FIREBASE_RECAPTCHA_SITE_KEY nije setovan.');
 }
 
 // ---- Analytics (ako postoji measurementId i radi u browseru) ----
 export let analytics = null;
-if (typeof window !== "undefined" && cfg.measurementId) {
+if (typeof window !== 'undefined' && cfg.measurementId) {
   try {
     analytics = getAnalytics(app);
   } catch {
@@ -61,7 +63,7 @@ export const googleProvider = new GoogleAuthProvider();
 // Facebook
 export const facebookProvider = new FacebookAuthProvider();
 facebookProvider.setCustomParameters({
-  display: "popup",
+  display: 'popup',
 });
 
 // ---- Phone Auth: invisible reCAPTCHA v2 host ----
@@ -70,15 +72,15 @@ export function ensureRecaptcha() {
   if (!window.__recaptchaVerifier) {
     window.__recaptchaVerifier = new RecaptchaVerifier(
       auth,
-      "recaptcha-container",
-      { size: "invisible" }
+      'recaptcha-container',
+      { size: 'invisible' }
     );
   }
   return window.__recaptchaVerifier;
 }
 
 // ---- Admin emailovi iz .env ----
-const rawAdmins = (import.meta.env.VITE_ADMIN_EMAILS || "").split(",");
+const rawAdmins = (import.meta.env.VITE_ADMIN_EMAILS || '').split(',');
 export const ADMIN_EMAILS = rawAdmins
   .map((e) => e.trim().toLowerCase())
   .filter(Boolean);

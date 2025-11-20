@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-unused-vars
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   Mail,
   Lock,
@@ -12,10 +12,11 @@ import {
   Smartphone,
   AtSign,
   ShieldCheck,
-} from "lucide-react";
-import { useAuth } from "../hooks/useAuth.js";
-import "./AuthModal.css";
-import FlashModal from "./modals/FlashModal.jsx";
+  Fingerprint,
+} from 'lucide-react';
+import { useAuth } from '../hooks/useAuth.js';
+import './AuthModal.css';
+import FlashModal from './modals/FlashModal.jsx';
 
 export default function AuthModal() {
   const {
@@ -29,27 +30,29 @@ export default function AuthModal() {
     oauth,
     pendingEmailVerify,
     detectIdentity,
+    passkeyLogin,
+    passkeyRegister,
   } = useAuth();
-  const isLogin = mode === "login";
+  const isLogin = mode === 'login';
 
   // slider tab
   function go(next) {
     setMode(next);
   }
 
-  const [identity, setIdentity] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const [identity, setIdentity] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [awaitPhoneCode, setAwaitPhoneCode] = useState(false);
-  const [smsCode, setSmsCode] = useState("");
-  const [sentTo, setSentTo] = useState(""); // prikaz broja u info traci
+  const [smsCode, setSmsCode] = useState('');
+  const [sentTo, setSentTo] = useState(''); // prikaz broja u info traci
 
   // flash success modal
   const [flashOpen, setFlashOpen] = useState(false);
-  const [flashTitle, setFlashTitle] = useState("");
-  const [flashSub, setFlashSub] = useState("");
+  const [flashTitle, setFlashTitle] = useState('');
+  const [flashSub, setFlashSub] = useState('');
 
   const idType = useMemo(
     () => detectIdentity(identity).type,
@@ -60,7 +63,7 @@ export default function AuthModal() {
   useEffect(() => {
     if (!authOpen) return;
     const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = prev;
     };
@@ -68,16 +71,16 @@ export default function AuthModal() {
 
   useEffect(() => {
     // reset per tab
-    setPassword("");
-    setSmsCode("");
+    setPassword('');
+    setSmsCode('');
     setAwaitPhoneCode(false);
-    setSentTo("");
+    setSentTo('');
   }, [mode]);
 
-  const isPhone = idType === "phone";
+  const isPhone = idType === 'phone';
   const showPassword = !isPhone;
 
-  function openFlash(msg, sub = "") {
+  function openFlash(msg, sub = '') {
     setFlashTitle(msg);
     setFlashSub(sub);
     setFlashOpen(true);
@@ -89,27 +92,27 @@ export default function AuthModal() {
     try {
       if (isLogin) {
         const r = await login({ identity, password });
-        if (r === "phone-code") {
+        if (r === 'phone-code') {
           setAwaitPhoneCode(true);
           setSentTo(identity);
         } else {
           hideAuth();
-          openFlash("Prijava uspešna", "Dobro došao nazad! ⌚");
+          openFlash('Prijava uspešna', 'Dobro došao nazad! ⌚');
         }
       } else {
         const r = await register({ identity, password, name });
-        if (r === "phone-code") {
+        if (r === 'phone-code') {
           setAwaitPhoneCode(true);
           setSentTo(identity);
         } else if (pendingEmailVerify) {
           // ostaje u modalu i prikazuje "Proveri email"
         } else {
           hideAuth();
-          openFlash("Registracija uspešna", "Srećna kupovina! 🛍️");
+          openFlash('Registracija uspešna', 'Srećna kupovina! 🛍️');
         }
       }
     } catch (err) {
-      alert(err.message || "Greška.");
+      alert(err.message || 'Greška.');
     } finally {
       setLoading(false);
     }
@@ -122,11 +125,11 @@ export default function AuthModal() {
       await confirmPhoneCode(smsCode);
       hideAuth();
       openFlash(
-        isLogin ? "Prijava uspešna" : "Registracija uspešna",
-        "Broj telefona verifikovan ✅"
+        isLogin ? 'Prijava uspešna' : 'Registracija uspešna',
+        'Broj telefona verifikovan ✅'
       );
     } catch (err) {
-      alert(err.message || "Nevažeći kod.");
+      alert(err.message || 'Nevažeći kod.');
     } finally {
       setLoading(false);
     }
@@ -138,13 +141,38 @@ export default function AuthModal() {
       await oauth(provider);
       hideAuth();
       openFlash(
-        "Uspeh",
-        provider === "google"
-          ? "Google prijava je prošla."
-          : "Facebook prijava je prošla."
+        'Uspeh',
+        provider === 'google'
+          ? 'Google prijava je prošla.'
+          : 'Facebook prijava je prošla.'
       );
     } catch (err) {
-      alert(err?.message || "Greška pri OAuth prijavi.");
+      alert(err?.message || 'Greška pri OAuth prijavi.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handlePasskey() {
+    setLoading(true);
+    try {
+      if (isLogin) {
+        await passkeyLogin();
+        hideAuth();
+        openFlash('Uspeh', 'Prijavljeni ste putem Passkey-a! 🔑');
+      } else {
+        // Za registraciju nam treba ime. Ako je polje prazno, tražimo ga.
+        if (!name && idType !== 'username') {
+          alert('Molimo unesite ime pre kreiranja Passkey-a.');
+          setLoading(false);
+          return;
+        }
+        await passkeyRegister(name || identity); // Koristi ime ili email kao identifikator
+        hideAuth();
+        openFlash('Uspeh', 'Passkey kreiran! 🛡️');
+      }
+    } catch (err) {
+      alert(err.message);
     } finally {
       setLoading(false);
     }
@@ -176,7 +204,7 @@ export default function AuthModal() {
               initial={{ y: 30, opacity: 0, scale: 0.98 }}
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: 20, opacity: 0, scale: 0.98 }}
-              transition={{ type: "spring", stiffness: 220, damping: 20 }}
+              transition={{ type: 'spring', stiffness: 220, damping: 20 }}
             >
               <button
                 className="icon-btn close"
@@ -189,11 +217,11 @@ export default function AuthModal() {
               {/* TAB BAR */}
               <div className="tabs">
                 <motion.button
-                  className={`tab ${isLogin ? "active" : ""}`}
-                  onClick={() => go("login")}
+                  className={`tab ${isLogin ? 'active' : ''}`}
+                  onClick={() => go('login')}
                   whileTap={{ scale: 0.96 }}
                   transition={{
-                    type: "spring",
+                    type: 'spring',
                     stiffness: 800,
                     damping: 35,
                     mass: 0.35,
@@ -205,7 +233,7 @@ export default function AuthModal() {
                       layoutId="tabPill"
                       className="tab-pill"
                       transition={{
-                        type: "spring",
+                        type: 'spring',
                         stiffness: 700,
                         damping: 40,
                         mass: 0.45,
@@ -214,11 +242,11 @@ export default function AuthModal() {
                   )}
                 </motion.button>
                 <motion.button
-                  className={`tab ${!isLogin ? "active" : ""}`}
-                  onClick={() => go("register")}
+                  className={`tab ${!isLogin ? 'active' : ''}`}
+                  onClick={() => go('register')}
                   whileTap={{ scale: 0.96 }}
                   transition={{
-                    type: "spring",
+                    type: 'spring',
                     stiffness: 800,
                     damping: 35,
                     mass: 0.35,
@@ -230,7 +258,7 @@ export default function AuthModal() {
                       layoutId="tabPill"
                       className="tab-pill"
                       transition={{
-                        type: "spring",
+                        type: 'spring',
                         stiffness: 700,
                         damping: 40,
                         mass: 0.45,
@@ -244,9 +272,9 @@ export default function AuthModal() {
               <div className="form-slider">
                 <motion.div
                   className="track"
-                  animate={{ x: isLogin ? "0%" : "-100%" }}
+                  animate={{ x: isLogin ? '0%' : '-100%' }}
                   transition={{
-                    type: "spring",
+                    type: 'spring',
                     stiffness: 520,
                     damping: 38,
                     bounce: 0.25,
@@ -254,7 +282,7 @@ export default function AuthModal() {
                 >
                   {/* PRIJAVA */}
                   <div
-                    className={`pane ${isLogin ? "active" : "inactive"}`}
+                    className={`pane ${isLogin ? 'active' : 'inactive'}`}
                     aria-hidden={!isLogin}
                   >
                     <div className="pane-inner">
@@ -263,9 +291,9 @@ export default function AuthModal() {
                           <label className="field">
                             <span>Identitet</span>
                             <div className="input">
-                              {idType === "phone" ? (
+                              {idType === 'phone' ? (
                                 <Smartphone className="ico" size={18} />
-                              ) : idType === "username" ? (
+                              ) : idType === 'username' ? (
                                 <AtSign className="ico" size={18} />
                               ) : (
                                 <Mail className="ico" size={18} />
@@ -288,7 +316,7 @@ export default function AuthModal() {
                               <div className="input">
                                 <Lock className="ico" size={18} />
                                 <input
-                                  type={showPass ? "text" : "password"}
+                                  type={showPass ? 'text' : 'password'}
                                   placeholder="••••••••"
                                   value={password}
                                   onChange={(e) => setPassword(e.target.value)}
@@ -301,8 +329,8 @@ export default function AuthModal() {
                                   onClick={() => setShowPass((p) => !p)}
                                   aria-label={
                                     showPass
-                                      ? "Sakrij lozinku"
-                                      : "Prikaži lozinku"
+                                      ? 'Sakrij lozinku'
+                                      : 'Prikaži lozinku'
                                   }
                                 >
                                   {showPass ? (
@@ -320,12 +348,12 @@ export default function AuthModal() {
                             disabled={loading}
                             whileTap={{ scale: 0.97 }}
                             transition={{
-                              type: "spring",
+                              type: 'spring',
                               stiffness: 700,
                               damping: 30,
                             }}
                           >
-                            {loading ? "Prijavljivanje…" : "Prijavi se"}
+                            {loading ? 'Prijavljivanje…' : 'Prijavi se'}
                           </motion.button>
 
                           {/* OAUTH dugmad */}
@@ -333,7 +361,7 @@ export default function AuthModal() {
                             <button
                               type="button"
                               className="btn-oauth"
-                              onClick={() => handleOauth("google")}
+                              onClick={() => handleOauth('google')}
                             >
                               <svg
                                 viewBox="0 0 24 24"
@@ -351,10 +379,27 @@ export default function AuthModal() {
                             <button
                               type="button"
                               className="btn-oauth"
-                              onClick={() => handleOauth("facebook")}
+                              onClick={() => handleOauth('facebook')}
                             >
                               <Facebook size={18} />
                               <span>Facebook</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-oauth"
+                              onClick={handlePasskey}
+                              style={{
+                                width: '100%',
+                                justifyContent: 'center',
+                                gap: '10px',
+                              }}
+                            >
+                              <Fingerprint size={20} className="text-primary" />
+                              <span>
+                                {isLogin
+                                  ? 'Prijavi se Passkey-om'
+                                  : 'Registruj se Passkey-om'}
+                              </span>
                             </button>
                           </div>
                         </form>
@@ -362,7 +407,7 @@ export default function AuthModal() {
                         <form className="form" onSubmit={onConfirmCode}>
                           {/* INFO traka iznad polja */}
                           <div className="verify-box">
-                            Na vaš broj {sentTo || "telefona"} poslali smo SMS
+                            Na vaš broj {sentTo || 'telefona'} poslali smo SMS
                             kod za verifikaciju. Unesite ga ispod. 📲
                           </div>
 
@@ -387,7 +432,7 @@ export default function AuthModal() {
                             disabled={loading}
                             whileTap={{ scale: 0.97 }}
                             transition={{
-                              type: "spring",
+                              type: 'spring',
                               stiffness: 700,
                               damping: 30,
                             }}
@@ -401,7 +446,7 @@ export default function AuthModal() {
 
                   {/* REGISTRACIJA */}
                   <div
-                    className={`pane ${!isLogin ? "active" : "inactive"}`}
+                    className={`pane ${!isLogin ? 'active' : 'inactive'}`}
                     aria-hidden={isLogin}
                   >
                     <div className="pane-inner">
@@ -424,7 +469,7 @@ export default function AuthModal() {
                           <label className="field">
                             <span>Email ili broj telefona</span>
                             <div className="input">
-                              {idType === "phone" ? (
+                              {idType === 'phone' ? (
                                 <Smartphone className="ico" size={18} />
                               ) : (
                                 <Mail className="ico" size={18} />
@@ -441,13 +486,13 @@ export default function AuthModal() {
                             </div>
                           </label>
 
-                          {idType !== "phone" && (
+                          {idType !== 'phone' && (
                             <label className="field">
                               <span>Lozinka</span>
                               <div className="input">
                                 <Lock className="ico" size={18} />
                                 <input
-                                  type={showPass ? "text" : "password"}
+                                  type={showPass ? 'text' : 'password'}
                                   placeholder="••••••••"
                                   value={password}
                                   onChange={(e) => setPassword(e.target.value)}
@@ -460,8 +505,8 @@ export default function AuthModal() {
                                   onClick={() => setShowPass((p) => !p)}
                                   aria-label={
                                     showPass
-                                      ? "Sakrij lozinku"
-                                      : "Prikaži lozinku"
+                                      ? 'Sakrij lozinku'
+                                      : 'Prikaži lozinku'
                                   }
                                 >
                                   {showPass ? (
@@ -479,12 +524,12 @@ export default function AuthModal() {
                             disabled={loading}
                             whileTap={{ scale: 0.97 }}
                             transition={{
-                              type: "spring",
+                              type: 'spring',
                               stiffness: 700,
                               damping: 30,
                             }}
                           >
-                            {loading ? "Kreiranje naloga…" : "Napravi nalog"}
+                            {loading ? 'Kreiranje naloga…' : 'Napravi nalog'}
                           </motion.button>
 
                           {/* OAUTH dugmad */}
@@ -492,7 +537,7 @@ export default function AuthModal() {
                             <button
                               type="button"
                               className="btn-oauth"
-                              onClick={() => handleOauth("google")}
+                              onClick={() => handleOauth('google')}
                             >
                               <svg
                                 viewBox="0 0 24 24"
@@ -510,10 +555,27 @@ export default function AuthModal() {
                             <button
                               type="button"
                               className="btn-oauth"
-                              onClick={() => handleOauth("facebook")}
+                              onClick={() => handleOauth('facebook')}
                             >
                               <Facebook size={18} />
                               <span>Facebook</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-oauth"
+                              onClick={handlePasskey}
+                              style={{
+                                width: '100%',
+                                justifyContent: 'center',
+                                gap: '10px',
+                              }}
+                            >
+                              <Fingerprint size={20} className="text-primary" />
+                              <span>
+                                {isLogin
+                                  ? 'Prijavi se Passkey-om'
+                                  : 'Registruj se Passkey-om'}
+                              </span>
                             </button>
                           </div>
                         </form>
@@ -529,7 +591,7 @@ export default function AuthModal() {
                         <form className="form" onSubmit={onConfirmCode}>
                           {/* INFO traka iznad polja */}
                           <div className="verify-box">
-                            Na vaš broj {sentTo || "telefona"} poslali smo SMS
+                            Na vaš broj {sentTo || 'telefona'} poslali smo SMS
                             kod za verifikaciju. Unesite ga ispod. 📲
                           </div>
 
@@ -554,7 +616,7 @@ export default function AuthModal() {
                             disabled={loading}
                             whileTap={{ scale: 0.97 }}
                             transition={{
-                              type: "spring",
+                              type: 'spring',
                               stiffness: 700,
                               damping: 30,
                             }}
