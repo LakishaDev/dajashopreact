@@ -301,9 +301,10 @@
   top: 50%;
   transform: translateY(-50%);
 
-  /* KLJUČNO ZA ELIMINACIJU RAMAKA: Prilagođena pozicija (44px) */
+  /* KLJUČNO: Vaš finalni ofset za poravnanje sa kursorom */
   left: 38px;
 
+  /* Eliminisanje razmaka */
   display: flex;
   align-items: center;
   gap: 0px;
@@ -341,14 +342,71 @@
   font-size: 16px;
 }
 
-/* Hint dugme */
-.tab-key-hint {
-  font-size: 0.7rem;
-  font-weight: 800;
-  padding: 3px 6px;
-  border-radius: 6px;
-  background: color-mix(in oklab, var(--color-surface) 50%, transparent);
-  border: 1px solid var(--color-border, #e5e7eb);
-  color: var(--color-text, #111);
-  opacity: 0.75;
+/* ... (Sav ostali CSS) ... */
+/* src/components/AuthModal.css - NOVI DODACI ZA EMAIL SUGGESTIONS */
+
+/* Wrapper za pozicioniranje dropdowna iznad forme */
+.field-group-with-dropdown {
+  position: relative;
+  /* Potreban je viši z-index jer je unutar forme */
+  z-index: 10;
+}
+
+/* Stil Dropdown liste */
+.email-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+
+  z-index: 50; /* iznad drugih elemenata forme */
+
+  margin-top: 6px;
+  background: var(--color-surface);
+  border: 1px solid color-mix(in oklab, var(--color-accent) 55%, transparent);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  list-style: none;
+  padding: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+
+  /* Stil za skrol bar, preuzet iz base.css */
+  scrollbar-width: thin;
+}
+
+.email-dropdown li {
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--color-text);
+  font-size: 0.95rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.15s;
+}
+
+.email-dropdown li:hover {
+  background: var(--color-primary);
+  color: var(--color-on-primary, #111);
+}
+
+.email-dropdown .domain {
+  opacity: 0.6;
+  font-size: 0.85em;
+  color: var(--color-muted);
+}
+
+.email-dropdown li:hover .domain {
+  color: var(--color-on-primary, #111);
+  opacity: 1;
+}
+
+/* KLJUČNO: Dozvoljava dropdownu da prelije ivice AuthModal kartice */
+.auth-card {
+  overflow: visible;
 }

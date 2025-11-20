@@ -44,6 +44,8 @@ export default function AuthModal() {
 
   // Ref za input polje
   const inputRef = useRef(null); 
+  // Ref za polje za lozinku
+  const passwordInputRef = useRef(null); 
 
   // slider tab
   function go(next) {
@@ -102,7 +104,7 @@ export default function AuthModal() {
     setFlashOpen(true);
   }
   
-  // ✅ FIKSIRAN HANDLER: Strikno razdvajanje dropdown/prediction modova
+  // FIKSIRAN HANDLER za auto-suggest i predikciju
   const handleIdentityInput = (e) => {
     const val = e.target.value;
     setIdentity(val);
@@ -134,14 +136,12 @@ export default function AuthModal() {
     } else {
         // SCENARIO 2: Dropdown Mode (e.g., 'm', 'm@')
         
-        // UKLJUČI LISTU ako ima unetih karaktera pre @ ILI ako je uneto samo @
+        // UKLJUČI LISTU ako ima unetih karaktera (radi i za 'm@')
         if (val.length > 0) {
            setShowEmailSuggestions(true);
-        } else {
-           setShowEmailSuggestions(false);
         }
 
-        setPredictedSuffix(''); // <--- ISKLJUČI PREDICIJU
+        setPredictedSuffix(''); // <--- STROGO ISKLJUČI PREDICIJU
         
         const currentPrefix = atIndex === -1 ? val : val.substring(0, atIndex);
         const currentDomainPrefix = atIndex === -1 ? '' : val.substring(atIndex + 1);
@@ -168,6 +168,9 @@ export default function AuthModal() {
           setIdentity(fullPrediction);
           setPredictedSuffix(''); 
           setShowEmailSuggestions(false);
+          
+          // PREBACIVANJE FOKUSA: Dva taba u jednom!
+          passwordInputRef.current?.focus(); 
       }
   }
 
@@ -437,6 +440,7 @@ export default function AuthModal() {
                               <div className="input">
                                 <Lock className="ico" size={18} />
                                 <input
+                                  ref={passwordInputRef} 
                                   type={showPass ? "text" : "password"} 
                                   placeholder="••••••••"
                                   value={password}
@@ -556,6 +560,7 @@ export default function AuthModal() {
                     <div className="pane-inner">
                       {!awaitPhoneCode && !pendingEmailVerify ? (
                         <form className="form" onSubmit={onSubmit}>
+                          {/* ✅ 1. Ime i prezime (UVEK PRVO) */}
                           <label className="field">
                             <span>Ime i prezime</span>
                             <div className="input">
@@ -570,6 +575,7 @@ export default function AuthModal() {
                             </div>
                           </label>
 
+                          {/* ✅ 2. Email ili broj telefona (Drugo polje) */}
                           <label className="field">
                             <span>Email ili broj telefona</span>
                             {/* NOVO: Wrapper za auto-suggest */}
@@ -641,12 +647,14 @@ export default function AuthModal() {
                             </div>
                           </label>
 
+                          {/* ✅ 3. Lozinka (Treće polje) */}
                           {idType !== "phone" && (
                             <label className="field">
                               <span>Lozinka</span>
                               <div className="input">
                                 <Lock className="ico" size={18} />
                                 <input
+                                  ref={passwordInputRef}
                                   type={showPass ? "text" : "password"}
                                   placeholder="••••••••"
                                   value={password}
