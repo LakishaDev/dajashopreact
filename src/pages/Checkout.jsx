@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
-import "./Checkout.css";
-import { useCart } from "../hooks/useCart.js";
-import { useFormValidator } from "../hooks/useFormValidator.js";
-import { useAuth } from "../hooks/useAuth.js";
-import { useFlash } from "../hooks/useFlash.js";
-import { money } from "../utils/currency.js";
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import './Checkout.css';
+import { useCart } from '../hooks/useCart.js';
+import { useFormValidator } from '../hooks/useFormValidator.js';
+import { useAuth } from '../hooks/useAuth.js';
+import { useFlash } from '../hooks/useFlash.js';
+import { money } from '../utils/currency.js';
 import {
   User,
   MapPin,
@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   ShieldCheck,
   ArrowRight,
+  ArrowRightToLine,
   AlertCircle,
   Loader2,
   ShoppingBag,
@@ -21,25 +22,54 @@ import {
   X,
   Check,
   UserPlus,
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+  ChevronDown,
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// Lista popularnih domena za autocompletion
-const POPULAR_DOMAINS = [
-  "gmail.com",
-  "yahoo.com",
-  "hotmail.com",
-  "outlook.com",
-  "icloud.com",
-  "yahoo.co.uk",
+// --- KONSTANTE ---
+const getFlagUrl = (code) =>
+  `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
+
+const COUNTRY_CODES = [
+  { code: 'RS', dial: '+381', label: 'Srbija' },
+  { code: 'ME', dial: '+382', label: 'Crna Gora' },
+  { code: 'BA', dial: '+387', label: 'BiH' },
+  { code: 'HR', dial: '+385', label: 'Hrvatska' },
+  { code: 'MK', dial: '+389', label: 'S. Makedonija' },
+  { code: 'SI', dial: '+386', label: 'Slovenija' },
+  { code: 'DE', dial: '+49', label: 'Nemačka' },
+  { code: 'AT', dial: '+43', label: 'Austrija' },
+  { code: 'CH', dial: '+41', label: 'Švajcarska' },
 ];
 
-// KONSTANTE ZA MAPU
-const MAP_API_KEY = "AIzaSyCwDMD-56pwnAqgEDqNCT8uMxFy_mPbAe0";
-const SHOP_ADDRESS_QUERY = "Daja Shop, TPC Gorca lokal C31, Nis, Srbija";
+const POPULAR_DOMAINS = [
+  'gmail.com',
+  'yahoo.com',
+  'hotmail.com',
+  'outlook.com',
+  'icloud.com',
+  'yahoo.co.uk',
+];
+
+const MAP_API_KEY = 'AIzaSyCwDMD-56pwnAqgEDqNCT8uMxFy_mPbAe0';
+const SHOP_ADDRESS_QUERY = 'Daja Shop, TPC Gorca lokal C31, Nis, Srbija';
 const MAP_EMBED_URL = `https://www.google.com/maps/embed/v1/place?key=${MAP_API_KEY}&q=${encodeURIComponent(
   SHOP_ADDRESS_QUERY
 )}`;
+
+// --- KOMPONENTA ZA GREŠKU ---
+const ErrorMessage = ({ message }) => (
+  <motion.div
+    initial={{ opacity: 0, y: -8, height: 0, marginTop: 0 }}
+    animate={{ opacity: 1, y: 0, height: 'auto', marginTop: 6 }}
+    exit={{ opacity: 0, y: -8, height: 0, marginTop: 0 }}
+    transition={{ duration: 0.25, type: 'spring', bounce: 0.3 }}
+    className="custom-error-popout"
+  >
+    <AlertCircle size={14} className="error-icon-pop" />
+    <span>{message}</span>
+  </motion.div>
+);
 
 // --- MODAL ZA RAČUN ---
 function OrderConfirmationModal({ order, money, onClose }) {
@@ -47,19 +77,18 @@ function OrderConfirmationModal({ order, money, onClose }) {
   const orderId = order.id;
   const [showMap, setShowMap] = useState(false);
 
-  // Lock scroll dok je modal otvoren
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = originalOverflow;
     };
   }, []);
 
   useEffect(() => {
-    const onKey = (e) => e.key === "Escape" && onClose?.();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    const onKey = (e) => e.key === 'Escape' && onClose?.();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
   useEffect(() => {
@@ -67,8 +96,8 @@ function OrderConfirmationModal({ order, money, onClose }) {
     return () => clearTimeout(t);
   }, []);
 
-  const isPickup = order.shippingMethod === "pickup";
-  const shippingLabel = isPickup ? "Preuzimanje" : "Isporuka kurirskom službom";
+  const isPickup = order.shippingMethod === 'pickup';
+  const shippingLabel = isPickup ? 'Preuzimanje' : 'Isporuka kurirskom službom';
 
   return (
     <motion.div
@@ -87,7 +116,7 @@ function OrderConfirmationModal({ order, money, onClose }) {
         initial={{ y: 30, opacity: 0, scale: 0.98 }}
         animate={{ y: 0, opacity: 1, scale: 1 }}
         exit={{ y: 20, opacity: 0, scale: 0.98 }}
-        transition={{ type: "spring", stiffness: 220, damping: 20 }}
+        transition={{ type: 'spring', stiffness: 220, damping: 20 }}
       >
         <div className="order-header">
           <CheckCircle2 size={32} className="text-success-ico" />
@@ -118,7 +147,7 @@ function OrderConfirmationModal({ order, money, onClose }) {
               <span>{shippingLabel}:</span>
               <span className="text-success">
                 {order.shippingCost === 0
-                  ? "Besplatna"
+                  ? 'Besplatna'
                   : money(order.shippingCost)}
               </span>
             </div>
@@ -129,7 +158,7 @@ function OrderConfirmationModal({ order, money, onClose }) {
             </div>
           </div>
           <div className="delivery-info">
-            <h4>{isPickup ? "Adresa preuzimanja:" : "Adresa dostave:"}</h4>
+            <h4>{isPickup ? 'Adresa preuzimanja:' : 'Adresa dostave:'}</h4>
             {isPickup ? (
               <>
                 <p>Niš, TPC Gorča lokal C31</p>
@@ -141,14 +170,14 @@ function OrderConfirmationModal({ order, money, onClose }) {
                     setShowMap(!showMap);
                   }}
                   style={{
-                    cursor: "pointer",
-                    width: "100%",
-                    justifyContent: "center",
-                    marginTop: "12px",
+                    cursor: 'pointer',
+                    width: '100%',
+                    justifyContent: 'center',
+                    marginTop: '12px',
                   }}
                 >
-                  <MapPin size={16} />{" "}
-                  {showMap ? "Sakrij mapu" : "Prikaži lokaciju na mapi"}
+                  <MapPin size={16} />{' '}
+                  {showMap ? 'Sakrij mapu' : 'Prikaži lokaciju na mapi'}
                 </button>
                 <AnimatePresence>
                   {showMap && (
@@ -157,7 +186,7 @@ function OrderConfirmationModal({ order, money, onClose }) {
                       animate={{ opacity: 1, height: 250, marginTop: 12 }}
                       exit={{ opacity: 0, height: 0, marginTop: 0 }}
                       className="map-container rounded-xl overflow-hidden"
-                      style={{ position: "relative", width: "100%" }}
+                      style={{ position: 'relative', width: '100%' }}
                     >
                       <iframe
                         className="map-iframe"
@@ -179,7 +208,7 @@ function OrderConfirmationModal({ order, money, onClose }) {
                   {order.customer.name} {order.customer.surname}
                 </p>
                 <p>
-                  {order.customer.address}, {order.customer.city}{" "}
+                  {order.customer.address}, {order.customer.city}{' '}
                   {order.customer.postalCode}
                 </p>
               </>
@@ -209,61 +238,97 @@ export default function Checkout() {
 
   const addressInputRef = useRef(null);
   const emailInputRef = useRef(null);
+  const countryDropdownRef = useRef(null);
 
   const [mapsReady, setMapsReady] = useState(false);
   const [emailSuggestions, setEmailSuggestions] = useState([]);
   const [showEmailSuggestions, setShowEmailSuggestions] = useState(false);
-  const [payMethod, setPayMethod] = useState("cod");
-  const [shippingMethod, setShippingMethod] = useState("courier");
+  const [prediction, setPrediction] = useState('');
+
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+
+  const [payMethod, setPayMethod] = useState('cod');
+  const [shippingMethod, setShippingMethod] = useState('courier');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [orderData, setOrderData] = useState(null);
 
-  // STATE ZA REGISTRACIJU
+  const [submitCount, setSubmitCount] = useState(0);
   const [showRegPopover, setShowRegPopover] = useState(false);
   const [createAccount, setCreateAccount] = useState(false);
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState('');
   const [popoverDismissed, setPopoverDismissed] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
 
   const { formData, errors, handleChange, handleBlur, validateAll } =
     useFormValidator({
-      name: "",
-      surname: "",
-      email: "",
-      phone: "",
-      address: "",
-      city: "",
-      postalCode: "",
+      name: '',
+      surname: '',
+      email: '',
+      phone: '',
+      address: '',
+      city: '',
+      postalCode: '',
     });
 
   const FREE_SHIPPING_LIMIT = 8000;
   const COURIER_COST = 380;
   const isFreeShipping = total >= FREE_SHIPPING_LIMIT;
   const finalShipping =
-    shippingMethod === "pickup" ? 0 : isFreeShipping ? 0 : COURIER_COST;
+    shippingMethod === 'pickup' ? 0 : isFreeShipping ? 0 : COURIER_COST;
   const finalTotal = total + finalShipping;
-  const requiredForCourier = shippingMethod === "courier";
+  const requiredForCourier = shippingMethod === 'courier';
 
-  // --- NOVO: FIX ZA SKROLOVANJE (LENIS REFRESH) ---
-  // Ovo osigurava da se dužina stranice ponovo izračuna kada se otvore/zatvore sekcije
+  const currentCountry = useMemo(() => {
+    const val = formData.phone;
+    if (!val) return COUNTRY_CODES.find((c) => c.code === 'RS');
+    const found = COUNTRY_CODES.find((c) => val.startsWith(c.dial));
+    if (found) return found;
+    return COUNTRY_CODES.find((c) => c.code === 'RS');
+  }, [formData.phone]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        emailInputRef.current &&
+        !emailInputRef.current.contains(e.target) &&
+        !e.target.closest('.email-dropdown')
+      ) {
+        setShowEmailSuggestions(false);
+      }
+      if (
+        countryDropdownRef.current &&
+        !countryDropdownRef.current.contains(e.target)
+      ) {
+        setIsCountryDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   useEffect(() => {
     const t = setTimeout(() => {
-      window.dispatchEvent(new Event("resize"));
-    }, 400); // Čeka da se animacija završi (0.3s) pa triggeruje resize
+      window.dispatchEvent(new Event('resize'));
+    }, 400);
     return () => clearTimeout(t);
-  }, [shippingMethod, createAccount, showRegPopover]);
+  }, [
+    shippingMethod,
+    createAccount,
+    showRegPopover,
+    isCountryDropdownOpen,
+    errors,
+  ]);
 
   useEffect(() => {
-    if (shippingMethod === "pickup") {
-      handleChange({ target: { name: "address", value: "" } });
-      handleChange({ target: { name: "city", value: "" } });
-      handleChange({ target: { name: "postalCode", value: "" } });
+    if (shippingMethod === 'pickup') {
+      handleChange({ target: { name: 'address', value: '' } });
+      handleChange({ target: { name: 'city', value: '' } });
+      handleChange({ target: { name: 'postalCode', value: '' } });
     }
   }, [shippingMethod]);
 
-  // --- GOOGLE PLACES ---
   useEffect(() => {
-    if (shippingMethod === "pickup") return; // Ne inicijalizuj ako je pickup
+    if (shippingMethod === 'pickup') return;
 
     let autocomplete = null;
     let checkInterval = null;
@@ -274,32 +339,32 @@ export default function Checkout() {
         autocomplete = new window.google.maps.places.Autocomplete(
           addressInputRef.current,
           {
-            componentRestrictions: { country: "rs" },
-            fields: ["address_components", "formatted_address"],
-            types: ["address"],
+            componentRestrictions: { country: 'rs' },
+            fields: ['address_components', 'formatted_address'],
+            types: ['address'],
           }
         );
-        autocomplete.addListener("place_changed", () => {
+        autocomplete.addListener('place_changed', () => {
           const place = autocomplete.getPlace();
           if (!place.address_components) return;
-          let street = "",
-            number = "",
-            city = "",
-            zip = "";
+          let street = '',
+            number = '',
+            city = '',
+            zip = '';
           place.address_components.forEach((comp) => {
             const types = comp.types;
-            if (types.includes("route")) street = comp.long_name;
-            if (types.includes("street_number")) number = comp.long_name;
-            if (types.includes("locality")) city = comp.long_name;
-            if (!city && types.includes("administrative_area_level_2"))
+            if (types.includes('route')) street = comp.long_name;
+            if (types.includes('street_number')) number = comp.long_name;
+            if (types.includes('locality')) city = comp.long_name;
+            if (!city && types.includes('administrative_area_level_2'))
               city = comp.long_name;
-            if (types.includes("postal_code")) zip = comp.long_name;
+            if (types.includes('postal_code')) zip = comp.long_name;
           });
           const fullAddress = number ? `${street} ${number}` : street;
           if (fullAddress)
-            handleChange({ target: { name: "address", value: fullAddress } });
-          if (city) handleChange({ target: { name: "city", value: city } });
-          if (zip) handleChange({ target: { name: "postalCode", value: zip } });
+            handleChange({ target: { name: 'address', value: fullAddress } });
+          if (city) handleChange({ target: { name: 'city', value: city } });
+          if (zip) handleChange({ target: { name: 'postalCode', value: zip } });
         });
         setMapsReady(true);
         return true;
@@ -319,23 +384,28 @@ export default function Checkout() {
       if (checkInterval) clearInterval(checkInterval);
       if (autocomplete)
         window.google.maps.event.clearInstanceListeners(autocomplete);
-      const pacs = document.querySelectorAll(".pac-container");
+      const pacs = document.querySelectorAll('.pac-container');
       pacs.forEach((el) => el.remove());
     };
-  }, [shippingMethod]); // Ponovno pokretanje kad se vrati na kurira
+  }, [shippingMethod]);
 
-  // --- EMAIL INPUT LOGIKA ---
   const handleEmailInput = (e) => {
     handleChange(e);
     const val = e.target.value;
-
     if (!val) {
       setShowEmailSuggestions(false);
+      setPrediction('');
       return;
     }
-    if (val.includes("@")) {
-      const [prefix, suffix] = val.split("@");
-      if (!suffix && suffix !== "") {
+    let newPrediction = '';
+    if (val.includes('@')) {
+      const [prefix, suffix] = val.split('@');
+      if (suffix !== undefined) {
+        const match = POPULAR_DOMAINS.find((d) => d.startsWith(suffix));
+        if (match && match !== suffix)
+          newPrediction = match.slice(suffix.length);
+      }
+      if (!suffix && suffix !== '') {
         const suggestions = POPULAR_DOMAINS.map((d) => `${prefix}@${d}`);
         setEmailSuggestions(suggestions);
         setShowEmailSuggestions(true);
@@ -358,55 +428,87 @@ export default function Checkout() {
         setShowEmailSuggestions(false);
       }
     }
-
-    // TRIGGER POPOUT
+    setPrediction(newPrediction);
     if (
       !user &&
       !popoverDismissed &&
       !createAccount &&
       val.length > 6 &&
-      val.includes("@")
+      val.includes('@')
     ) {
       setShowRegPopover(true);
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Tab' && prediction) {
+      e.preventDefault();
+      const fullEmail = formData.email + prediction;
+      const event = { target: { name: 'email', value: fullEmail } };
+      handleChange(event);
+      setPrediction('');
+      setShowEmailSuggestions(false);
+    }
+  };
+
   const selectEmail = (email) => {
-    handleChange({ target: { name: "email", value: email } });
+    handleChange({ target: { name: 'email', value: email } });
     setShowEmailSuggestions(false);
+    setPrediction('');
     emailInputRef.current?.focus();
     if (!user && !popoverDismissed && !createAccount) setShowRegPopover(true);
   };
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (
-        emailInputRef.current &&
-        !emailInputRef.current.contains(e.target) &&
-        !e.target.closest(".email-dropdown")
-      ) {
-        setShowEmailSuggestions(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const moveCursorToEnd = (el) => {
+    setTimeout(() => {
+      const len = el.value.length;
+      el.setSelectionRange(len, len);
+    }, 0);
+  };
 
-  // --- AKCIJE REGISTRACIJE ---
+  const handlePhoneFocus = (e) => {
+    moveCursorToEnd(e.target);
+  };
+
+  const handlePhoneChange = (e) => {
+    const val = e.target.value;
+    handleChange({ target: { name: 'phone', value: val } });
+  };
+
+  const handleCountrySelect = (country) => {
+    let raw = formData.phone.replace(/\s/g, '');
+    let localPart = raw;
+    if (currentCountry && raw.startsWith(currentCountry.dial)) {
+      localPart = raw.substring(currentCountry.dial.length);
+    } else if (raw.startsWith('0')) {
+      localPart = raw.substring(1);
+    }
+    localPart = localPart.replace(/^0+/, '');
+    const newValue = `${country.dial} ${localPart}`;
+    handleChange({ target: { name: 'phone', value: newValue } });
+    setIsCountryDropdownOpen(false);
+    const inputEl = document.querySelector('input[name="phone"]');
+    if (inputEl) {
+      inputEl.focus();
+      setTimeout(() => {
+        inputEl.setSelectionRange(newValue.length, newValue.length);
+      }, 10);
+    }
+  };
+
   const handleConfirmReg = async () => {
     if (!formData.name.trim() || !formData.surname.trim()) {
-      flash("Nedostaju podaci", "Unesite ime i prezime iznad.", "error");
+      flash('Nedostaju podaci', 'Unesite ime i prezime iznad.', 'error');
       return;
     }
     if (!formData.email && !formData.phone) {
-      flash("Nedostaju podaci", "Unesite email.", "error");
+      flash('Nedostaju podaci', 'Unesite email.', 'error');
       return;
     }
     if (password.length < 6) {
-      flash("Greška", "Lozinka mora imati min. 6 karaktera", "error");
+      flash('Greška', 'Lozinka mora imati min. 6 karaktera', 'error');
       return;
     }
-
     setIsRegistering(true);
     try {
       await register({
@@ -414,14 +516,14 @@ export default function Checkout() {
         password: password,
         name: `${formData.name} ${formData.surname}`,
       });
-      flash("Uspeh", "Nalog je kreiran.", "success");
+      flash('Uspeh', 'Nalog je kreiran.', 'success');
       setShowRegPopover(false);
-      setPassword("");
+      setPassword('');
     } catch (err) {
-      console.error("Reg failed", err);
-      let msg = "Došlo je do greške.";
-      if (err.code === "auth/email-already-in-use") msg = "Email je zauzet.";
-      flash("Greška", msg, "error");
+      console.error('Reg failed', err);
+      let msg = 'Došlo je do greške.';
+      if (err.code === 'auth/email-already-in-use') msg = 'Email je zauzet.';
+      flash('Greška', msg, 'error');
     } finally {
       setIsRegistering(false);
     }
@@ -430,18 +532,14 @@ export default function Checkout() {
   const handleDismissReg = () => {
     setShowRegPopover(false);
     setPopoverDismissed(true);
-    setPassword("");
+    setPassword('');
   };
 
-  // --- PLACE ORDER ---
   const handlePlaceOrder = async () => {
-    if (shippingMethod === "pickup") {
-      errors.address = null;
-      errors.city = null;
-      errors.postalCode = null;
-    }
+    const fieldsToSkip =
+      shippingMethod === 'pickup' ? ['address', 'city', 'postalCode'] : [];
 
-    if (validateAll()) {
+    if (validateAll(fieldsToSkip)) {
       if (createAccount && !user && password) {
         try {
           await register({
@@ -453,8 +551,7 @@ export default function Checkout() {
           /* ignore */
         }
       }
-
-      const orderId = "DAJA-" + Date.now().toString().slice(-6);
+      const orderId = 'DAJA-' + Date.now().toString().slice(-6);
       const orderSummary = {
         id: orderId,
         customer: formData,
@@ -463,38 +560,42 @@ export default function Checkout() {
         shippingCost: finalShipping,
         shippingMethod: shippingMethod,
         finalTotal: finalTotal,
-        date: new Date().toLocaleDateString("sr-RS"),
+        date: new Date().toLocaleDateString('sr-RS'),
       };
       setOrderData(orderSummary);
       setShowSuccessModal(true);
-      dispatch({ type: "CLEAR" });
+      dispatch({ type: 'CLEAR' });
     } else {
-      alert("Popunite obavezna polja.");
+      setSubmitCount((prev) => prev + 1);
+      setTimeout(() => {
+        const firstError = document.querySelector('.input-error');
+        if (firstError) {
+          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
     }
   };
 
   const preventFormSubmit = (e) => e.preventDefault();
-  const getInputClass = (n) => (errors[n] ? "input-error" : "");
+  const getInputClass = (n) => (errors[n] ? 'input-error' : '');
 
   return (
     <div className="container checkout-page">
       <h1 className="checkout-title">Naplata i Isporuka</h1>
-
       <form className="checkout-layout" onSubmit={preventFormSubmit} noValidate>
         <div className="checkout-left">
           <section
             className={`checkout-section card glass ${
-              showSuccessModal ? "z-high" : ""
+              showSuccessModal ? 'z-high' : ''
             }`}
           >
             <div className="section-header">
               <div className="step-badge">1</div>
               <h2>Podaci za isporuku</h2>
             </div>
-
             <div className="form-grid">
               <div className="input-wrapper-col">
-                <div className={`input-group ${getInputClass("name")}`}>
+                <div className={`input-group ${getInputClass('name')}`}>
                   <User className="input-icon" size={18} />
                   <input
                     type="text"
@@ -506,12 +607,17 @@ export default function Checkout() {
                     required
                   />
                 </div>
-                {errors.name && (
-                  <span className="error-msg">{errors.name}</span>
-                )}
+                <AnimatePresence mode="wait">
+                  {errors.name && (
+                    <ErrorMessage
+                      key={`err-name-${submitCount}`}
+                      message={errors.name}
+                    />
+                  )}
+                </AnimatePresence>
               </div>
               <div className="input-wrapper-col">
-                <div className={`input-group ${getInputClass("surname")}`}>
+                <div className={`input-group ${getInputClass('surname')}`}>
                   <User className="input-icon" size={18} />
                   <input
                     type="text"
@@ -523,17 +629,36 @@ export default function Checkout() {
                     required
                   />
                 </div>
-                {errors.surname && (
-                  <span className="error-msg">{errors.surname}</span>
-                )}
+                <AnimatePresence mode="wait">
+                  {errors.surname && (
+                    <ErrorMessage
+                      key={`err-surname-${submitCount}`}
+                      message={errors.surname}
+                    />
+                  )}
+                </AnimatePresence>
               </div>
-
-              {/* EMAIL */}
               <div
                 className={`input-wrapper-col full-width relative-wrapper email-input-container`}
               >
-                <div className={`input-group ${getInputClass("email")}`}>
-                  <Mail className="input-icon" size={18} />
+                <div
+                  className={`input-group ghost-container ${getInputClass(
+                    'email'
+                  )}`}
+                >
+                  <div
+                    className="ghost-overlay"
+                    style={{ paddingLeft: '42px' }}
+                  >
+                    <span className="invisible-text">{formData.email}</span>
+                    <span className="prediction-text">{prediction}</span>
+                    {prediction && (
+                      <span className="tab-hint-inline">
+                        <ArrowRightToLine size={10} /> Tab
+                      </span>
+                    )}
+                  </div>
+                  <Mail className="input-icon z-index-fix" size={18} />
                   <input
                     ref={emailInputRef}
                     type="email"
@@ -541,17 +666,13 @@ export default function Checkout() {
                     placeholder="E-mail adresa"
                     value={formData.email}
                     onChange={handleEmailInput}
+                    onKeyDown={handleKeyDown}
                     onBlur={handleBlur}
                     required
-                    autoComplete="off"
+                    autoComplete="email"
+                    className="real-input"
                   />
-
-                  {(createAccount || user) && (
-                    <div className="account-ready-badge">
-                      <Check size={14} /> Nalog aktivan
-                    </div>
-                  )}
-
+                  {/* --- UKLONJENO: Nalog aktivan badž --- */}
                   {showEmailSuggestions && (
                     <ul className="email-dropdown">
                       {emailSuggestions.map((s) => (
@@ -562,54 +683,132 @@ export default function Checkout() {
                             selectEmail(s);
                           }}
                         >
-                          {s.split("@")[0]}
-                          <span className="domain">@{s.split("@")[1]}</span>
+                          {s.split('@')[0]}
+                          <span className="domain">@{s.split('@')[1]}</span>
                         </li>
                       ))}
                     </ul>
                   )}
                 </div>
-                {errors.email && (
-                  <span className="error-msg">{errors.email}</span>
-                )}
+                <AnimatePresence mode="wait">
+                  {errors.email && (
+                    <ErrorMessage
+                      key={`err-email-${submitCount}`}
+                      message={errors.email}
+                    />
+                  )}
+                </AnimatePresence>
               </div>
-
-              {/* TELEFON */}
               <div className="input-wrapper-col full-width">
-                <div className={`input-group ${getInputClass("phone")}`}>
-                  <Phone className="input-icon" size={18} />
+                <div
+                  className={`input-group ghost-container ${getInputClass(
+                    'phone'
+                  )}`}
+                >
+                  <div
+                    className="flag-trigger-wrapper z-index-fix"
+                    ref={countryDropdownRef}
+                    style={{ left: '6px' }}
+                  >
+                    <button
+                      type="button"
+                      className="flag-btn"
+                      onClick={() =>
+                        setIsCountryDropdownOpen(!isCountryDropdownOpen)
+                      }
+                    >
+                      <img
+                        src={getFlagUrl(currentCountry?.code || 'RS')}
+                        alt={currentCountry?.code}
+                        className="w-5 h-auto rounded-[2px]"
+                      />
+                      <ChevronDown
+                        size={12}
+                        className={`transition-transform ${
+                          isCountryDropdownOpen ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+                    <AnimatePresence>
+                      {isCountryDropdownOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 5 }}
+                          className="flag-dropdown country-dropdown-scroll"
+                          data-lenis-prevent
+                        >
+                          {COUNTRY_CODES.map((country) => (
+                            <button
+                              key={country.code}
+                              type="button"
+                              className="flag-item"
+                              onClick={() => handleCountrySelect(country)}
+                            >
+                              <img
+                                src={getFlagUrl(country.code)}
+                                alt={country.code}
+                                className="w-5"
+                              />
+                              <div className="flag-text">
+                                <span className="font-bold text-gray-900">
+                                  {country.label}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  {country.dial}
+                                </span>
+                              </div>
+                              {currentCountry?.code === country.code && (
+                                <Check
+                                  size={14}
+                                  className="text-green-600 ml-auto"
+                                />
+                              )}
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                   <input
                     type="tel"
                     name="phone"
-                    placeholder="Telefon (npr. 064...)"
+                    placeholder="Telefon"
                     value={formData.phone}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
+                    onChange={handlePhoneChange}
+                    onFocus={handlePhoneFocus}
+                    onClick={handlePhoneFocus}
                     required
+                    className="real-input"
+                    style={{ paddingLeft: '75px' }}
                   />
                 </div>
-                {errors.phone && (
-                  <span className="error-msg">{errors.phone}</span>
-                )}
+                <AnimatePresence mode="wait">
+                  {errors.phone && (
+                    <ErrorMessage
+                      key={`err-phone-${submitCount}`}
+                      message={errors.phone}
+                    />
+                  )}
+                </AnimatePresence>
               </div>
-
               <AnimatePresence>
                 {requiredForCourier && (
                   <motion.div
                     className="full-width form-grid"
                     initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
+                    animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.25 }}
-                    style={{ gridColumn: "1 / -1", overflow: "hidden" }}
+                    style={{ gridColumn: '1 / -1', overflow: 'hidden' }}
                   >
                     <div className="input-wrapper-col full-width">
                       <div
-                        className={`input-group ${getInputClass("address")}`}
+                        className={`input-group ${getInputClass('address')}`}
                       >
                         <MapPin
                           className={`input-icon ${
-                            !mapsReady ? "opacity-50" : ""
+                            !mapsReady ? 'opacity-50' : ''
                           }`}
                           size={18}
                         />
@@ -619,8 +818,8 @@ export default function Checkout() {
                           name="address"
                           placeholder={
                             mapsReady
-                              ? "Počnite da kucate ulicu..."
-                              : "Učitavanje mape..."
+                              ? 'Počnite da kucate ulicu...'
+                              : 'Učitavanje mape...'
                           }
                           value={formData.address}
                           onChange={handleChange}
@@ -630,7 +829,7 @@ export default function Checkout() {
                           disabled={!mapsReady}
                         />
                         {!mapsReady && (
-                          <div style={{ position: "absolute", right: 12 }}>
+                          <div style={{ position: 'absolute', right: 12 }}>
                             <Loader2
                               size={18}
                               className="animate-spin text-muted"
@@ -638,26 +837,40 @@ export default function Checkout() {
                           </div>
                         )}
                       </div>
-                      {errors.address && (
-                        <span className="error-msg">{errors.address}</span>
-                      )}
+                      <AnimatePresence mode="wait">
+                        {errors.address && (
+                          <ErrorMessage
+                            key={`err-address-${submitCount}`}
+                            message={errors.address}
+                          />
+                        )}
+                      </AnimatePresence>
                     </div>
                     <div className="input-wrapper-col">
-                      <div className="input-group">
+                      <div className={`input-group ${getInputClass('city')}`}>
                         <input
                           type="text"
                           name="city"
                           placeholder="Grad"
                           value={formData.city}
                           onChange={handleChange}
+                          onBlur={handleBlur}
                           required={requiredForCourier}
                           className="pl-4"
                         />
                       </div>
+                      <AnimatePresence mode="wait">
+                        {errors.city && (
+                          <ErrorMessage
+                            key={`err-city-${submitCount}`}
+                            message={errors.city}
+                          />
+                        )}
+                      </AnimatePresence>
                     </div>
                     <div className="input-wrapper-col">
                       <div
-                        className={`input-group ${getInputClass("postalCode")}`}
+                        className={`input-group ${getInputClass('postalCode')}`}
                       >
                         <input
                           type="text"
@@ -670,24 +883,27 @@ export default function Checkout() {
                           className="pl-4"
                         />
                       </div>
-                      {errors.postalCode && (
-                        <span className="error-msg">{errors.postalCode}</span>
-                      )}
+                      <AnimatePresence mode="wait">
+                        {errors.postalCode && (
+                          <ErrorMessage
+                            key={`err-postalCode-${submitCount}`}
+                            message={errors.postalCode}
+                          />
+                        )}
+                      </AnimatePresence>
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
-
-              {/* --- REGISTRACIJA POPOUT --- */}
               <AnimatePresence>
                 {showRegPopover && !user && (
                   <motion.div
                     className="reg-popover full-width"
-                    style={{ gridColumn: "1 / -1" }}
+                    style={{ gridColumn: '1 / -1' }}
                     initial={{ opacity: 0, y: 10, height: 0 }}
-                    animate={{ opacity: 1, y: 0, height: "auto" }}
+                    animate={{ opacity: 1, y: 0, height: 'auto' }}
                     exit={{ opacity: 0, y: 10, height: 0 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
                   >
                     <div className="reg-popover-header">
                       <div>
@@ -708,12 +924,11 @@ export default function Checkout() {
                         <X size={18} />
                       </button>
                     </div>
-
                     <div className="input-group" style={{ marginBottom: 0 }}>
                       <Lock
                         className="input-icon"
                         size={16}
-                        style={{ color: "var(--primary)" }}
+                        style={{ color: 'var(--primary)' }}
                       />
                       <input
                         type="password"
@@ -721,10 +936,8 @@ export default function Checkout() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         autoComplete="new-password"
-                        // bez autofokusa
                       />
                     </div>
-
                     <button
                       type="button"
                       className="reg-confirm-btn"
@@ -734,7 +947,7 @@ export default function Checkout() {
                       {isRegistering ? (
                         <Loader2 className="animate-spin" size={18} />
                       ) : (
-                        "Potvrdi i Registruj se"
+                        'Potvrdi i Registruj se'
                       )}
                       {!isRegistering && <ArrowRight size={16} />}
                     </button>
@@ -743,7 +956,6 @@ export default function Checkout() {
               </AnimatePresence>
             </div>
           </section>
-
           <section className="checkout-section card glass">
             <div className="section-header">
               <div className="step-badge">2</div>
@@ -752,9 +964,9 @@ export default function Checkout() {
             <div className="shipping-options">
               <label
                 className={`radio-card ${
-                  shippingMethod === "courier" ? "selected" : ""
+                  shippingMethod === 'courier' ? 'selected' : ''
                 }`}
-                onClick={() => setShippingMethod("courier")}
+                onClick={() => setShippingMethod('courier')}
               >
                 <div className="radio-info">
                   <Truck size={20} className="text-primary" />
@@ -764,13 +976,13 @@ export default function Checkout() {
                     </span>
                     <span className="radio-desc">
                       {isFreeShipping
-                        ? "Iznad 8.000 RSD besplatno"
+                        ? 'Iznad 8.000 RSD besplatno'
                         : `Cena: ${money(COURIER_COST)}`}
                     </span>
                   </div>
                 </div>
                 <div className="radio-price">
-                  {finalShipping === 0 && shippingMethod === "courier" ? (
+                  {finalShipping === 0 && shippingMethod === 'courier' ? (
                     <span className="text-success">Besplatna</span>
                   ) : (
                     <span>{money(COURIER_COST)}</span>
@@ -780,7 +992,7 @@ export default function Checkout() {
                   type="radio"
                   name="shipping"
                   value="courier"
-                  checked={shippingMethod === "courier"}
+                  checked={shippingMethod === 'courier'}
                   hidden
                 />
                 <div className="radio-check">
@@ -789,9 +1001,9 @@ export default function Checkout() {
               </label>
               <label
                 className={`radio-card ${
-                  shippingMethod === "pickup" ? "selected" : ""
+                  shippingMethod === 'pickup' ? 'selected' : ''
                 }`}
-                onClick={() => setShippingMethod("pickup")}
+                onClick={() => setShippingMethod('pickup')}
               >
                 <div className="radio-info">
                   <MapPin size={20} className="text-primary" />
@@ -811,7 +1023,7 @@ export default function Checkout() {
                   type="radio"
                   name="shipping"
                   value="pickup"
-                  checked={shippingMethod === "pickup"}
+                  checked={shippingMethod === 'pickup'}
                   hidden
                 />
                 <div className="radio-check">
@@ -820,34 +1032,34 @@ export default function Checkout() {
               </label>
             </div>
           </section>
-
           <AnimatePresence>
-            {shippingMethod === "pickup" && (
+            {shippingMethod === 'pickup' && (
               <motion.section
                 className="checkout-section card glass pickup-details"
                 initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
+                animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3 }}
-                style={{ overflow: "hidden", padding: 0 }}
+                style={{ overflow: 'hidden', padding: 0 }}
               >
-                <div style={{ padding: "24px" }}>
+                <div style={{ padding: '24px' }}>
                   <h3>Lokacija prodavnice:</h3>
-                  <div className="location-box" style={{ marginTop: "12px" }}>
+                  <div className="location-box" style={{ marginTop: '12px' }}>
                     <p
                       style={{
-                        marginBottom: "4px",
-                        fontWeight: "700",
-                        color: "var(--text)",
+                        marginBottom: '4px',
+                        fontWeight: '700',
+                        color: 'var(--text)',
                       }}
                     >
                       Daja Shop Niš
                     </p>
-                    <p style={{ color: "var(--muted)", fontSize: "0.9rem" }}>
+                    <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>
                       TPC Gorča lokal C31, Obrenovićeva bb, Medijana
                     </p>
                   </div>
                 </div>
+                {/* --- EMBEDDED MAPA --- */}
                 <div className="map-container">
                   <iframe
                     className="map-iframe"
@@ -863,7 +1075,6 @@ export default function Checkout() {
               </motion.section>
             )}
           </AnimatePresence>
-
           <section className="checkout-section card glass">
             <div className="section-header">
               <div className="step-badge">3</div>
@@ -872,7 +1083,7 @@ export default function Checkout() {
             <div className="payment-options">
               <label
                 className={`radio-card ${
-                  payMethod === "cod" ? "selected" : ""
+                  payMethod === 'cod' ? 'selected' : ''
                 }`}
               >
                 <div className="radio-info">
@@ -888,8 +1099,8 @@ export default function Checkout() {
                   type="radio"
                   name="payment"
                   value="cod"
-                  checked={payMethod === "cod"}
-                  onChange={() => setPayMethod("cod")}
+                  checked={payMethod === 'cod'}
+                  onChange={() => setPayMethod('cod')}
                   hidden
                 />
                 <div className="radio-check">
@@ -899,7 +1110,6 @@ export default function Checkout() {
             </div>
           </section>
         </div>
-
         <div className="checkout-right">
           <div className="summary-card card glass">
             <h2>Pregled porudžbine</h2>
@@ -935,7 +1145,6 @@ export default function Checkout() {
           </div>
         </div>
       </form>
-
       <AnimatePresence>
         {showSuccessModal && orderData && (
           <OrderConfirmationModal

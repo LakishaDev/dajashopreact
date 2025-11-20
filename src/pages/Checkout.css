@@ -21,8 +21,8 @@
 .checkout-section {
   padding: 24px;
   margin-bottom: 20px;
-  background: rgba(255,255,255,0.02); /* Malo tamnije od surface */
-  
+  background: rgba(255, 255, 255, 0.02); /* Malo tamnije od surface */
+
   /* FIX: Stacking context - mora biti relativan i vidljiv */
   position: relative;
   z-index: 1;
@@ -48,12 +48,14 @@
 }
 
 .step-badge {
-  width: 28px; height: 28px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--primary);
   color: var(--on-primary);
   font-weight: 800;
-  display: grid; place-items: center;
+  display: grid;
+  place-items: center;
   font-size: 0.9rem;
 }
 
@@ -98,7 +100,7 @@
   font-size: 1rem;
   font-weight: 500;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  
+
   /* DEFAULT PADDING (za polja bez ikonice, npr. Grad) */
   padding: 0 16px;
 }
@@ -136,8 +138,8 @@
   justify-content: space-between;
   padding: 16px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
   cursor: pointer;
   transition: all 0.2s ease;
   margin-bottom: 12px;
@@ -146,7 +148,7 @@
 }
 
 .radio-card:hover {
-  background: rgba(255,255,255,0.04);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .radio-card.selected {
@@ -178,14 +180,21 @@
   font-weight: 700;
   margin-right: 12px;
 }
-.text-success { color: #4ade80; font-weight: 700; }
-.text-primary { color: var(--primary); }
+.text-success {
+  color: #4ade80;
+  font-weight: 700;
+}
+.text-primary {
+  color: var(--primary);
+}
 
 .radio-check {
-  width: 20px; height: 20px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   border: 2px solid var(--muted);
-  display: grid; place-items: center;
+  display: grid;
+  place-items: center;
   color: transparent;
   transition: all 0.2s;
 }
@@ -247,15 +256,17 @@
   border-radius: 12px;
   transition: transform 0.1s;
 }
-.checkout-btn:active { transform: scale(0.98); }
+.checkout-btn:active {
+  transform: scale(0.98);
+}
 
 .secure-badge {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 8px;
+  color: #40a840;
   font-size: 0.85rem;
-  color: "#40a840";
   opacity: 0.8;
 }
 
@@ -282,7 +293,9 @@
   .radio-info {
     gap: 10px;
   }
-  .radio-title { font-size: 0.95rem; }
+  .radio-title {
+    font-size: 0.95rem;
+  }
 }
 
 /* =========================================
@@ -323,13 +336,25 @@
 }
 
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.8); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* =========================================
@@ -342,7 +367,7 @@
 
 /* Podizanje wrappera da bude iznad inputa ispod */
 .relative-wrapper.z-50 {
-  z-index: 100; 
+  z-index: 100;
 }
 
 /* Dropdown Stil */
@@ -351,9 +376,9 @@
   top: 100%;
   left: 0;
   width: 100%; /* Sada prati širinu input-group-a */
-  
-  z-index: 1000; 
-  
+
+  z-index: 1000;
+
   margin-top: 6px;
   background: var(--color-surface, #151923);
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -362,7 +387,7 @@
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  
+
   list-style: none;
   padding: 4px;
   max-height: 220px;
@@ -401,10 +426,10 @@
   background-color: #151923;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
   font-family: inherit;
   margin-top: 6px;
-  z-index: 2000; 
+  z-index: 2000;
 }
 .pac-item {
   border-top: none;
@@ -412,24 +437,34 @@
   cursor: pointer;
   color: #ececec;
 }
-.pac-item:hover { background-color: rgba(255, 255, 255, 0.1); }
-.pac-item-query { color: #fff; font-weight: 700; }
-.pac-item span { color: #9ca3af; }
-.pac-logo:after { filter: invert(1) opacity(0.5); margin: 8px 12px; }
+.pac-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.pac-item-query {
+  color: #fff;
+  font-weight: 700;
+}
+.pac-item span {
+  color: #9ca3af;
+}
+.pac-logo:after {
+  filter: invert(1) opacity(0.5);
+  margin: 8px 12px;
+}
 /* ... (postojeći kod za Checkout.css) ... */
 
 /* === FIX ZA PREKLAPANJE SEKCIJA (Z-INDEX FIX) === */
 
 /* Osnovno stanje za sve sekcije - mora biti relative */
 .checkout-section {
-  position: relative; 
-  z-index: 1; 
-  overflow: visible !important; 
+  position: relative;
+  z-index: 1;
+  overflow: visible !important;
 }
 
 /* Kada je dropdown otvoren, dižemo celu sekciju iznad sledeće */
 .checkout-section.z-high {
-  z-index: 50 !important; 
+  z-index: 50 !important;
 }
 
 /* Email wrapper mora biti relativan i imati viši z-index unutar forme */
@@ -439,33 +474,33 @@
 
 /* Podizanje wrappera da bude iznad inputa ispod */
 .relative-wrapper.z-50 {
-  z-index: 100; 
+  z-index: 100;
 }
 
 /* --- ORDER CONFIRMATION MODAL --- */
 
 .order-overlay {
-  position: fixed; 
-  inset: 0; 
+  position: fixed;
+  inset: 0;
   z-index: 9999; /* Mora biti najviši */
-  background: rgba(0,0,0,0.5); 
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  display: grid; 
+  display: grid;
   place-items: center;
   padding: 16px;
 }
 
 .order-card {
-  width: 100%; 
-  max-width: 600px; 
-  padding: 30px; 
+  width: 100%;
+  max-width: 600px;
+  padding: 30px;
   position: relative;
   border-radius: 20px;
-  max-height: 90vh;       /* Maksimalna visina 90% ekrana */
-  overflow-y: auto;       /* Vertikalni skrol po potrebi */
-  scrollbar-width: thin;  /* Tanji scrollbar za lepši izgled */
-  display: flex;          /* Pomaže u rasporedu */
+  max-height: 90vh; /* Maksimalna visina 90% ekrana */
+  overflow-y: auto; /* Vertikalni skrol po potrebi */
+  scrollbar-width: thin; /* Tanji scrollbar za lepši izgled */
+  display: flex; /* Pomaže u rasporedu */
   flex-direction: column;
 }
 .order-card::-webkit-scrollbar {
@@ -479,28 +514,28 @@
   border-radius: 20px;
 }
 .order-header {
-    text-align: center;
-    margin-bottom: 24px;
+  text-align: center;
+  margin-bottom: 24px;
 }
 
 .text-success-ico {
-    color: #4ade80; 
-    margin-inline: auto;
-    margin-bottom: 8px;
-    font-weight: 800;
+  color: #4ade80;
+  margin-inline: auto;
+  margin-bottom: 8px;
+  font-weight: 800;
 }
 
 .order-header h2 {
-    font-size: 1.8rem;
-    font-weight: 800;
-    margin: 0 0 8px;
-    color: var(--text);
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin: 0 0 8px;
+  color: var(--text);
 }
 
 .order-lead {
-    font-size: 1rem;
-    color: var(--muted);
-    line-height: 1.5;
+  font-size: 1rem;
+  color: var(--muted);
+  line-height: 1.5;
 }
 /* ... (Sav postojeći CSS) ... */
 
@@ -520,186 +555,186 @@
   padding: 8px 12px;
   border-radius: 8px;
   /* Koristimo dark/glass stilove */
-  background: rgba(255, 255, 255, 0.08); 
-  color: var(--color-primary, #C8A94E); 
-  border: 1px solid var(--color-primary, #C8A94E);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-primary, #c8a94e);
+  border: 1px solid var(--color-primary, #c8a94e);
   margin-top: 10px;
   font-weight: 700;
   font-size: 0.9rem;
   transition: background 0.2s, color 0.2s, transform 0.1s;
 }
 .btn-map-receipt:hover {
-  background: var(--color-primary, #C8A94E);
+  background: var(--color-primary, #c8a94e);
   color: var(--color-bg); /* Obrnuti kontrast */
   transform: translateY(-1px);
 }
 
 .order-overlay {
-  position: fixed; 
-  inset: 0; 
+  position: fixed;
+  inset: 0;
   z-index: 9999;
-  background: rgba(0,0,0,0.5); 
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  display: grid; 
+  display: grid;
   place-items: center;
   padding: 16px;
 }
 
 .order-card {
-  width: 100%; 
-  max-width: 600px; 
-  padding: 30px; 
+  width: 100%;
+  max-width: 600px;
+  padding: 30px;
   position: relative;
   border-radius: 20px;
 }
 
 .order-header {
-    text-align: center;
-    margin-bottom: 24px;
+  text-align: center;
+  margin-bottom: 24px;
 }
 
 .text-success-ico {
-    color: #4ade80; 
-    margin-inline: auto;
-    margin-bottom: 8px;
-    font-weight: 800;
+  color: #4ade80;
+  margin-inline: auto;
+  margin-bottom: 8px;
+  font-weight: 800;
 }
 
 .order-header h2 {
-    font-size: 1.8rem;
-    font-weight: 800;
-    margin: 0 0 8px;
-    color: var(--text);
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin: 0 0 8px;
+  color: var(--text);
 }
 
 .order-lead {
-    font-size: 1rem;
-    color: var(--muted);
-    line-height: 1.5;
+  font-size: 1rem;
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 /* --- RECEIPT DETAILS --- */
 
 .receipt-details {
-    padding: 24px;
-    border-radius: 16px;
-    background: rgba(255,255,255,0.04);
-    border: 1px dashed rgba(255,255,255,0.1);
+  padding: 24px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
 }
 
 .details-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-top: 0;
-    margin-bottom: 16px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .item-list {
-    display: grid;
-    gap: 12px;
-    margin-bottom: 20px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: grid;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .item-row {
-    display: grid;
-    grid-template-columns: 2fr auto 1fr;
-    gap: 10px;
-    align-items: baseline;
-    font-size: 0.95rem;
+  display: grid;
+  grid-template-columns: 2fr auto 1fr;
+  gap: 10px;
+  align-items: baseline;
+  font-size: 0.95rem;
 }
 
 .item-name {
-    font-weight: 600;
-    color: var(--text);
+  font-weight: 600;
+  color: var(--text);
 }
 
 .item-qty {
-    color: var(--muted);
-    font-size: 0.85rem;
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
 .item-price {
-    font-weight: 700;
-    justify-self: end;
+  font-weight: 700;
+  justify-self: end;
 }
 
 /* Summary */
 .summary-section {
-    display: grid;
-    gap: 8px;
+  display: grid;
+  gap: 8px;
 }
 
 .summary-section .summary-row {
-    font-size: 1rem;
+  font-size: 1rem;
 }
 
 .summary-section .summary-row.total {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--primary);
-    margin-top: 8px;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--primary);
+  margin-top: 8px;
 }
 
 .summary-section .hr {
-    height: 1px;
-    background: rgba(255,255,255,0.15);
-    margin: 10px 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 10px 0;
 }
 
 /* Delivery Info */
 .delivery-info {
-    margin-top: 20px;
-    padding-top: 16px;
-    border-top: 1px dashed rgba(255,255,255,0.1);
-    color: var(--muted);
-    font-size: 0.9rem;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .delivery-info h4 {
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--text);
-    margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 8px;
 }
 
 .delivery-info p {
-    margin: 4px 0;
+  margin: 4px 0;
 }
 
 /* Actions */
 .order-actions {
-    margin-top: 30px;
-    text-align: center;
+  margin-top: 30px;
+  text-align: center;
 }
 
 .order-actions .checkout-btn {
-    display: inline-flex;
-    gap: 10px;
-    align-items: center;
-    padding: 14px 24px;
-    font-size: 1rem;
-    border-radius: 12px;
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  padding: 14px 24px;
+  font-size: 1rem;
+  border-radius: 12px;
 }
 
 /* Mobile Adjustments */
 @media (max-width: 520px) {
-    .order-card {
-        padding: 20px;
-    }
-    .order-header h2 {
-        font-size: 1.4rem;
-    }
-    .receipt-details {
-        padding: 16px;
-    }
-    .summary-section .summary-row.total {
-        font-size: 1.3rem;
-    }
+  .order-card {
+    padding: 20px;
+  }
+  .order-header h2 {
+    font-size: 1.4rem;
+  }
+  .receipt-details {
+    padding: 16px;
+  }
+  .summary-section .summary-row.total {
+    font-size: 1.3rem;
+  }
 }
 /* ... (Sav postojeći CSS iz prethodnih koraka) ... */
 
@@ -707,19 +742,19 @@
 
 /* Kontejner za responzivni iframe (4:3 aspect ratio) */
 .map-container {
-    position: relative;
-    width: 100%;
-    padding-top: 75%; /* 4:3 Aspect Ratio (3 / 4 * 100) */
-    background: var(--color-bg);
+  position: relative;
+  width: 100%;
+  padding-top: 75%; /* 4:3 Aspect Ratio (3 / 4 * 100) */
+  background: var(--color-bg);
 }
 .map-container iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: none; 
-    border-top: 1px solid rgba(255, 255, 255, 0.1); /* Separator od teksta adrese */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1); /* Separator od teksta adrese */
 }
 
 /* Uklanjamo stil starog linka/dugmeta koji je sada nepotreban, 
@@ -734,17 +769,17 @@
   position: relative;
   width: 100%;
   margin-top: 24px; /* Odvaja ga od forme */
-  
+
   /* Tamna pozadina koja se ističe na staklu */
-  background: #18181b; 
+  background: #18181b;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
   padding: 20px;
-  
+
   /* Jaka senka da izgleda kao da lebdi iznad */
   box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
   z-index: 10;
-  
+
   /* Animacija ulaska */
   transform-origin: top left;
   animation: popin 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -754,18 +789,18 @@
 .reg-popover::before {
   content: "";
   position: absolute;
-  top: -8px;       /* Izađe malo iznad */
-  left: 32px;      /* Poravnato sa inputima */
+  top: -8px; /* Izađe malo iznad */
+  left: 32px; /* Poravnato sa inputima */
   width: 16px;
   height: 16px;
-  
+
   /* Mora biti iste boje kao pozadina popovera */
-  background: #18181b; 
-  
+  background: #18181b;
+
   /* Iste ivice kao popover */
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   border-left: 1px solid rgba(255, 255, 255, 0.12);
-  
+
   /* Rotacija da napravi trougao */
   transform: rotate(45deg);
 }
@@ -806,14 +841,14 @@
   display: grid;
   place-items: center;
 }
-.reg-close-btn:hover { 
+.reg-close-btn:hover {
   background: rgba(255, 255, 255, 0.15);
-  color: #fff; 
+  color: #fff;
 }
 
 /* Input za lozinku */
 .reg-popover input {
-  background: rgba(0,0,0,0.3) !important;
+  background: rgba(0, 0, 0, 0.3) !important;
   border-color: rgba(255, 255, 255, 0.15) !important;
   color: #fff !important;
   font-size: 0.95rem;
@@ -824,7 +859,7 @@
 }
 .reg-popover input:focus {
   border-color: var(--primary) !important;
-  background: rgba(0,0,0,0.5) !important;
+  background: rgba(0, 0, 0, 0.5) !important;
   box-shadow: 0 0 0 2px rgba(200, 169, 78, 0.2);
 }
 
@@ -846,12 +881,22 @@
   gap: 8px;
   transition: transform 0.1s, filter 0.2s;
 }
-.reg-confirm-btn:hover { filter: brightness(1.1); }
-.reg-confirm-btn:active { transform: scale(0.98); }
+.reg-confirm-btn:hover {
+  filter: brightness(1.1);
+}
+.reg-confirm-btn:active {
+  transform: scale(0.98);
+}
 
 @keyframes popin {
-  from { opacity: 0; transform: translateY(10px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* Bedž "Nalog" u email polju */
@@ -871,4 +916,97 @@
   border-radius: 6px;
   pointer-events: none;
   border: 1px solid rgba(74, 222, 128, 0.2);
+}
+/* --- ERROR STYLES --- */
+
+/* Stil za Input grupu kada ima grešku */
+.input-group.input-error {
+  border-color: #ef4444 !important; /* Jaka crvena boja */
+  box-shadow: 0 0 0 1px #ef4444 !important; /* Crveni glow efekat */
+  border-radius: 12px !important; /* Dodat border radius kako si tražio */
+  background-color: rgba(254, 242, 242, 0.5); /* Blago crvena pozadina */
+}
+
+/* Ikonica unutar inputa postaje crvena */
+.input-group.input-error .input-icon {
+  color: #ef4444 !important;
+}
+
+/* Tekst unutar inputa */
+.input-group.input-error input {
+  color: #b91c1c; /* Tamnije crvena za tekst koji kucaš */
+}
+
+/* Poruka greške (Popout) - Osiguravamo da je crvena */
+.custom-error-popout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #dc2626 !important; /* Jaka crvena slova */
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  overflow: hidden;
+  margin-top: 6px;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.15);
+}
+
+.custom-error-popout span {
+  color: #dc2626 !important;
+}
+
+.error-icon-pop {
+  color: #dc2626 !important;
+}
+
+/* Animacija trzanja (Shake) ako želiš da dodaš */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+.input-group.input-error {
+  animation: shake 0.3s ease-in-out;
+}
+/* --- FIX ZA DROPDOWN I Z-INDEX --- */
+
+.flag-dropdown {
+  /* Osigurava da je dropdown iznad svega ostalog u toj sekciji */
+  z-index: 9999 !important;
+}
+
+/* Pomaže Lenis-u da razume skrolovanje unutar dropdowna */
+.country-dropdown-scroll {
+  overscroll-behavior: contain;
+}
+
+/* REŠENJE ZA PREKLAPANJE KARTICA (Z-Index Context) */
+
+/* Sve sekcije moraju imati relative position da bi z-index radio */
+.checkout-section {
+  position: relative;
+}
+
+/* Prva kartica (Info) mora biti IZNAD druge (Isporuka) da dropdown ne bi otišao ispod */
+.checkout-left .checkout-section:nth-of-type(1) {
+  z-index: 20;
+}
+
+.checkout-left .checkout-section:nth-of-type(2) {
+  z-index: 10;
+}
+
+.checkout-left .checkout-section:nth-of-type(3) {
+  z-index: 5;
 }
