@@ -856,6 +856,26 @@ export default function AuthModal() {
                                 <Facebook size={18} />
                                 <span>Facebook</span>
                               </button>
+                              <button
+                                type="button"
+                                className="btn-oauth"
+                                onClick={handlePasskey}
+                                style={{
+                                  width: '100%',
+                                  justifyContent: 'center',
+                                  gap: '10px',
+                                }}
+                              >
+                                <Fingerprint
+                                  size={20}
+                                  className="text-primary"
+                                />
+                                <span>
+                                  {isLogin
+                                    ? 'Prijavi se Passkey-om'
+                                    : 'Registruj se Passkey-om'}
+                                </span>
+                              </button>
                             </div>
                           </form>
                         ) : pendingEmailVerify && !loginPane ? (
