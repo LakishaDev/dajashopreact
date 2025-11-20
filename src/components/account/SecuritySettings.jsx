@@ -1,16 +1,17 @@
 // src/components/account/SecuritySettings.jsx
+import { useState } from 'react'; // ⬅️ Dodali smo useState za lokalni loading
 import { useAuth } from '../../hooks/useAuth';
-import { usePasskey } from '../../hooks/usePasskey';
 import { GoogleAuthProvider, linkWithPopup } from 'firebase/auth';
 
 const SecuritySettings = () => {
-  const { user } = useAuth();
-  const { registerPasskey, loading: passkeyLoading } = usePasskey();
+  const { user, linkPasskey } = useAuth(); // ⬅️ Uzimamo linkPasskey iz Context-a
+  const [isPasskeyLoading, setIsPasskeyLoading] = useState(false); // Lokalni state za dugme
 
   // Logika za povezivanje Google-a
   const handleGoogleLink = async () => {
     const provider = new GoogleAuthProvider();
     try {
+      if (!user) throw new Error('Morate biti ulogovani.');
       await linkWithPopup(user, provider);
       alert('Google nalog uspešno povezan!');
     } catch (err) {
@@ -19,13 +20,24 @@ const SecuritySettings = () => {
     }
   };
 
-  // Logika za dodavanje Passkey-a
+  // Logika za dodavanje Passkey-a (NOVA METODA)
   const handleAddPasskey = async () => {
+    setIsPasskeyLoading(true);
     try {
-      const success = await registerPasskey();
-      if (success) alert('✅ Uspešno! Vaš otisak prsta je sada povezan.');
+      // Biblioteka traži ime za ključ.
+      // Koristimo ime korisnika, email ili generičko ime.
+      const passkeyName =
+        user.displayName || user.email || 'Moj DajaShop Ključ';
+
+      await linkPasskey(passkeyName);
+
+      alert('✅ Uspešno! Vaš otisak prsta/FaceID je povezan sa nalogom.');
     } catch (err) {
+      console.error(err);
+      // Često greška bude "OperationError" ako korisnik otkaže, pa možemo lepše ispisati
       alert('❌ Greška: ' + err.message);
+    } finally {
+      setIsPasskeyLoading(false);
     }
   };
 
@@ -95,14 +107,14 @@ const SecuritySettings = () => {
 
         <button
           onClick={handleAddPasskey}
-          disabled={passkeyLoading}
+          disabled={isPasskeyLoading}
           className={`px-4 py-2 rounded-lg text-white text-sm transition-all shadow-sm ${
-            passkeyLoading
+            isPasskeyLoading
               ? 'bg-gray-400 cursor-not-allowed'
               : 'bg-black hover:bg-gray-800'
           }`}
         >
-          {passkeyLoading ? 'Procesiranje...' : 'Dodaj Passkey +'}
+          {isPasskeyLoading ? 'Procesiranje...' : 'Dodaj Passkey +'}
         </button>
       </div>
     </div>

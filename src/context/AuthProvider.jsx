@@ -23,6 +23,7 @@ import { functions } from '../services/firebase';
 import {
   createUserWithPasskey,
   signInWithPasskey,
+  linkWithPasskey,
 } from '@firebase-web-authn/browser';
 
 // Constants moved outside component to avoid recreation
@@ -206,6 +207,26 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  // 2. NOVA FUNKCIJA ZA POVEZIVANJE PASSKEY-a
+  const linkPasskey = useCallback(async (passkeyName) => {
+    try {
+      if (!auth.currentUser) {
+        throw new Error('Morate biti ulogovani da biste dodali Passkey.');
+      }
+
+      // Koristimo "first" faktor kako bi passkey mogao da se koristi
+      // za potpunu prijavu (bez lozinke), kao zamena za password.
+      // Argumenti: auth, functions, ImeKljuča, "first"
+      await linkWithPasskey(auth, functions, passkeyName, 'first');
+
+      console.log('Passkey uspešno povezan!');
+      return 'success';
+    } catch (error) {
+      console.error('Link Passkey error:', error);
+      throw error;
+    }
+  }, []);
+
   const value = useMemo(
     () => ({
       user,
@@ -224,6 +245,7 @@ export function AuthProvider({ children }) {
       logout,
       passkeyLogin,
       passkeyRegister,
+      linkPasskey,
     }),
     [
       user,
@@ -237,6 +259,7 @@ export function AuthProvider({ children }) {
       register,
       passkeyLogin,
       passkeyRegister,
+      linkPasskey,
     ]
   );
 
