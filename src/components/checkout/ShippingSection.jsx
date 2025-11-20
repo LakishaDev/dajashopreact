@@ -1,0 +1,140 @@
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Truck, MapPin, CheckCircle2 } from 'lucide-react';
+
+// Prosleđujemo URL mape kao prop ili konstantu ako je potrebno
+const MAP_API_KEY = 'AIzaSyCwDMD-56pwnAqgEDqNCT8uMxFy_mPbAe0';
+const SHOP_ADDRESS_QUERY = 'Daja Shop, TPC Gorca lokal C31, Nis, Srbija';
+const MAP_EMBED_URL = `https://www.google.com/maps/embed/v1/place?key=${MAP_API_KEY}&q=${encodeURIComponent(
+  SHOP_ADDRESS_QUERY
+)}`;
+
+export default function ShippingSection({
+  shippingMethod,
+  setShippingMethod,
+  isFreeShipping,
+  COURIER_COST,
+  money,
+  finalShipping,
+}) {
+  return (
+    <>
+      <section className="checkout-section card glass">
+        <div className="section-header">
+          <div className="step-badge">2</div>
+          <h2>Način isporuke</h2>
+        </div>
+        <div className="shipping-options">
+          <label
+            className={`radio-card ${
+              shippingMethod === 'courier' ? 'selected' : ''
+            }`}
+            onClick={() => setShippingMethod('courier')}
+          >
+            <div className="radio-info">
+              <Truck size={20} className="text-primary" />
+              <div>
+                <span className="radio-title">Isporuka kurirskom službom</span>
+                <span className="radio-desc">
+                  {isFreeShipping
+                    ? 'Iznad 8.000 RSD besplatno'
+                    : `Cena: ${money(COURIER_COST)}`}
+                </span>
+              </div>
+            </div>
+            <div className="radio-price">
+              {finalShipping === 0 && shippingMethod === 'courier' ? (
+                <span className="text-success">Besplatna</span>
+              ) : (
+                <span>{money(COURIER_COST)}</span>
+              )}
+            </div>
+            <input
+              type="radio"
+              name="shipping"
+              value="courier"
+              checked={shippingMethod === 'courier'}
+              hidden
+              readOnly
+            />
+            <div className="radio-check">
+              <CheckCircle2 size={16} />
+            </div>
+          </label>
+          <label
+            className={`radio-card ${
+              shippingMethod === 'pickup' ? 'selected' : ''
+            }`}
+            onClick={() => setShippingMethod('pickup')}
+          >
+            <div className="radio-info">
+              <MapPin size={20} className="text-primary" />
+              <div>
+                <span className="radio-title">Preuzimanje u prodavnici</span>
+                <span className="radio-desc">
+                  Niš, TPC Gorča lokal C31 (Uvek besplatno)
+                </span>
+              </div>
+            </div>
+            <div className="radio-price">
+              <span className="text-success">Besplatna</span>
+            </div>
+            <input
+              type="radio"
+              name="shipping"
+              value="pickup"
+              checked={shippingMethod === 'pickup'}
+              hidden
+              readOnly
+            />
+            <div className="radio-check">
+              <CheckCircle2 size={16} />
+            </div>
+          </label>
+        </div>
+      </section>
+      <AnimatePresence>
+        {shippingMethod === 'pickup' && (
+          <motion.section
+            className="checkout-section card glass pickup-details"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            style={{ overflow: 'hidden', padding: 0 }}
+          >
+            <div style={{ padding: '24px' }}>
+              <h3>Lokacija prodavnice:</h3>
+              <div className="location-box" style={{ marginTop: '12px' }}>
+                <p
+                  style={{
+                    marginBottom: '4px',
+                    fontWeight: '700',
+                    color: 'var(--text)',
+                  }}
+                >
+                  Daja Shop Niš
+                </p>
+                <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>
+                  TPC Gorča lokal C31, Obrenovićeva bb, Medijana
+                </p>
+              </div>
+            </div>
+            <div className="map-container">
+              <iframe
+                className="map-iframe"
+                title="Daja Shop Lokacija"
+                width="100%"
+                height="100%"
+                loading="lazy"
+                allowFullScreen
+                referrerPolicy="no-referrer-when-downgrade"
+                src={MAP_EMBED_URL}
+              ></iframe>
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
