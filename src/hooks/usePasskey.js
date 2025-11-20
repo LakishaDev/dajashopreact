@@ -19,7 +19,7 @@ export const usePasskey = () => {
       const token = await user.getIdToken();
       // A) Tražimo izazov (Challenge) od servera preko PROXY-ja
       const respStart = await fetch(
-        'https://europe-west1-daja-shop-site.cloudfunctions.net/ext-firebase-web-authn-api/register-challenge',
+        '/firebase-web-authn-api/register-challenge',
         {
           method: 'POST',
           headers: {
@@ -67,7 +67,7 @@ export const usePasskey = () => {
 
       // E) Verifikacija na serveru
       const respVerify = await fetch(
-        'https://europe-west1-daja-shop-site.cloudfunctions.net/ext-firebase-web-authn-api/register-verify',
+        '/firebase-web-authn-api/register-verify',
         {
           method: 'POST',
           headers: {

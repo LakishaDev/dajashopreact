@@ -6,7 +6,7 @@ import {
   FacebookAuthProvider,
   RecaptchaVerifier,
 } from 'firebase/auth';
-import { getFunctions } from 'firebase/functions';
+import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
@@ -29,6 +29,10 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const functions = getFunctions(app, 'europe-west1');
+
+// Custom domain za Functions (ako koristiš Firebase Hosting rewrites)
+functions.customDomain = 'https://dajashop.pages.dev';
+connectFunctionsEmulator(functions, 'localhost', 5173); // lokalni emulator (ako koristiš)
 
 // ---- App Check (reCAPTCHA v3) ----
 // Debug token samo u DEV okruženju:
