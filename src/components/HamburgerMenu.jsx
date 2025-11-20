@@ -164,6 +164,10 @@ function DesktopDropdown({ open, onClose, count, user, anchorEl, showAuth }) {
             <DDItem to="/catalog" label="Prodavnica" onClose={onClose} />
             <DDItem to="/usluge" label="Usluge" onClose={onClose} />
 
+            {/* NOVO: Dodati Kontakt i Pomoć (FAQ) linkovi */}
+            <DDItem to="/contact" label="Kontakt" onClose={onClose} />
+            <DDItem to="/faq" label="Pomoć / FAQ" onClose={onClose} />
+
             {isAdmin && (
               <DDItem to="/admin" label="Admin Panel" onClose={onClose} />
             )}
@@ -384,7 +388,8 @@ function MobileSheet({ open, onClose, user, showAuth }) {
                   <HelpCircle size={16} /> Pomoć
                 </Link>
 
-                <Link to="/about" className="hm__f-btn" onClick={onClose}>
+                {/* IZMENJENO: Lokacija sada vodi na Contact */}
+                <Link to="/contact" className="hm__f-btn" onClick={onClose}>
                   <MapPin size={16} /> Lokacija
                 </Link>
               </div>

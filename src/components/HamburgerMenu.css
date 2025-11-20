@@ -232,14 +232,16 @@
   content: "";
   position: absolute;
   top: -7px;
-  left: auto;
-  right: 18px;
+  left: var(--arrow-x, 50%);
+  right: auto;
+  transform: translateX(-50%) rotate(45deg);
   width: 12px;
   height: 12px;
   background: var(--color-surface, #fff);
   border-left: 1px solid var(--color-border, #e5e7eb);
   border-top: 1px solid var(--color-border, #e5e7eb);
-  transform: rotate(45deg);
+  border-top-left-radius: 2px;
+  pointer-events: none;
 }
 
 .hm__ddNav {
@@ -332,20 +334,20 @@
 }
 
 /* ==============================
-   FOOTER UNUTAR MENIJA
+   FOOTER UNUTAR MENIJA (Vraćeno na original + smanjen gap)
    ============================== */
 .hm__footer {
   margin-top: auto;
   background: color-mix(in oklab, var(--color-surface, #fff) 95%, #000);
   border-top: 1px solid var(--color-border, #e5e7eb);
-  padding: 16px;
+  padding: 12px 16px; /* Smanjen gornji/donji padding za kompaktnost */
   display: grid;
-  gap: 16px;
+  gap: 8px; /* Smanjen gap između info i bottom sekcije */
 }
 
 .hm__f-info {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr; /* Originalni layout 2x2 */
   gap: 8px;
 }
 .hm__f-info .hm__f-btn:last-child {
@@ -353,11 +355,10 @@
 }
 
 .hm__f-btn {
-  display: flex; /* Flexbox za kontrolu sadržaja */
-  width: 100%; /* Širina 100% roditeljskog elementa (grid ćelije) */
-  justify-content: center; /* Centrira sadržaj horizontalno */
-  align-items: center; /* Centrira sadržaj vertikalno */
-
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
   gap: 8px;
   padding: 10px;
   border-radius: 10px;
@@ -367,8 +368,6 @@
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 600;
-
-  /* Optimizovane tranzicije za hover/active stanja */
   transition: background 0.2s ease, transform 0.1s ease, border-color 0.2s ease;
 }
 
@@ -381,7 +380,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 12px;
+  padding-top: 8px; /* Smanjen padding top za kompaktnost */
   border-top: 1px dashed var(--color-border, #e5e7eb);
 }
 
@@ -395,15 +394,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-
-  width: 40px; /* Ista veličina kao X dugme */
+  width: 40px;
   height: 40px;
-  border-radius: 50%; /* Ista forma */
-
-  background: #f3f4f6; /* Ista boja */
+  border-radius: 50%;
+  background: #f3f4f6;
   border: none;
   color: var(--color-text, #111);
-
   transition: all 0.2s ease;
 }
 .hm__f-socials a:active {
