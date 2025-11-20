@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
+// src/components/AuthModal.jsx
+import React, { useEffect, useMemo, useState, useRef } from "react";
 // eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -10,12 +11,21 @@ import {
   X,
   Facebook,
   Smartphone,
-  AtSign,
   ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth.js";
 import "./AuthModal.css";
 import FlashModal from "./modals/FlashModal.jsx";
+
+// Konstante za auto-suggest
+const POPULAR_DOMAINS = [
+  "gmail.com",
+  "yahoo.com",
+  "hotmail.com",
+  "outlook.com",
+  "icloud.com",
+  "yahoo.co.uk",
+];
 
 export default function AuthModal() {
   const {
@@ -32,6 +42,11 @@ export default function AuthModal() {
   } = useAuth();
   const isLogin = mode === "login";
 
+  // Ref za input polje
+  const inputRef = useRef(null); 
+  // Ref za polje za lozinku
+  const passwordInputRef = useRef(null); 
+
   // slider tab
   function go(next) {
     setMode(next);
@@ -44,9 +59,14 @@ export default function AuthModal() {
   const [loading, setLoading] = useState(false);
   const [awaitPhoneCode, setAwaitPhoneCode] = useState(false);
   const [smsCode, setSmsCode] = useState("");
-  const [sentTo, setSentTo] = useState(""); // prikaz broja u info traci
+  const [sentTo, setSentTo] = useState(""); 
 
-  // flash success modal
+  // State za auto-suggest i predikciju
+  const [emailSuggestions, setEmailSuggestions] = useState([]);
+  const [showEmailSuggestions, setShowEmailSuggestions] = useState(false);
+  const [predictedSuffix, setPredictedSuffix] = useState(''); 
+
+  // flash state
   const [flashOpen, setFlashOpen] = useState(false);
   const [flashTitle, setFlashTitle] = useState("");
   const [flashSub, setFlashSub] = useState("");
@@ -72,6 +92,7 @@ export default function AuthModal() {
     setSmsCode("");
     setAwaitPhoneCode(false);
     setSentTo("");
+    setPredictedSuffix('');
   }, [mode]);
 
   const isPhone = idType === "phone";
@@ -82,6 +103,88 @@ export default function AuthModal() {
     setFlashSub(sub);
     setFlashOpen(true);
   }
+  
+  // FIKSIRAN HANDLER za auto-suggest i predikciju
+  const handleIdentityInput = (e) => {
+    const val = e.target.value;
+    setIdentity(val);
+    setPredictedSuffix(''); 
+    setShowEmailSuggestions(false); 
+
+    if (val.length === 0 || detectIdentity(val).type === "phone") {
+        return;
+    }
+
+    const atIndex = val.indexOf('@');
+    
+    // Predikcija se aktivira SAMO ako je uneto nešto posle @
+    const isPredictionActive = atIndex !== -1 && val.length > atIndex + 1; 
+
+    if (isPredictionActive) {
+        // SCENARIO 1: Prediction Mode (e.g., 'm@g')
+        
+        setShowEmailSuggestions(false); // <--- ISKLJUČI LISTU
+        
+        const currentDomainPrefix = val.substring(atIndex + 1);
+        const domainMatch = POPULAR_DOMAINS.find(d => d.startsWith(currentDomainPrefix));
+        
+        if (domainMatch && domainMatch !== currentDomainPrefix) {
+            // Predikcija je samo ostatak domena
+            setPredictedSuffix(domainMatch.substring(currentDomainPrefix.length));
+        }
+        
+    } else {
+        // SCENARIO 2: Dropdown Mode (e.g., 'm', 'm@')
+        
+        // UKLJUČI LISTU ako ima unetih karaktera (radi i za 'm@')
+        if (val.length > 0) {
+           setShowEmailSuggestions(true);
+        }
+
+        setPredictedSuffix(''); // <--- STROGO ISKLJUČI PREDICIJU
+        
+        const currentPrefix = atIndex === -1 ? val : val.substring(0, atIndex);
+        const currentDomainPrefix = atIndex === -1 ? '' : val.substring(atIndex + 1);
+        
+        // Ažuriraj listu za dropdown
+        const suggestions = POPULAR_DOMAINS.filter(d => d.startsWith(currentDomainPrefix)).map((d) => `${currentPrefix}@${d}`);
+        setEmailSuggestions(suggestions);
+    }
+  };
+
+
+  const selectEmail = (email) => {
+    setIdentity(email);
+    setPredictedSuffix('');
+    setShowEmailSuggestions(false);
+    inputRef.current?.focus();
+  };
+  
+  // NOVO: TAB Completion Handler
+  const handleKeyDown = (e) => {
+      if (e.key === 'Tab' && predictedSuffix.length > 0) {
+          e.preventDefault();
+          const fullPrediction = identity + predictedSuffix;
+          setIdentity(fullPrediction);
+          setPredictedSuffix(''); 
+          setShowEmailSuggestions(false);
+          
+          // PREBACIVANJE FOKUSA: Dva taba u jednom!
+          passwordInputRef.current?.focus(); 
+      }
+  }
+
+  // Zadržavanje sugerisanog stanja pri blur/focus
+  const handleInputBlur = () => {
+    setTimeout(() => setShowEmailSuggestions(false), 150);
+    setPredictedSuffix(''); // Ukloni predikciju kad se izgubi fokus
+  };
+  const handleInputFocus = () => {
+     if(identity.length > 0) {
+        handleIdentityInput({ target: { value: identity } });
+     }
+  }
+
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -262,23 +365,72 @@ export default function AuthModal() {
                         <form className="form" onSubmit={onSubmit}>
                           <label className="field">
                             <span>Identitet</span>
-                            <div className="input">
-                              {idType === "phone" ? (
-                                <Smartphone className="ico" size={18} />
-                              ) : idType === "username" ? (
-                                <AtSign className="ico" size={18} />
-                              ) : (
-                                <Mail className="ico" size={18} />
-                              )}
-                              <input
-                                type="text"
-                                placeholder="Email / korisničko ime / +3816…"
-                                value={identity}
-                                onChange={(e) =>
-                                  setIdentity(e.target.value.trim())
-                                }
-                                required
-                              />
+                            {/* NOVO: Wrapper za auto-suggest */}
+                            <div className="relative-wrapper z-50">
+                              <div className="input">
+                                {/* Ikona */}
+                                {idType === "phone" ? (
+                                  <Smartphone className="ico" size={18} />
+                                ) : ( 
+                                  <Mail className="ico" size={18} />
+                                )}
+                                
+                                {/* PREDICIJA: Overlay za ghost text */}
+                                <AnimatePresence>
+                                  {predictedSuffix.length > 0 && (
+                                     <motion.div 
+                                        className="prediction-hint-container"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        transition={{ duration: 0.15 }}
+                                     >
+                                        {/* NOVO: Element za merenje kucanog teksta */}
+                                        <span className="typed-text-ghost" aria-hidden="true">{identity}</span>
+                                        <span className="predicted-suffix">{predictedSuffix}</span>
+                                        <span className="tab-key-hint">Tab</span>
+                                     </motion.div>
+                                  )}
+                                </AnimatePresence>
+
+                                <input
+                                  ref={inputRef}
+                                  type="text"
+                                  placeholder="Email ili broj telefona (npr. +3816…)" 
+                                  value={identity}
+                                  onChange={handleIdentityInput} 
+                                  onBlur={handleInputBlur} 
+                                  onFocus={handleInputFocus} 
+                                  onKeyDown={handleKeyDown} 
+                                  autoComplete="off"
+                                  required
+                                />
+                              </div>
+                              {/* NOVO: Dropdown za sugestije */}
+                              <AnimatePresence>
+                                {showEmailSuggestions && emailSuggestions.length > 0 && (
+                                  <motion.ul
+                                    className="email-dropdown"
+                                    initial={{ opacity: 0, y: 5 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 5 }}
+                                    transition={{ duration: 0.15 }}
+                                  >
+                                    {emailSuggestions.map((s, index) => (
+                                      <li
+                                        key={index}
+                                        onMouseDown={(e) => {
+                                          e.preventDefault(); 
+                                          selectEmail(s);
+                                        }}
+                                      >
+                                        {s.split("@")[0]}
+                                        <span className="domain">@{s.split("@")[1]}</span>
+                                      </li>
+                                    ))}
+                                  </motion.ul>
+                                )}
+                              </AnimatePresence>
                             </div>
                           </label>
 
@@ -288,7 +440,8 @@ export default function AuthModal() {
                               <div className="input">
                                 <Lock className="ico" size={18} />
                                 <input
-                                  type={showPass ? "text" : "password"}
+                                  ref={passwordInputRef} 
+                                  type={showPass ? "text" : "password"} 
                                   placeholder="••••••••"
                                   value={password}
                                   onChange={(e) => setPassword(e.target.value)}
@@ -407,6 +560,7 @@ export default function AuthModal() {
                     <div className="pane-inner">
                       {!awaitPhoneCode && !pendingEmailVerify ? (
                         <form className="form" onSubmit={onSubmit}>
+                          {/* ✅ 1. Ime i prezime (UVEK PRVO) */}
                           <label className="field">
                             <span>Ime i prezime</span>
                             <div className="input">
@@ -421,32 +575,86 @@ export default function AuthModal() {
                             </div>
                           </label>
 
+                          {/* ✅ 2. Email ili broj telefona (Drugo polje) */}
                           <label className="field">
                             <span>Email ili broj telefona</span>
-                            <div className="input">
-                              {idType === "phone" ? (
-                                <Smartphone className="ico" size={18} />
-                              ) : (
-                                <Mail className="ico" size={18} />
-                              )}
-                              <input
-                                type="text"
-                                placeholder="ime@primer.com ili +3816…"
-                                value={identity}
-                                onChange={(e) =>
-                                  setIdentity(e.target.value.trim())
-                                }
-                                required
-                              />
+                            {/* NOVO: Wrapper za auto-suggest */}
+                            <div className="relative-wrapper z-50">
+                              <div className="input">
+                                {/* Ikona */}
+                                {idType === "phone" ? (
+                                  <Smartphone className="ico" size={18} />
+                                ) : (
+                                  <Mail className="ico" size={18} />
+                                )}
+                                
+                                {/* PREDICIJA: Overlay za ghost text */}
+                                <AnimatePresence>
+                                  {predictedSuffix.length > 0 && (
+                                     <motion.div 
+                                        className="prediction-hint-container"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        transition={{ duration: 0.15 }}
+                                     >
+                                        {/* NOVO: Element za merenje kucanog teksta */}
+                                        <span className="typed-text-ghost" aria-hidden="true">{identity}</span>
+                                        <span className="predicted-suffix">{predictedSuffix}</span>
+                                        <span className="tab-key-hint">Tab</span>
+                                     </motion.div>
+                                  )}
+                                </AnimatePresence>
+
+                                <input
+                                  ref={inputRef}
+                                  type="text"
+                                  placeholder="ime@primer.com ili broj telefona (+3816…)" 
+                                  value={identity}
+                                  onChange={handleIdentityInput} 
+                                  onBlur={handleInputBlur} 
+                                  onFocus={handleInputFocus}
+                                  onKeyDown={handleKeyDown} 
+                                  autoComplete="off"
+                                  required
+                                />
+                              </div>
+                              {/* NOVO: Dropdown za sugestije */}
+                              <AnimatePresence>
+                                {showEmailSuggestions && emailSuggestions.length > 0 && (
+                                  <motion.ul
+                                    className="email-dropdown"
+                                    initial={{ opacity: 0, y: 5 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 5 }}
+                                    transition={{ duration: 0.15 }}
+                                  >
+                                    {emailSuggestions.map((s, index) => (
+                                      <li
+                                        key={index}
+                                        onMouseDown={(e) => {
+                                          e.preventDefault(); 
+                                          selectEmail(s);
+                                        }}
+                                      >
+                                        {s.split("@")[0]}
+                                        <span className="domain">@{s.split("@")[1]}</span>
+                                      </li>
+                                    ))}
+                                  </motion.ul>
+                                )}
+                              </AnimatePresence>
                             </div>
                           </label>
 
+                          {/* ✅ 3. Lozinka (Treće polje) */}
                           {idType !== "phone" && (
                             <label className="field">
                               <span>Lozinka</span>
                               <div className="input">
                                 <Lock className="ico" size={18} />
                                 <input
+                                  ref={passwordInputRef}
                                   type={showPass ? "text" : "password"}
                                   placeholder="••••••••"
                                   value={password}
