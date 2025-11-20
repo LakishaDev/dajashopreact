@@ -17,7 +17,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useCart } from '../hooks/useCart.js';
 import { useAuth } from '../hooks/useAuth.js'; // <-- NOVO: Import useAuth
 // 👇 Nove ikonice za footer menija
-import { Phone, HelpCircle, Facebook, Instagram, MapPin } from 'lucide-react';
+import {
+  Phone,
+  HelpCircle,
+  Facebook,
+  Instagram,
+  MapPin,
+  X,
+} from 'lucide-react';
 import './HamburgerMenu.css';
 import { ADMIN_EMAILS } from '../services/firebase.js';
 
@@ -154,8 +161,8 @@ function DesktopDropdown({ open, onClose, count, user, anchorEl, showAuth }) {
         >
                    {' '}
           <nav className="hm__ddNav">
-                        <DDItem to="/about" label="O nama" onClose={onClose} />
-                       {' '}
+                        <DDItem to="/about" label="O nama" onClose={onClose} /> 
+                     {' '}
             <DDItem to="/catalog" label="Prodavnica" onClose={onClose} />
                         <DDItem to="/usluge" label="Usluge" onClose={onClose} />
                        {' '}
@@ -301,7 +308,7 @@ function MobileSheet({ open, onClose, user, showAuth }) {
                 aria-label="Zatvori meni"
                 onClick={onClose}
               >
-                                ✕              {' '}
+                <X size={24} />
               </button>
                          {' '}
             </div>
