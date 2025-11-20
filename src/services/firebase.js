@@ -31,8 +31,8 @@ export const storage = getStorage(app);
 export const functions = getFunctions(app, 'europe-west1');
 
 // Custom domain za Functions (ako koristiš Firebase Hosting rewrites)
-functions.customDomain = 'https://dajashop.pages.dev';
-connectFunctionsEmulator(functions, 'localhost', 5173); // lokalni emulator (ako koristiš)
+functions.customDomain =
+  'https://europe-west1-daja-shop-site.cloudfunctions.net';
 
 // ---- App Check (reCAPTCHA v3) ----
 // Debug token samo u DEV okruženju:
