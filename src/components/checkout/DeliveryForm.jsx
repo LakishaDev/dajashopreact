@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User,
@@ -15,9 +21,9 @@ import {
 } from 'lucide-react';
 import ErrorMessage from './ErrorMessage';
 
+// Konstante
 const getFlagUrl = (code) =>
   `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
-
 const COUNTRY_CODES = [
   { code: 'RS', dial: '+381', label: 'Srbija' },
   { code: 'ME', dial: '+382', label: 'Crna Gora' },
@@ -29,7 +35,6 @@ const COUNTRY_CODES = [
   { code: 'AT', dial: '+43', label: 'Austrija' },
   { code: 'CH', dial: '+41', label: 'Švajcarska' },
 ];
-
 const POPULAR_DOMAINS = [
   'gmail.com',
   'yahoo.com',
@@ -50,7 +55,6 @@ export default function DeliveryForm({
   shippingMethod,
   requiredForCourier,
   showSuccessModal,
-  // Props za registraciju
   password,
   setPassword,
   showRegPopover,
@@ -61,9 +65,9 @@ export default function DeliveryForm({
   popoverDismissed,
   createAccount,
 }) {
-  const addressInputRef = useRef(null);
   const emailInputRef = useRef(null);
   const countryDropdownRef = useRef(null);
+  const autocompleteInstance = useRef(null);
 
   const [mapsReady, setMapsReady] = useState(false);
   const [emailSuggestions, setEmailSuggestions] = useState([]);
@@ -79,68 +83,63 @@ export default function DeliveryForm({
     return COUNTRY_CODES.find((c) => c.code === 'RS');
   }, [formData.phone]);
 
-  // --- GOOGLE PLACES AUTOCOMPLETE ---
-  useEffect(() => {
-    if (shippingMethod === 'pickup') return;
-
-    let autocomplete = null;
-    let checkInterval = null;
-    const initGooglePlaces = () => {
-      if (!window.google || !window.google.maps || !window.google.maps.places)
-        return false;
-      if (addressInputRef.current) {
-        autocomplete = new window.google.maps.places.Autocomplete(
-          addressInputRef.current,
-          {
-            componentRestrictions: { country: 'rs' },
-            fields: ['address_components', 'formatted_address'],
-            types: ['address'],
+  // --- GOOGLE PLACES INIT (CALLBACK REF PATTERN) ---
+  // Ovo je fix za adresu
+  const onAddressInputMount = useCallback((node) => {
+    if (node) {
+      if (!window.google || !window.google.maps || !window.google.maps.places) {
+        const interval = setInterval(() => {
+          if (
+            window.google &&
+            window.google.maps &&
+            window.google.maps.places
+          ) {
+            initAutocomplete(node);
+            clearInterval(interval);
           }
-        );
-        autocomplete.addListener('place_changed', () => {
-          const place = autocomplete.getPlace();
-          if (!place.address_components) return;
-          let street = '',
-            number = '',
-            city = '',
-            zip = '';
-          place.address_components.forEach((comp) => {
-            const types = comp.types;
-            if (types.includes('route')) street = comp.long_name;
-            if (types.includes('street_number')) number = comp.long_name;
-            if (types.includes('locality')) city = comp.long_name;
-            if (!city && types.includes('administrative_area_level_2'))
-              city = comp.long_name;
-            if (types.includes('postal_code')) zip = comp.long_name;
-          });
-          const fullAddress = number ? `${street} ${number}` : street;
-          if (fullAddress)
-            handleChange({ target: { name: 'address', value: fullAddress } });
-          if (city) handleChange({ target: { name: 'city', value: city } });
-          if (zip) handleChange({ target: { name: 'postalCode', value: zip } });
-        });
-        setMapsReady(true);
-        return true;
+        }, 500);
+        return;
       }
-      return false;
-    };
-
-    if (!initGooglePlaces()) {
-      let attempts = 0;
-      checkInterval = setInterval(() => {
-        attempts++;
-        if (initGooglePlaces() || attempts > 20) clearInterval(checkInterval);
-      }, 500);
+      initAutocomplete(node);
     }
+  }, []);
 
-    return () => {
-      if (checkInterval) clearInterval(checkInterval);
-      if (autocomplete)
-        window.google.maps.event.clearInstanceListeners(autocomplete);
-      const pacs = document.querySelectorAll('.pac-container');
-      pacs.forEach((el) => el.remove());
-    };
-  }, [shippingMethod, handleChange]);
+  const initAutocomplete = (node) => {
+    if (node.classList.contains('pac-target-input')) return;
+    try {
+      const autocomplete = new window.google.maps.places.Autocomplete(node, {
+        componentRestrictions: { country: 'rs' },
+        fields: ['address_components', 'formatted_address'],
+        types: ['address'],
+      });
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (!place.address_components) return;
+        let street = '',
+          number = '',
+          city = '',
+          zip = '';
+        place.address_components.forEach((comp) => {
+          const types = comp.types;
+          if (types.includes('route')) street = comp.long_name;
+          if (types.includes('street_number')) number = comp.long_name;
+          if (types.includes('locality')) city = comp.long_name;
+          if (!city && types.includes('administrative_area_level_2'))
+            city = comp.long_name;
+          if (types.includes('postal_code')) zip = comp.long_name;
+        });
+        const fullAddress = number ? `${street} ${number}` : street;
+        if (fullAddress)
+          handleChange({ target: { name: 'address', value: fullAddress } });
+        if (city) handleChange({ target: { name: 'city', value: city } });
+        if (zip) handleChange({ target: { name: 'postalCode', value: zip } });
+      });
+      autocompleteInstance.current = autocomplete;
+      setMapsReady(true);
+    } catch (error) {
+      console.error('Google Maps Autocomplete error:', error);
+    }
+  };
 
   // --- CLICK OUTSIDE ---
   useEffect(() => {
@@ -149,15 +148,13 @@ export default function DeliveryForm({
         emailInputRef.current &&
         !emailInputRef.current.contains(e.target) &&
         !e.target.closest('.email-dropdown')
-      ) {
+      )
         setShowEmailSuggestions(false);
-      }
       if (
         countryDropdownRef.current &&
         !countryDropdownRef.current.contains(e.target)
-      ) {
+      )
         setIsCountryDropdownOpen(false);
-      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -214,7 +211,6 @@ export default function DeliveryForm({
       setShowRegPopover(true);
     }
   };
-
   const handleKeyDown = (e) => {
     if (e.key === 'Tab' && prediction) {
       e.preventDefault();
@@ -225,7 +221,6 @@ export default function DeliveryForm({
       setShowEmailSuggestions(false);
     }
   };
-
   const selectEmail = (email) => {
     handleChange({ target: { name: 'email', value: email } });
     setShowEmailSuggestions(false);
@@ -233,7 +228,6 @@ export default function DeliveryForm({
     emailInputRef.current?.focus();
     if (!user && !popoverDismissed && !createAccount) setShowRegPopover(true);
   };
-
   const handleCountrySelect = (country) => {
     let raw = formData.phone.replace(/\s/g, '');
     let localPart = raw;
@@ -254,12 +248,9 @@ export default function DeliveryForm({
       }, 10);
     }
   };
-
   const handlePhoneChange = (e) => {
-    const val = e.target.value;
-    handleChange({ target: { name: 'phone', value: val } });
+    handleChange({ target: { name: 'phone', value: e.target.value } });
   };
-
   const handlePhoneFocus = (e) => {
     const el = e.target;
     setTimeout(() => {
@@ -274,6 +265,29 @@ export default function DeliveryForm({
         showSuccessModal ? 'z-high' : ''
       }`}
     >
+      {/* Fix za z-index Google Mape (da bude iznad svega) */}
+      <style>{`
+        .pac-container {
+          background-color: #151923;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 12px;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+          font-family: inherit;
+          z-index: 99999 !important; 
+          margin-top: 6px;
+        }
+        .pac-item {
+          border-top: none;
+          padding: 10px 14px;
+          cursor: pointer;
+          color: #ececec;
+        }
+        .pac-item:hover { background-color: rgba(255, 255, 255, 0.1); }
+        .pac-item-query { color: #fff; font-weight: 700; }
+        .pac-item span { color: #9ca3af; }
+        .pac-logo:after { filter: invert(1) opacity(0.5); margin: 8px 12px; }
+      `}</style>
+
       <div className="section-header">
         <div className="step-badge">1</div>
         <h2>Podaci za isporuku</h2>
@@ -293,12 +307,7 @@ export default function DeliveryForm({
             />
           </div>
           <AnimatePresence mode="wait">
-            {errors.name && (
-              <ErrorMessage
-                key={`err-name-${submitCount}`}
-                message={errors.name}
-              />
-            )}
+            {errors.name && <ErrorMessage message={errors.name} />}
           </AnimatePresence>
         </div>
         <div className="input-wrapper-col">
@@ -315,17 +324,12 @@ export default function DeliveryForm({
             />
           </div>
           <AnimatePresence mode="wait">
-            {errors.surname && (
-              <ErrorMessage
-                key={`err-surname-${submitCount}`}
-                message={errors.surname}
-              />
-            )}
+            {errors.surname && <ErrorMessage message={errors.surname} />}
           </AnimatePresence>
         </div>
-        <div
-          className={`input-wrapper-col full-width relative-wrapper email-input-container`}
-        >
+
+        {/* EMAIL */}
+        <div className="input-wrapper-col full-width relative-wrapper email-input-container">
           <div
             className={`input-group ghost-container ${getInputClass('email')}`}
           >
@@ -370,14 +374,11 @@ export default function DeliveryForm({
             )}
           </div>
           <AnimatePresence mode="wait">
-            {errors.email && (
-              <ErrorMessage
-                key={`err-email-${submitCount}`}
-                message={errors.email}
-              />
-            )}
+            {errors.email && <ErrorMessage message={errors.email} />}
           </AnimatePresence>
         </div>
+
+        {/* TELEFON */}
         <div className="input-wrapper-col full-width">
           <div
             className={`input-group ghost-container ${getInputClass('phone')}`}
@@ -426,7 +427,7 @@ export default function DeliveryForm({
                           className="w-5"
                         />
                         <div className="flag-text">
-                          <span className="font-bold text-gray-900">
+                          <span className="font-bold text-gray-200">
                             {country.label}
                           </span>
                           <span className="text-xs text-gray-500">
@@ -434,7 +435,7 @@ export default function DeliveryForm({
                           </span>
                         </div>
                         {currentCountry?.code === country.code && (
-                          <Check size={14} className="text-success ml-auto" />
+                          <Check size={14} className="text-[#40a840] ml-auto" />
                         )}
                       </button>
                     ))}
@@ -456,14 +457,11 @@ export default function DeliveryForm({
             />
           </div>
           <AnimatePresence mode="wait">
-            {errors.phone && (
-              <ErrorMessage
-                key={`err-phone-${submitCount}`}
-                message={errors.phone}
-              />
-            )}
+            {errors.phone && <ErrorMessage message={errors.phone} />}
           </AnimatePresence>
         </div>
+
+        {/* ADRESA (Fix sa callback ref-om) */}
         <AnimatePresence>
           {requiredForCourier && (
             <motion.div
@@ -481,7 +479,7 @@ export default function DeliveryForm({
                     size={18}
                   />
                   <input
-                    ref={addressInputRef}
+                    ref={onAddressInputMount} /* FIX: Callback ref */
                     type="text"
                     name="address"
                     placeholder={
@@ -493,8 +491,7 @@ export default function DeliveryForm({
                     onChange={handleChange}
                     onBlur={handleBlur}
                     required={requiredForCourier}
-                    autoComplete="off"
-                    disabled={!mapsReady}
+                    autoComplete="new-password"
                   />
                   {!mapsReady && (
                     <div style={{ position: 'absolute', right: 12 }}>
@@ -503,12 +500,7 @@ export default function DeliveryForm({
                   )}
                 </div>
                 <AnimatePresence mode="wait">
-                  {errors.address && (
-                    <ErrorMessage
-                      key={`err-address-${submitCount}`}
-                      message={errors.address}
-                    />
-                  )}
+                  {errors.address && <ErrorMessage message={errors.address} />}
                 </AnimatePresence>
               </div>
               <div className="input-wrapper-col">
@@ -525,12 +517,7 @@ export default function DeliveryForm({
                   />
                 </div>
                 <AnimatePresence mode="wait">
-                  {errors.city && (
-                    <ErrorMessage
-                      key={`err-city-${submitCount}`}
-                      message={errors.city}
-                    />
-                  )}
+                  {errors.city && <ErrorMessage message={errors.city} />}
                 </AnimatePresence>
               </div>
               <div className="input-wrapper-col">
@@ -548,16 +535,15 @@ export default function DeliveryForm({
                 </div>
                 <AnimatePresence mode="wait">
                   {errors.postalCode && (
-                    <ErrorMessage
-                      key={`err-postalCode-${submitCount}`}
-                      message={errors.postalCode}
-                    />
+                    <ErrorMessage message={errors.postalCode} />
                   )}
                 </AnimatePresence>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* REGISTER POPOUT */}
         <AnimatePresence>
           {showRegPopover && !user && (
             <motion.div
@@ -571,8 +557,8 @@ export default function DeliveryForm({
               <div className="reg-popover-header">
                 <div>
                   <div className="reg-popover-title">
-                    <UserPlus size={18} className="text-primary mr-2" />
-                    Novi kupac? Kreirajte nalog odmah.
+                    <UserPlus size={18} className="text-primary mr-2" /> Novi
+                    kupac? Kreirajte nalog odmah.
                   </div>
                   <span className="reg-popover-desc">
                     Unesite lozinku i registrujte se za bržu kupovinu.
@@ -582,7 +568,6 @@ export default function DeliveryForm({
                   type="button"
                   className="reg-close-btn"
                   onClick={handleDismissReg}
-                  aria-label="Zatvori"
                 >
                   <X size={18} />
                 </button>
