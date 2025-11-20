@@ -28,7 +28,7 @@
 
 /* Profil */
 .profile-header { display: flex; align-items: center; gap: 20px; padding: 24px; width: 100%; }
-.profile-avatar { width: 72px; height: 72px; border-radius: 50%; background: var(--color-surface); border: 2px solid var(--color-primary); color: var(--color-primary); font-size: 28px; font-weight: 800; display: grid; place-items: center; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); flex-shrink: 0; }
+.profile-avatar { width: 72px; height: 72px; border-radius: 50%; background: var(--color-surface); border: 2px solid var(--color-primary); color: var(--color-primary); font-size: 28px; font-weight: 800; display: grid; place-items: center; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); flex-shrink: 0; position: relative; }
 .profile-info { min-width: 0; flex: 1; }
 .profile-info h2 { margin: 0 0 4px; font-size: 1.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .profile-info .muted { word-break: break-all; }
@@ -57,7 +57,7 @@
 .form-grid label { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .form-grid label.full { grid-column: 1 / -1; }
 .form-grid span { font-size: 0.85rem; font-weight: 700; color: var(--color-muted); }
-.form-grid input { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(0, 0, 0, 0.2); color: var(--color-text); font-size: 0.95rem; transition: 0.2s; }
+.form-grid input { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(0, 0, 0, 0.2); color: var(--color-text); font-size: 1rem; transition: 0.2s; }
 .form-grid input:focus { outline: none; border-color: var(--color-primary); background: rgba(0, 0, 0, 0.3); box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary), transparent 85%); }
 .input-with-icon { position: relative; width: 100%; display: flex; align-items: center; }
 .input-icon-left { position: absolute; left: 12px; color: var(--color-muted); pointer-events: none; transition: color 0.2s; z-index: 2; }
@@ -86,10 +86,22 @@
 .status-badge { font-size: 0.7rem; padding: 4px 10px; border-radius: 99px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
 .status-badge.success { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
 .status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
+
+/* NOVO: Dodatni statusi za porudžbine */
+.status-badge.shipping { background: rgba(59, 130, 246, 0.15); color: #3b82f6; border-color: rgba(59, 130, 246, 0.2); }
+.status-badge.cancelled { background: rgba(239, 68, 68, 0.15); color: #ef4444; border-color: rgba(239, 68, 68, 0.2); }
+
 .order-meta { font-size: 0.9rem; color: var(--color-muted); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .order-right { text-align: right; display: flex; align-items: center; gap: 16px; }
 .order-total { font-weight: 800; font-size: 1.15rem; color: var(--color-text); white-space: nowrap; }
 .empty-state, .loading-state, .empty-state-small { text-align: center; padding: 40px 20px; color: var(--color-muted); }
+
+/* NOVO: Wishlist Grid */
+.wishlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
 
 /* ==========================================================================
    4. SPECIJALNI STILOVI ZA DROPDOWN DRŽAVA (Scrollbar Fix)

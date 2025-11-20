@@ -95,7 +95,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1); /* Suptilniji border */
   background: rgba(0, 0, 0, 0.2); /* Tamnija, modernija pozadina */
   color: var(--text);
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 500;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   
