@@ -44,6 +44,60 @@ const POPULAR_DOMAINS = [
   'yahoo.co.uk',
 ];
 
+// ************************************************************
+// PROFESIONALNA POMOĆNA FUNKCIJA ZA DINAMIČKO UČITAVANJE (Promise-based)
+// ************************************************************
+function loadGoogleMapsScript(apiKey) {
+  return new Promise((resolve, reject) => {
+    // Proveri da li je već učitano
+    if (window.google && window.google.maps && window.google.maps.places) {
+      resolve();
+      return;
+    }
+
+    // Proveri da li se skripta već učitava
+    if (document.getElementById('google-maps-script')) {
+      // Ako se već učitava, ne radi ništa, čekaj na onload event
+      // Pošto ne možemo ovde lako da dodamo listener, oslanjamo se na initAutocomplete
+      // koji će se desiti kada se DOM i globalni objekat formiraju
+      resolve();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.type = 'text/javascript';
+    // Bitno: API ključ i libraries=places
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.id = 'google-maps-script';
+
+    // Koristimo onload event umesto globalnog callback-a
+    script.onload = () => {
+      if (window.google && window.google.maps && window.google.maps.places) {
+        resolve();
+      } else {
+        // Iako se učitalo, API ključ je možda nevažeći, pa nije definisan globalni objekat
+        reject(
+          new Error(
+            'Google Maps API učitan, ali globalni objekat nije definisan. Proverite API ključ i dozvole.'
+          )
+        );
+      }
+    };
+
+    script.onerror = () => {
+      reject(
+        new Error(
+          'Neuspešno učitavanje Google Maps skripte. Proverite konekciju.'
+        )
+      );
+    };
+
+    document.head.appendChild(script);
+  });
+}
+
 export default function DeliveryForm({
   formData,
   errors,
@@ -68,12 +122,14 @@ export default function DeliveryForm({
   const emailInputRef = useRef(null);
   const countryDropdownRef = useRef(null);
   const autocompleteInstance = useRef(null);
+  const addressInputRef = useRef(null); // Čuvamo referencu na input
 
   const [mapsReady, setMapsReady] = useState(false);
   const [emailSuggestions, setEmailSuggestions] = useState([]);
   const [showEmailSuggestions, setShowEmailSuggestions] = useState(false);
   const [prediction, setPrediction] = useState('');
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const [mapsScriptLoaded, setMapsScriptLoaded] = useState(false);
 
   const currentCountry = useMemo(() => {
     const val = formData.phone;
@@ -83,29 +139,50 @@ export default function DeliveryForm({
     return COUNTRY_CODES.find((c) => c.code === 'RS');
   }, [formData.phone]);
 
-  // --- GOOGLE PLACES INIT (CALLBACK REF PATTERN) ---
-  // Ovo je fix za adresu
-  const onAddressInputMount = useCallback((node) => {
-    if (node) {
-      if (!window.google || !window.google.maps || !window.google.maps.places) {
-        const interval = setInterval(() => {
-          if (
-            window.google &&
-            window.google.maps &&
-            window.google.maps.places
-          ) {
-            initAutocomplete(node);
-            clearInterval(interval);
-          }
-        }, 500);
-        return;
-      }
-      initAutocomplete(node);
+  // ************************************************************
+  // GLAVNI HOOK ZA UČITAVANJE SKRIPTE I INICIJALIZACIJU
+  // ************************************************************
+  useEffect(() => {
+    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
+    if (!apiKey) {
+      console.error(
+        'VITE_GOOGLE_MAPS_KEY nije definisan u .env fajlu. Autocomplete je onemogućen.'
+      );
+      setMapsReady(false);
+      return;
     }
+
+    loadGoogleMapsScript(apiKey)
+      .then(() => {
+        setMapsScriptLoaded(true);
+        // Ako je skripta učitana, inicijalizuj Autocomplete
+        if (addressInputRef.current) {
+          initAutocomplete(addressInputRef.current);
+        }
+      })
+      .catch((error) => {
+        console.error('Greška pri učitavanju Google Maps:', error.message);
+        setMapsReady(false); // Onemogući Autocomplete
+      });
   }, []);
 
+  // ************************************************************
+  // FUNKCIJA ZA INICIJALIZACIJU AUTOCMPLETE-A
+  // ************************************************************
   const initAutocomplete = (node) => {
-    if (node.classList.contains('pac-target-input')) return;
+    // Provera da li je Google Places API dostupan
+    if (!window.google || !window.google.maps || !window.google.maps.places) {
+      console.warn('Google Maps Places API nije dostupan za inicijalizaciju.');
+      return;
+    }
+
+    // Sprečavamo dvostruku inicijalizaciju
+    if (
+      node.classList.contains('pac-target-input') ||
+      autocompleteInstance.current
+    )
+      return;
+
     try {
       const autocomplete = new window.google.maps.places.Autocomplete(node, {
         componentRestrictions: { country: 'rs' },
@@ -135,9 +212,10 @@ export default function DeliveryForm({
         if (zip) handleChange({ target: { name: 'postalCode', value: zip } });
       });
       autocompleteInstance.current = autocomplete;
-      setMapsReady(true);
+      setMapsReady(true); // Signaliziraj UI-u da je Autocomplete spreman
     } catch (error) {
-      console.error('Google Maps Autocomplete error:', error);
+      console.error('Google Maps Autocomplete greška:', error);
+      setMapsReady(false);
     }
   };
 
@@ -160,7 +238,21 @@ export default function DeliveryForm({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // --- HANDLERS ---
+  // --- CALLBACK REF ZA ADDRESS INPUT ---
+  // Ova ref funkcija povezuje DOM element sa React ref-om i pokreće Autocomplete
+  const onAddressInputMount = useCallback(
+    (node) => {
+      addressInputRef.current = node; // Čuvamo referencu na input polje
+
+      // Inicijalizuj ako je skripta već učitana
+      if (mapsScriptLoaded && node) {
+        initAutocomplete(node);
+      }
+    },
+    [mapsScriptLoaded]
+  );
+
+  // --- HANDLERS (OSTATAK KODA JE NEPROMENJEN) ---
   const handleEmailInput = (e) => {
     handleChange(e);
     const val = e.target.value;
@@ -265,7 +357,7 @@ export default function DeliveryForm({
         showSuccessModal ? 'z-high' : ''
       }`}
     >
-      {/* Fix za z-index Google Mape (da bude iznad svega) */}
+      {/* Fix za z-index Google Mape (sada se učitava dinamički, ostavljamo CSS) */}
       <style>{`
         .pac-container {
           background-color: #151923;
@@ -461,7 +553,7 @@ export default function DeliveryForm({
           </AnimatePresence>
         </div>
 
-        {/* ADRESA (Fix sa callback ref-om) */}
+        {/* ADRESA (Koristi dinamičko učitavanje) */}
         <AnimatePresence>
           {requiredForCourier && (
             <motion.div
@@ -479,7 +571,7 @@ export default function DeliveryForm({
                     size={18}
                   />
                   <input
-                    ref={onAddressInputMount} /* FIX: Callback ref */
+                    ref={onAddressInputMount} /* Callback ref za init */
                     type="text"
                     name="address"
                     placeholder={

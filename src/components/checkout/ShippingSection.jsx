@@ -1,13 +1,13 @@
 import React from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Truck, MapPin, CheckCircle2 } from 'lucide-react';
 
 // Prosleđujemo URL mape kao prop ili konstantu ako je potrebno
-const MAP_API_KEY = 'AIzaSyCwDMD-56pwnAqgEDqNCT8uMxFy_mPbAe0';
 const SHOP_ADDRESS_QUERY = 'Daja Shop, TPC Gorca lokal C31, Nis, Srbija';
-const MAP_EMBED_URL = `https://www.google.com/maps/embed/v1/place?key=${MAP_API_KEY}&q=${encodeURIComponent(
-  SHOP_ADDRESS_QUERY
-)}`;
+const MAP_EMBED_URL = `https://www.google.com/maps/embed/v1/place?key=${
+  import.meta.env.VITE_GOOGLE_MAPS_KEY
+}&q=${encodeURIComponent(SHOP_ADDRESS_QUERY)}`;
 
 export default function ShippingSection({
   shippingMethod,
