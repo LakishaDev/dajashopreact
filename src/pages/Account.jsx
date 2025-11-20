@@ -1673,8 +1673,8 @@ function SecuritySection({ user }) {
           className="text-lg font-bold mb-4 flex items-center gap-2"
           style={{ marginBottom: '20px', fontSize: '1.1rem' }}
         >
-          <KeyRound size={20} className="text-[var(--color-primary)]" /> Promena
-          lozinke
+          <KeyRound size={20} className="text-[var(--color-primary)]" />{' '}
+          Autentifikacija
         </h4>
 
         <AnimatePresence mode="wait">
