@@ -1,3 +1,5 @@
+/* ===== AuthModal.css ===== */
+
 .auth-overlay {
   position: fixed;
   inset: 0;
@@ -43,7 +45,7 @@
   opacity: 0.8;
 }
 
-/* Tabs + animated pill */
+/* Tabs */
 .tabs {
   position: relative;
   display: grid;
@@ -71,6 +73,7 @@
   font-weight: 600;
   cursor: pointer;
   user-select: none;
+  font-size: 0.95rem;
 }
 .tab-label {
   position: relative;
@@ -87,7 +90,7 @@
   pointer-events: none;
 }
 
-/* OAuth row */
+/* OAuth */
 .oauth-row {
   display: grid;
   grid-auto-flow: column;
@@ -105,6 +108,7 @@
     color-mix(in oklab, var(--color-accent, #d2d2d7) 55%, transparent);
   background: var(--color-surface, #f5f5f7);
   cursor: pointer;
+  font-size: 0.9rem;
 }
 .btn-oauth span {
   font-weight: 600;
@@ -146,19 +150,23 @@
   width: min(380px, 100%);
   margin-inline: auto;
 }
+.field {
+  position: relative;
+}
 .field > span {
   display: block;
   font-size: 12px;
   color: var(--color-muted, #6e6e73);
   margin-bottom: 6px;
 }
+
+/* --- INPUT STYLES --- */
 .input {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: max-content 1fr max-content;
+  grid-template-columns: max-content 1fr max-content;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: 10px;
+  padding: 12px 14px;
   border-radius: 12px;
   background: color-mix(
     in oklab,
@@ -167,19 +175,185 @@
   );
   border: 1px solid
     color-mix(in oklab, var(--color-accent, #d2d2d7) 55%, transparent);
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+.input:focus-within {
+  border-color: var(--color-primary, #111);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
 }
 .input .ico {
   opacity: 0.8;
+  z-index: 2;
 }
+
+/* ERROR STATE */
+.input.input-error {
+  border-color: #ef4444 !important;
+  background-color: rgba(239, 68, 68, 0.05) !important;
+  box-shadow: 0 0 0 1px #ef4444 !important;
+}
+.input.input-error:focus-within {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3) !important;
+}
+.input.input-error .ico {
+  color: #ef4444;
+}
+
+/* CUSTOM ERROR POPOUT */
+.custom-error-popout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #ef4444;
+  font-size: 0.85rem;
+  font-weight: 600;
+  overflow: hidden;
+}
+.error-icon-pop {
+  flex-shrink: 0;
+  stroke-width: 2.5px;
+}
+
+/* PRAVI INPUT */
 .input input {
   border: 0;
   outline: 0;
   background: transparent;
   color: var(--color-text, #111);
+  font-family: inherit;
   font-size: 16px;
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: 1.5;
   width: 100%;
+  padding: 0;
+  position: relative;
+  z-index: 2;
+  transition: padding 0.2s;
 }
 
+/* GHOST / PREDICTION */
+.ghost-container {
+  position: relative;
+  overflow: visible;
+}
+.ghost-overlay {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 14px;
+  padding-left: 42px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  pointer-events: none;
+  z-index: 1;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: 1.5;
+  white-space: pre;
+  transition: padding 0.2s;
+}
+.invisible-text {
+  opacity: 0;
+  color: transparent;
+}
+.prediction-text {
+  color: var(--color-muted, #6e6e73);
+  opacity: 0.5;
+}
+.tab-hint-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  background: rgba(0, 0, 0, 0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* FLAG TRIGGER & DROPDOWN */
+.flag-trigger-wrapper {
+  position: absolute;
+  left: 8px; /* Malo bliže ivici */
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+}
+
+/* --- IZMENA: Veće dugme za zastavu --- */
+.flag-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px; /* Povećano sa 4px 6px */
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.8); /* Malo jača pozadina */
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.2s;
+  height: 36px; /* Fiksna visina da bude lepo klikabilno */
+}
+.flag-btn:hover {
+  background: #fff;
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* --- IZMENA: Dropdown bez horizontalnog skrola --- */
+.flag-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 260px;
+  max-height: 180px;
+  overflow-y: auto;
+  overflow-x: hidden; /* SPREČAVA HORIZONTALNI SKROL */
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  padding: 4px;
+}
+
+.flag-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+  white-space: nowrap; /* Sprečava prelom teksta */
+}
+.flag-item:hover {
+  background: #f5f5f7;
+}
+.flag-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  overflow: hidden; /* Ako je tekst predug */
+}
+
+/* Buttons */
 .btn-primary {
   display: inline-grid;
   grid-auto-flow: column;
@@ -202,7 +376,6 @@
 .w-full {
   width: 100%;
 }
-
 .verify-box {
   padding: 16px;
   border: 1px dashed
@@ -214,6 +387,64 @@
     transparent
   );
   text-align: center;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+/* AUTH DROPDOWN (EMAIL) */
+.auth-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  margin-top: 6px;
+  padding: 4px;
+  z-index: 200;
+  background: var(--color-surface, #f5f5f7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  list-style: none;
+  max-height: 180px;
+  overflow-y: auto;
+  overflow-x: hidden; /* I ovde da budemo sigurni */
+}
+.auth-dropdown li {
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--color-text, #111);
+  font-size: 0.9rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.15s;
+}
+.auth-dropdown li:hover {
+  background: var(--color-primary, #c8a94e);
+  color: var(--color-on-primary, #fff);
+}
+.auth-dropdown .domain {
+  opacity: 0.6;
+  font-size: 0.85em;
+  font-weight: 600;
+}
+.auth-dropdown li:hover .domain {
+  opacity: 0.9;
+  color: inherit;
+}
+
+.auth-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+.auth-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+.auth-dropdown::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
 }
 
 @media (max-width: 480px) {
