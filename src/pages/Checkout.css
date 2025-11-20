@@ -181,7 +181,7 @@
   margin-right: 12px;
 }
 .text-success {
-  color: #4ade80;
+  color: #40a840;
   font-weight: 700;
 }
 .text-primary {
@@ -497,12 +497,21 @@
   padding: 30px;
   position: relative;
   border-radius: 20px;
-  max-height: 90vh; /* Maksimalna visina 90% ekrana */
-  overflow-y: auto; /* Vertikalni skrol po potrebi */
-  scrollbar-width: thin; /* Tanji scrollbar za lepši izgled */
-  display: flex; /* Pomaže u rasporedu */
+
+  /* --- NOVO ZA SKROL --- */
+  max-height: 85vh; /* Ograničimo visinu da bi se pojavio skrol */
+  overflow-y: auto; /* Dozvoljavamo vertikalni skrol */
+  overscroll-behavior: contain; /* SPREČAVA povlačenje pozadine (chaining) */
+
+  /* Lepši scrollbar (opciono, ali preporučeno) */
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) rgba(0, 0, 0, 0.1);
+
+  display: flex;
   flex-direction: column;
 }
+
+/* Webkit scrollbar stilizacija (Chrome, Safari, Edge) */
 .order-card::-webkit-scrollbar {
   width: 6px;
 }
@@ -510,8 +519,13 @@
   background: transparent;
 }
 .order-card::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--muted);
   border-radius: 20px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.order-card::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary);
 }
 .order-header {
   text-align: center;
@@ -519,7 +533,7 @@
 }
 
 .text-success-ico {
-  color: #4ade80;
+  color: #40a840;
   margin-inline: auto;
   margin-bottom: 8px;
   font-weight: 800;
@@ -595,7 +609,7 @@
 }
 
 .text-success-ico {
-  color: #4ade80;
+  color: #40a840;
   margin-inline: auto;
   margin-bottom: 8px;
   font-weight: 800;
@@ -899,24 +913,6 @@
   }
 }
 
-/* Bedž "Nalog" u email polju */
-.account-ready-badge {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #4ade80;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(74, 222, 128, 0.15);
-  padding: 6px 10px;
-  border-radius: 6px;
-  pointer-events: none;
-  border: 1px solid rgba(74, 222, 128, 0.2);
-}
 /* --- ERROR STYLES --- */
 
 /* Stil za Input grupu kada ima grešku */
