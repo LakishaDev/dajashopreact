@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { FORM_RULES } from "../data/validationRules";
+import { useState } from 'react';
+import { FORM_RULES } from '../data/validationRules';
 
 export function useFormValidator(initialState) {
   const [formData, setFormData] = useState(initialState);
@@ -8,55 +8,61 @@ export function useFormValidator(initialState) {
   // Handler za promenu (kucanje)
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
 
-    // Ako postoji greška, brišemo je čim korisnik krene da ispravlja
+    // Brišemo grešku čim korisnik krene da kuca
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: null }));
     }
   };
 
-  // Handler za izlaz iz polja (onBlur) - Tada validiramo
+  // Handler za onBlur (validacija pojedinačnog polja)
   const handleBlur = (e) => {
     const { name, value } = e.target;
     validateField(name, value);
   };
 
-  // Glavna funkcija za validaciju jednog polja
   const validateField = (name, value) => {
     const rule = FORM_RULES[name];
-    
     if (rule) {
-      // Ako je polje prazno, a required je (hendlovano HTML-om), ali ovde proveravamo format
+      // 1. Ako vrednost postoji, proveri Regex
       if (value && !rule.regex.test(value)) {
         setErrors((prev) => ({ ...prev, [name]: rule.message }));
         return false;
       }
+      // (Ovde ne proveravamo prazno polje na onBlur da ne bi smarali korisnika pre vremena)
     }
     return true;
   };
 
-  // Validacija cele forme pre slanja
-  const validateAll = () => {
+  // --- GLAVNA VALIDACIJA NA DUGME ---
+  // Prima listu polja koja treba preskočiti (npr. ['address', 'city'] za Pickup)
+  const validateAll = (fieldsToSkip = []) => {
     const newErrors = {};
     let isValid = true;
 
     Object.keys(formData).forEach((key) => {
+      // Ako je polje u listi za preskakanje, ignoriši ga
+      if (fieldsToSkip.includes(key)) return;
+
       const rule = FORM_RULES[key];
       const value = formData[key];
 
+      // 1. Provera REGEX-a (ako je uneto nešto)
       if (rule && value && !rule.regex.test(value)) {
         newErrors[key] = rule.message;
         isValid = false;
       }
-      // Dodatna provera za prazna polja ako HTML required nije dovoljan
+
+      // 2. PROVERA PRAZNIH POLJA (Ovo je falilo!)
+      // Ako nema vrednosti, a postoji pravilo -> OBAVEZNO JE
       if (!value && rule) {
-         // newErrors[key] = "Ovo polje je obavezno.";
-         // isValid = false;
+        newErrors[key] = 'Ovo polje je obavezno.';
+        isValid = false;
       }
     });
 
@@ -69,6 +75,6 @@ export function useFormValidator(initialState) {
     errors,
     handleChange,
     handleBlur,
-    validateAll
+    validateAll,
   };
 }

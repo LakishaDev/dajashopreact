@@ -707,7 +707,7 @@ export default function AuthModal() {
                                 <input
                                   name="identity"
                                   type="text"
-                                  placeholder="ime@primer.com ili 06..."
+                                  placeholder="Email ili Broj telefona"
                                   value={identity}
                                   onChange={handleIdentityChange}
                                   onKeyDown={handleKeyDown}
