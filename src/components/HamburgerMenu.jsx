@@ -17,7 +17,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useCart } from '../hooks/useCart.js';
 import { useAuth } from '../hooks/useAuth.js'; // <-- NOVO: Import useAuth
 // 👇 Nove ikonice za footer menija
-import { Phone, HelpCircle, Facebook, Instagram, MapPin } from 'lucide-react';
+import {
+  Phone,
+  HelpCircle,
+  Facebook,
+  Instagram,
+  MapPin,
+  X,
+} from 'lucide-react';
 import './HamburgerMenu.css';
 import { ADMIN_EMAILS } from '../services/firebase.js';
 
@@ -134,7 +141,6 @@ function DesktopDropdown({ open, onClose, count, user, anchorEl, showAuth }) {
 
   return (
     <AnimatePresence>
-           {' '}
       {open && (
         <motion.div
           ref={ddRef}
@@ -152,17 +158,16 @@ function DesktopDropdown({ open, onClose, count, user, anchorEl, showAuth }) {
           exit="exit"
           variants={variants}
         >
-                   {' '}
           <nav className="hm__ddNav">
-                        <DDItem to="/about" label="O nama" onClose={onClose} />
-                       {' '}
+            <DDItem to="/about" label="O nama" onClose={onClose} />
+
             <DDItem to="/catalog" label="Prodavnica" onClose={onClose} />
-                        <DDItem to="/usluge" label="Usluge" onClose={onClose} />
-                       {' '}
+            <DDItem to="/usluge" label="Usluge" onClose={onClose} />
+
             {isAdmin && (
               <DDItem to="/admin" label="Admin Panel" onClose={onClose} />
             )}
-                       {' '}
+
             {user ? (
               <DDItem to="/account" label="Moj nalog" onClose={onClose} />
             ) : (
@@ -178,19 +183,16 @@ function DesktopDropdown({ open, onClose, count, user, anchorEl, showAuth }) {
                 Prijava / Registracija
               </button>
             )}
-                       {' '}
+
             <DDItem
               to="/cart"
               label={`Korpa (${count})`}
               onClose={onClose}
               strong
             />
-                     {' '}
           </nav>
-                 {' '}
         </motion.div>
       )}
-         {' '}
     </AnimatePresence>
   );
 }
@@ -204,7 +206,7 @@ function DDItem({ to, label, strong, onClose }) {
       role="menuitem"
       onClick={onClose}
     >
-            {label}   {' '}
+      {label}
     </Link>
   );
 }
@@ -260,7 +262,6 @@ function MobileSheet({ open, onClose, user, showAuth }) {
 
   return (
     <AnimatePresence>
-           {' '}
       {open && (
         <motion.div
           className="hm__backdrop"
@@ -273,7 +274,6 @@ function MobileSheet({ open, onClose, user, showAuth }) {
           variants={backdrop}
           style={{ zIndex: 9999 }}
         >
-                   {' '}
           <motion.aside
             id="hm-panel"
             ref={panelRef}
@@ -288,51 +288,46 @@ function MobileSheet({ open, onClose, user, showAuth }) {
               if (info.offset.x > 120 || info.velocity.x > 800) onClose?.();
             }}
           >
-                        {/* HEADER MENIJA */}           {' '}
+            {/* HEADER MENIJA */}
             <div className="hm__head">
-                           {' '}
               <h2 id="hm-title" className="hm__title">
-                                Meni              {' '}
+                Meni
               </h2>
-                           {' '}
+
               <button
                 ref={firstFocusableRef}
                 className="hm__close"
                 aria-label="Zatvori meni"
                 onClick={onClose}
               >
-                                ✕              {' '}
+                <X size={24} />
               </button>
-                         {' '}
             </div>
-                        {/* NAVIGACIJA */}           {' '}
+            {/* NAVIGACIJA */}
             <nav className="hm__nav">
-                           {' '}
               <Link className="hm__link" to="/about" onClick={onClose}>
-                                O nama              {' '}
+                O nama
               </Link>
-                           {' '}
+
               <Link className="hm__link" to="/catalog" onClick={onClose}>
-                                Prodavnica              {' '}
+                Prodavnica
               </Link>
-                           {' '}
+
               <Link className="hm__link" to="/usluge" onClick={onClose}>
-                                Usluge              {' '}
+                Usluge
               </Link>
-                           {' '}
+
               {user ? (
                 <>
-                                   {' '}
                   <Link className="hm__link" to="/account" onClick={onClose}>
-                                        Moj nalog                  {' '}
+                    Moj nalog
                   </Link>
-                                   {' '}
+
                   {isAdmin && (
                     <Link className="hm__link" to="/admin" onClick={onClose}>
                       Admin Panel
                     </Link>
                   )}
-                                 {' '}
                 </>
               ) : (
                 <button // <-- IZMENA: Dugme za otvaranje modala
@@ -346,107 +341,83 @@ function MobileSheet({ open, onClose, user, showAuth }) {
                   Prijava / Registracija
                 </button>
               )}
-                           {' '}
+
               <Link className="hm__link hm__cart" to="/cart" onClick={onClose}>
-                               {' '}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                   {' '}
                   <span className="hm__cartIcon" style={{ margin: 0 }}>
-                                        🛒                  {' '}
+                    🛒
                   </span>
-                                    <span>Korpa</span>               {' '}
+                  <span>Korpa</span>
                 </div>
-                                <span className="hm__badge">{count}</span>     
-                       {' '}
+                <span className="hm__badge">{count}</span>
               </Link>
-                            {/* Mini Cart Items */}             {' '}
+              {/* Mini Cart Items */}
               {items.length > 0 && (
                 <div className="hm__miniCart">
-                                   {' '}
                   {items.map((item) => (
                     <div key={item.id} className="hm__miniItem">
-                                           {' '}
                       <img
                         src={item.image}
                         alt={item.name}
                         className="hm__miniImg"
                         loading="lazy"
                       />
-                                           {' '}
+
                       <div className="hm__miniInfo">
-                                               {' '}
-                        <div className="hm__miniName">{item.name}</div>         
-                                     {' '}
-                        <div className="hm__miniQty">{item.qty} kom.</div>     
-                                       {' '}
+                        <div className="hm__miniName">{item.name}</div>
+
+                        <div className="hm__miniQty">{item.qty} kom.</div>
                       </div>
-                                         {' '}
                     </div>
                   ))}
-                                 {' '}
                 </div>
               )}
-                         {' '}
             </nav>
-                        {/* NOVI FOOTER MENIJA - "STICKY" DNO */}           {' '}
+            {/* NOVI FOOTER MENIJA - "STICKY" DNO */}
             <div className="hm__footer">
-                           {' '}
               <div className="hm__f-info">
-                               {' '}
                 <Link to="/contact" className="hm__f-btn" onClick={onClose}>
-                                    <Phone size={16} /> Kontakt                {' '}
+                  <Phone size={16} /> Kontakt
                 </Link>
-                               {' '}
+
                 <Link to="/faq" className="hm__f-btn" onClick={onClose}>
-                                    <HelpCircle size={16} /> Pomoć              
-                   {' '}
+                  <HelpCircle size={16} /> Pomoć
                 </Link>
-                               {' '}
+
                 <Link to="/about" className="hm__f-btn" onClick={onClose}>
-                                    <MapPin size={16} /> Lokacija              
-                   {' '}
+                  <MapPin size={16} /> Lokacija
                 </Link>
-                             {' '}
               </div>
-                           {' '}
+
               <div className="hm__f-bottom">
-                               {' '}
                 <div className="hm__f-socials">
-                                   {' '}
                   <a
                     href="https://facebook.com"
                     target="_blank"
                     rel="noreferrer"
                     aria-label="Facebook"
                   >
-                                        <Facebook size={18} />                 {' '}
+                    <Facebook size={18} />
                   </a>
-                                   {' '}
+
                   <a
                     href="https://instagram.com"
                     target="_blank"
                     rel="noreferrer"
                     aria-label="Instagram"
                   >
-                                        <Instagram size={18} />                 {' '}
+                    <Instagram size={18} />
                   </a>
-                                 {' '}
                 </div>
-                               {' '}
+
                 <div className="hm__f-copy">
-                                    Daja Shop © {new Date().getFullYear()}     
-                           {' '}
+                  Daja Shop © {new Date().getFullYear()}
                 </div>
-                             {' '}
               </div>
-                         {' '}
             </div>
-                     {' '}
           </motion.aside>
-                 {' '}
         </motion.div>
       )}
-         {' '}
     </AnimatePresence>
   );
 }
