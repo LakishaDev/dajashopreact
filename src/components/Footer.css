@@ -1,4 +1,4 @@
-/* ===== Footer.css ===== */
+/* ===== Footer.css (Ažurirana verzija) ===== */
 .footer {
   margin-top: 80px;
   position: relative;
@@ -98,20 +98,46 @@
   flex-direction: column;
   gap: 14px;
 }
+
+/* Li element je samo kontejner */
 .footer__contact li,
+.footer__hours li {
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+/* AŽURIRANO: Stil za klikabilne linkove u Kontakt sekciji. Koristimo 'align-items: center' za savršeno centriranje ikone i teksta */
+.footer__contact-link {
+  display: flex;
+  align-items: center; /* Ključno za vertikalno centriranje */
+  gap: 12px;
+  color: var(--color-muted, #6e6e73);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  width: fit-content;
+}
+
+/* AŽURIRANO: Ciljamo SVG unutar linka i uklanjamo marginu */
+.footer__contact-link svg {
+  color: var(--color-primary, #c8a94e);
+  flex-shrink: 0;
+  /* margin-top: 2px je uklonjen za bolje centriranje */
+}
+
+/* Hover efekat za linkove u Kontakt sekciji */
+.footer__contact-link:hover {
+  color: var(--color-primary, #c8a94e);
+  transform: translateX(4px);
+}
+
+/* Postojeći stil za Radno vreme (hours) zadržava display: flex itd. na li */
 .footer__hours li {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  font-size: 0.92rem;
-  line-height: 1.5;
   color: var(--color-muted, #6e6e73);
 }
-.footer__contact li svg {
-  color: var(--color-primary, #c8a94e);
-  flex-shrink: 0;
-  margin-top: 2px;
-}
+
 .footer__hours span {
   font-weight: 600;
   color: var(--color-text);
@@ -172,6 +198,16 @@
 .footer__links a:hover {
   color: var(--color-text);
   text-decoration: underline;
+}
+
+/* Horizontalni prikaz na desktopu (u istom redu) */
+@media (min-width: 1025px) {
+  .footer__contact {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 14px 20px;
+    justify-content: flex-start;
+  }
 }
 
 /* Responsive */

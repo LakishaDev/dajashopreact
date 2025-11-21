@@ -1,25 +1,25 @@
-import React from "react";
-import "./Home.css";
-import { Link } from "react-router-dom";
-import Carousel from "../components/Carousel.jsx";
-import BrandStrip from "../components/BrandStrip.jsx";
-import HeroBgSlider from "../components/HeroBgSlider.jsx";
-import FeaturedSlider from "../components/FeaturedSlider.jsx";
-import { Check } from "lucide-react";
-import TrustBar from "../components/TrustBar.jsx";
+import React from 'react';
+import './Home.css';
+import { Link } from 'react-router-dom';
+import Carousel from '../components/Carousel.jsx';
+import BrandStrip from '../components/BrandStrip.jsx';
+import HeroBgSlider from '../components/HeroBgSlider.jsx';
+import FeaturedSlider from '../components/FeaturedSlider.jsx';
+import { Check } from 'lucide-react';
+import TrustBar from '../components/TrustBar.jsx';
 
 const bgSlides = [
   {
-    src: "/images/banner-watches-casio.png",
-    alt: "Casio",
-    to: "/catalog?brand=CASIO",
+    src: '/images/banner-watches-casio.png',
+    alt: 'Casio',
+    to: '/catalog?brand=CASIO',
   },
   {
-    src: "/images/model_banner_bed6ebb9-b47f-438a-835e-f63534a7d455.jpg",
-    alt: "Daniel Klein",
-    to: "/catalog?brand=DANIEL+KLEIN",
+    src: '/images/model_banner_bed6ebb9-b47f-438a-835e-f63534a7d455.jpg',
+    alt: 'Daniel Klein',
+    to: '/catalog?brand=DANIEL+KLEIN',
   },
-  { src: "/images/q&q.png", alt: "Q&Q", to: "/catalog?brand=Q%26Q" },
+  { src: '/images/q&q.png', alt: 'Q&Q', to: '/catalog?brand=Q%26Q' },
 ];
 
 export default function Home() {
@@ -71,14 +71,14 @@ export default function Home() {
       {/* BRAND STRIP (marquee-like, ali bez animacije koja smara) */}
       <BrandStrip
         brands={[
-          "CASIO",
-          "DANIEL KLEIN",
-          "Q&Q",
-          "ORIENT",
-          "G-SHOCK",
-          "EDIFICE",
-          "SHEEN",
-          "RETRO",
+          'CASIO',
+          'DANIEL KLEIN',
+          'Q&Q',
+          'ORIENT',
+          'G-SHOCK',
+          'EDIFICE',
+          'SHEEN',
+          'RETRO',
         ]}
       />
 
@@ -146,7 +146,11 @@ export default function Home() {
                 G-Shock
               </Link>
             </div>
-            <img className="editorial__img" src="images/casio-g-shock-original-ga-2100-4aer-carbon-core-guard_183960_205228.jpg" alt="" />
+            <img
+              className="editorial__img"
+              src="images/casio-g-shock-original-ga-2100-4aer-carbon-core-guard_183960_205228.jpg"
+              alt=""
+            />
           </div>
 
           <div className="editorial">

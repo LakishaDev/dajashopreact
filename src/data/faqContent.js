@@ -23,13 +23,13 @@ export const faqContent = [
     id: 4,
     question: 'Koje metode plaćanja prihvatate?',
     answer:
-      'Trenutno prihvatamo plaćanje pouzećem (gotovinom prilikom isporuke) i online plaćanje platnim karticama (Visa, MasterCard) putem bezbednog platnog procesora.',
+      'Trenutno prihvatamo plaćanje pouzećem (gotovinom prilikom isporuke).',
   },
   {
     id: 5,
     question: 'Kako funkcioniše povrat i reklamacija proizvoda?',
     answer:
-      "Imate pravo na povrat proizvoda u roku od 14 dana od prijema, bez navođenja razloga. Za reklamacije zbog oštećenja ili neispravnosti, molimo vas da popunite formu u sekciji 'Reklamacije' na našem sajtu. Svi proizvodi moraju biti vraćeni u originalnom stanju i pakovanju.",
+      'Imate pravo na povrat proizvoda u roku od 14 dana od prijema, bez navođenja razloga. Za reklamacije zbog oštećenja ili neispravnosti, obratite se na telefon (064 126 24 25). Svi proizvodi moraju biti vraćeni u originalnom stanju i pakovanju.',
   },
   {
     id: 6,

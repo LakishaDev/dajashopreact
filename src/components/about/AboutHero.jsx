@@ -1,31 +1,54 @@
-import React from "react";
-import { Link } from "react-router-dom";
-// eslint-disable-next-line no-unused-vars
-import { motion } from "framer-motion";
+// ==============================
+// File: src/components/about/AboutHero.jsx
+// Upečatljiv Hero deo sa animacijom
+// ==============================
+import React from 'react';
+import { motion } from 'framer-motion';
 
-const fade = (d=0)=>({ hidden:{opacity:0,y:18}, visible:{opacity:1,y:0,transition:{duration:.55,delay:d,ease:"easeOut"}} });
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.15 },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 100 } },
+};
 
 export default function AboutHero() {
   return (
-    <section className="section aboutHero" style={{
-      background: "radial-gradient(900px 500px at 10% -10%, rgba(0,0,0,.06), transparent), radial-gradient(800px 480px at 90% -20%, rgba(0,0,0,.05), transparent)"
-    }}>
-      <div className="container">
-        <motion.div className="card glass shadow" initial={{opacity:0,y:24}} animate={{opacity:1,y:0}} transition={{duration:.6}}>
-          <div style={{padding:"clamp(20px,3vw,28px)"}}>
-            <motion.h1 className="h1" variants={fade()} initial="hidden" animate="visible">
-              O nama — <span style={{background:"linear-gradient(180deg,#111,#888)",WebkitBackgroundClip:"text",color:"transparent"}}>Daja Shop</span>
-            </motion.h1>
-            <motion.p className="lead" variants={fade(.06)} initial="hidden" animate="visible">
-              Porodična prodavnica satova iz Niša — original brendovi, fer cena i fina usluga. Bez šuplje priče.
-            </motion.p>
-            <motion.div style={{display:"flex",gap:12,flexWrap:"wrap"}} variants={fade(.12)} initial="hidden" animate="visible">
-              <Link to="/catalog" className="btn btn--primary">Katalog</Link>
-              <Link to="/contact" className="btn btn--ghost">Kontakt</Link>
-            </motion.div>
-          </div>
-        </motion.div>
-      </div>
+    <section className="hero-about section">
+      <motion.div
+        className="content"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.p className="pill" variants={itemVariants}>
+          DAJA SHOP | VREME JE DA ZABLISTAŠ
+        </motion.p>
+        <motion.h1 className="h1" variants={itemVariants}>
+          Posvećenost Kvalitetu.
+          <br />
+          Vaše Poverenje je Naš Vremenski Okvir.
+        </motion.h1>
+        <motion.p className="lead" variants={itemVariants}>
+          Kao posvećeni trgovac satovima iz Niša, gradimo priču Daja Shop-a na
+          temeljima preciznosti, autentičnosti i neprevaziđenog korisničkog
+          iskustva. Svaki sat u našoj ponudi odraz je naše strasti prema
+          savršenstvu.
+        </motion.p>
+        <motion.button
+          className="btn-primary"
+          variants={itemVariants}
+          style={{ marginTop: '24px' }}
+        >
+          Istražite Našu Priču
+        </motion.button>
+      </motion.div>
     </section>
   );
 }
