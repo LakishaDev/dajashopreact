@@ -1,36 +1,109 @@
-import React from "react";
-// eslint-disable-next-line no-unused-vars
-import { motion } from "framer-motion";
+// ==============================
+// File: src/components/about/AboutStory.jsx
+// MODERAN REDIZAJN: Fokus na Misiju i Viziju u Glass karticama
+// ==============================
+import React from 'react';
+import { motion } from 'framer-motion';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.2, delayChildren: 0.1 },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 30, opacity: 0 },
+  visible: { y: 0, opacity: 1, transition: { duration: 0.6, ease: 'easeOut' } },
+};
 
 export default function AboutStory() {
   return (
-    <section className="section">
-      <div className="container" style={{display:"grid",gap:18,gridTemplateColumns:"1.1fr .9fr"}}>
+    <motion.section
+      className="section"
+      // whileInView animacija ulaska celog bloka
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.3 }}
+      variants={containerVariants}
+    >
+      <div
+        className="container"
+        style={{ maxWidth: '1000px', margin: '0 auto' }}
+      >
+        {/* I. Uvod / Osnovna Priča (Full Width) */}
         <motion.div
-          initial={{opacity:0,x:-18}} whileInView={{opacity:1,x:0}} viewport={{once:true,amount:.3}} transition={{duration:.5}}>
-          <h2 className="h2">Naša priča</h2>
-          <p>Daja Shop je pokrenuo <strong>Dejan Cvetković</strong> u Nišu 2007 — ideja: original satovi, jasne informacije i prijateljska podrška.</p>
-          <p>Online i u lokalu, guramo iste principe: kvalitet, transparentnost, poštovanje kupca.</p>
+          variants={itemVariants}
+          style={{ marginBottom: '40px', textAlign: 'center' }}
+        >
+          <p
+            className="pill"
+            style={{
+              margin: '0 auto 10px',
+              borderColor: 'var(--color-primary)',
+            }}
+          >
+            NAŠA PRIČA
+          </p>
+          <h2 className="h2" style={{ marginBottom: '20px' }}>
+            Od Niša do Vašeg Zgloba: Putovanje Preciznosti
+          </h2>
+          <p className="lead" style={{ maxWidth: '800px', margin: '0 auto' }}>
+            Priča Daja Shop-a počela je sa jednostavnom idejom: ponuditi
+            autentične i kvalitetne satove uz beskompromisnu podršku klijentima.
+            Svake godine, naša strast prema časovničarstvu raste, kao i naša
+            posvećenost da budemo Vaš najpouzdaniji online trgovac satovima.
+            Fokusirani smo na detalje koji čine razliku i iskustvo koje ostaje.
+          </p>
         </motion.div>
 
-        <motion.div className="card shadow glass"
-          initial={{opacity:0,x:18}} whileInView={{opacity:1,x:0}} viewport={{once:true,amount:.3}} transition={{duration:.5}}
-          style={{padding:18,borderRadius:"var(--radius,16px)"}}>
-          <div style={{display:"flex",gap:12,alignItems:"center",marginBottom:10}}>
-            <img src="/images/team/dejan.jpg" alt="Dejan Cvetković" style={{width:64,height:64,borderRadius:"50%",objectFit:"cover",background:"#ddd"}} onError={(e)=>{e.currentTarget.style.opacity=0}}/>
-            <div>
-              <h3 style={{margin:0}}>Dejan Cvetković</h3>
-              <p className="lead" style={{margin:0}}>Osnivač i vlasnik</p>
-            </div>
-          </div>
-          <ul style={{display:"flex",gap:8,flexWrap:"wrap",listStyle:"none",padding:0,margin:"10px 0 12px"}}>
-            <li className="pill">Original</li>
-            <li className="pill">Garancija</li>
-            <li className="pill">Podrška</li>
-          </ul>
-          <p>Preko decenije iskustva u izboru i prodaji satova. Preporuka po meri stila i budžeta.</p>
+        {/* II. Misija i Vizija (2-Kolone Grid sa Glass Efektom) */}
+        <motion.div
+          className="grid-2"
+          style={{ marginTop: '40px', gap: '24px' }}
+        >
+          {/* A. Misija Kartica - Koristi glass i shadow klase iz About.css */}
+          <motion.div
+            className="card glass shadow"
+            variants={itemVariants}
+            style={{ padding: '40px', height: '100%' }}
+          >
+            <h3
+              className="h2"
+              style={{ color: 'var(--color-primary)', marginBottom: '15px' }}
+            >
+              Naša Misija
+            </h3>
+            <p className="lead" style={{ fontSize: '18px' }}>
+              Naša misija je da osiguramo da svaki sat koji napusti Daja Shop
+              nosi pečat **originalnosti i najvišeg kvaliteta**. Težimo
+              transparentnosti, fer cenama i izgradnji dugoročnog poverenja sa
+              svakim klijentom u regionu.
+            </p>
+          </motion.div>
+
+          {/* B. Vizija Kartica - Koristi glass i shadow klase iz About.css */}
+          <motion.div
+            className="card glass shadow"
+            variants={itemVariants}
+            style={{ padding: '40px', height: '100%' }}
+          >
+            <h3
+              className="h2"
+              style={{ color: 'var(--color-primary)', marginBottom: '15px' }}
+            >
+              Naša Vizija
+            </h3>
+            <p className="lead" style={{ fontSize: '18px' }}>
+              Vizija Daja Shop-a je da postane **sinonim za online kupovinu
+              satova** u Jugoistočnoj Evropi, poznat po besprekornoj usluzi i
+              ekskluzivnom izboru. Koristimo naprednu tehnologiju kako bismo
+              inspirisali i povezali ljubitelje satova sa modelima koji traju.
+            </p>
+          </motion.div>
         </motion.div>
       </div>
-    </section>
+    </motion.section>
   );
 }

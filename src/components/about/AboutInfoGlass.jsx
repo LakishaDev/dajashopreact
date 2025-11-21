@@ -1,31 +1,59 @@
-import React from "react";
+// ==============================
+// File: src/components/about/AboutInfoGlass.jsx
+// Informacije i brzi faktoidi
+// ==============================
+import React from 'react';
+import { motion } from 'framer-motion';
+
+const infoCards = [
+  { title: 'Dostava', text: 'Isporuka širom Srbije', delay: 0.1 },
+  { title: 'Ovlašćeni Diler', text: 'Garancija originalnosti', delay: 0.2 },
+  {
+    title: 'Niš Lokacija',
+    text: 'Dostupnost za lično preuzimanje',
+    delay: 0.3,
+  },
+];
+
+const containerVariants = {
+  visible: { transition: { staggerChildren: 0.15 } },
+};
+
+const itemVariants = {
+  hidden: { y: 30, opacity: 0 },
+  visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 100 } },
+};
 
 export default function AboutInfoGlass() {
   return (
     <section className="section">
       <div className="container">
-        <div className="card glass shadow" style={{display:"grid",gap:14,padding:18,borderRadius:"var(--radius,16px)"}}>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",gap:14,alignItems:"center"}}>
-            <div>
-              <h3 style={{margin:"0 0 6px"}}>Gde smo</h3>
-              <p style={{margin:0}}><strong>Niš, TPC Gorča — lokal C31</strong></p>
-              <p style={{margin:0}}>Obrenovićeva bb, Medijana</p>
-            </div>
-            <div>
-              <h3 style={{margin:"0 0 6px"}}>Kontakt</h3>
-              <p style={{margin:0}}>📞 064/126-2425 • 065/240-8400</p>
-              <p style={{margin:0}}>✉️ cvelenis42@yahoo.com</p>
-            </div>
-            <div>
-              <h3 style={{margin:"0 0 6px"}}>Radno vreme</h3>
-              <p style={{margin:0}}>Pon–Pet: 10–20h • Sub: 10–15h • Ned: zatvoreno</p>
-            </div>
-            <div style={{display:"flex",gap:10,justifySelf:"start"}}>
-              <a className="btn btn--primary" href="/contact">Piši nam</a>
-              <a className="btn btn--ghost" href="https://maps.app.goo.gl/" target="_blank" rel="noreferrer">Mapa</a>
-            </div>
-          </div>
-        </div>
+        <motion.div
+          className="grid-3"
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.4 }}
+        >
+          {infoCards.map((card, index) => (
+            <motion.div
+              key={index}
+              className="card glass shadow"
+              variants={itemVariants}
+              style={{ padding: '30px' }}
+            >
+              <h3
+                className="h3"
+                style={{ color: 'var(--color-primary)', marginBottom: '8px' }}
+              >
+                {card.title}
+              </h3>
+              <p className="lead" style={{ fontSize: '15px' }}>
+                {card.text}
+              </p>
+            </motion.div>
+          ))}
+        </motion.div>
       </div>
     </section>
   );

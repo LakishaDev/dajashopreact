@@ -12,6 +12,7 @@ import AdminDashboard from './pages/Admin/AdminDashboard.jsx';
 import VerifyEmail from './pages/VerifyEmail.jsx';
 import FAQ from './pages/FAQ.jsx';
 import Contact from './pages/Contact.jsx';
+import Usluge from './pages/Usluge.jsx';
 
 export default function AppRoutes() {
   return (
@@ -28,6 +29,7 @@ export default function AppRoutes() {
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/faq" element={<FAQ />} />
       <Route path="/contact" element={<Contact />} />
+      <Route path="/usluge" element={<Usluge />} />
     </Routes>
   );
 }

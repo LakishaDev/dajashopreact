@@ -1,16 +1,15 @@
+/* ==============================
+   File: src/pages/Home.css
+   KONAČNA KOREKCIJA: Ispravljena Editorial Slika i optimizovana fluidnost
+============================== */
 /* Minimal / apple-like spacing & type scale */
 .home {
   display: grid;
-  gap: 48px;
+  /* KOREKCIJA: Koristimo clamp za fluidni gap, sa maksimalno 48px */
+  gap: clamp(32px, 5vw, 48px);
 }
 
 /* ---------- HERO ---------- */
-/* .hero {
-  position: relative;
-  min-height: clamp(420px, 60vh, 720px);
-  overflow: clip;
-  border-radius: 24px;
-} */
 .hero__media img {
   width: 100%;
   height: 100%;
@@ -37,7 +36,8 @@
   border-radius: 24px;
 }
 .hero__wrap {
-  padding: clamp(24px, 4vw, 56px) 0;
+  /* KOREKCIJA: Manji max padding */
+  padding: clamp(24px, 4vw, 40px) 0;
 }
 .hero__copy {
   max-width: 900px;
@@ -71,7 +71,7 @@
 .trust {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  gap: 12px;
 }
 .trust__item {
   text-align: center;
@@ -84,6 +84,8 @@
 /* ---------- SECTION ---------- */
 .section {
   display: grid;
+  /* KOREKCIJA: Smanjen max padding */
+  padding: clamp(32px, 4vw, 60px) 0;
   gap: 16px;
 }
 .section__head {
@@ -138,32 +140,28 @@
 }
 
 /* ---------- EDITORIAL SLIDE ---------- */
-/* EDITORIAL SLIDE – layout */
 .editorial {
   display: flex;
   align-items: center;
   justify-content: space-between;
-   border-radius: 16px;
+  border-radius: 16px;
   background: var(--color-surface);
-  gap: clamp(16px, 4vw, 48px);
-
-  /* padding oko sadržaja */
-  padding: 24px clamp(16px, 6vw, 40px);
-
-  /* pomeramo ceo sadržaj udesno da strelica ne seče tekst */
-  padding-left: 60px; /* OVDE SE IGRAJ AKO TREBA VIŠE/MANJE */
+  gap: clamp(16px, 3vw, 32px);
+  padding: 24px clamp(16px, 5vw, 32px);
+  padding-left: clamp(24px, 6vw, 60px);
 }
 
 /* Tekst blok – malo udesno plus max širina */
 .editorial__copy {
-  flex: 0 0 38%;
-  max-width: 420px;
+  flex: 0 0 40%;
+  max-width: 400px;
 }
 
-/* SLIKA – da bude "malo duža" / dominantnija */
+/* SLIKA – KLJUČNA IZMENA */
 .editorial__img {
-  flex: 0 0 62%;
-  width: 510%;
+  flex: 0 0 60%;
+  /* ISPRAVLJENO: Koristimo 100% da popuni flex container, umesto pogrešnog 510% */
+  width: 100%;
   max-width: 600px;
   aspect-ratio: 4 / 3;
   object-fit: cover;
@@ -177,15 +175,16 @@
 }
 .editorial__copy p {
   margin: 0 0 12px;
-  color: var(--color-muted);}
+  color: var(--color-muted);
+}
 
-/* Responsive za telefon – da ne bude tesno sa padding-left */
+/* Responsive za telefon */
 @media (max-width: 768px) {
   .editorial {
     flex-direction: column;
     align-items: flex-start;
     padding: 20px 16px;
-    padding-left: 24px; /* manje, da ne gubimo prostor na mobilnom */
+    padding-left: 24px;
   }
 
   .editorial__copy {
@@ -197,7 +196,6 @@
     flex: initial;
     max-width: 100%;
   }
-  
 }
 
 /* ---------- NEWSLETTER ---------- */
@@ -250,24 +248,32 @@
 }
 
 /* ---------- RESPONSIVE ---------- */
-@media (max-width: 860px) {
+@media (max-width: 1300px) {
   .trust {
     grid-template-columns: repeat(2, 1fr);
   }
   .editorial {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px 16px;
+    padding-left: 24px;
+  }
+
+  .editorial__copy,
+  .editorial__img {
+    flex: initial;
+    max-width: 100%;
   }
 }
-/* === ADD: hero kao kontejner za apsolutni slider === */
+
 .hero {
   position: relative;
-  min-height: clamp(320px, 48vh, 560px); /* visina hero zone */
+  min-height: clamp(320px, 48vh, 560px);
   border: 1px solid var(--color-border, #e5e7eb);
   border-radius: var(--radius, 22px);
   overflow: hidden;
 }
 
-/* Stakleni panel ostaje iznad slidera */
 .hero__glass {
   position: relative;
   z-index: 2;
@@ -276,7 +282,6 @@
   -webkit-backdrop-filter: blur(8px) saturate(140%);
 }
 
-/* Stari <picture> ostaje u DOM-u, samo ga skrivamo (da ne brišemo ništa) */
 .hero__media {
   display: none;
 }

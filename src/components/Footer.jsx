@@ -1,7 +1,7 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { Facebook, Instagram, MapPin, Phone, Mail } from "lucide-react";
-import "./Footer.css";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Facebook, Instagram, MapPin, Phone, Mail } from 'lucide-react';
+import './Footer.css';
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -50,21 +50,39 @@ export default function Footer() {
             </nav>
           </div>
 
-          {/* 3. Kontakt Info */}
+          {/* 3. Kontakt Info - MODIFIKOVANO */}
           <div className="footer__col">
             <h3 className="footer__title">Kontakt</h3>
             <ul className="footer__contact">
               <li>
-                <MapPin size={18} />
-                <span>Niš, TPC Gorča lokal C31</span>
+                <Link
+                  to="/contact"
+                  className="footer__contact-link"
+                  aria-label="Adresa"
+                >
+                  <MapPin size={18} />
+                  <span>Niš, TPC Gorča lokal C31</span>
+                </Link>
               </li>
               <li>
-                <Phone size={18} />
-                <span>064/126-2425</span>
+                <a
+                  href="tel:+381641262425"
+                  className="footer__contact-link"
+                  aria-label="Telefonski broj"
+                >
+                  <Phone size={18} />
+                  <span>064/126-2425</span>
+                </a>
               </li>
               <li>
-                <Mail size={18} />
-                <span>cvelenis42@yahoo.com</span>
+                <Link
+                  to="/contact"
+                  className="footer__contact-link"
+                  aria-label="Email adresa"
+                >
+                  <Mail size={18} />
+                  <span>cvelenis42@yahoo.com</span>
+                </Link>
               </li>
             </ul>
           </div>
