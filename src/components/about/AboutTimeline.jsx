@@ -7,34 +7,40 @@ import { motion } from 'framer-motion';
 
 const timelineEvents = [
   {
+    year: '2006',
+    title: 'Početak Putovanja',
+    description:
+      'Rađanje ideje o mestu gde se tradicija i tačnost susreću. Postavljanje temelja poslovanja zasnovanog na iskrenom odnosu i poverenju prema svakom kupcu.',
+  },
+  {
     year: '2007',
-    title: 'Osnivanje i Vizija Duga 18 Godina',
+    title: 'Približavanje Kupcima',
     description:
-      'Daja Shop zvanično započinje sa radom u Nišu. Od samog starta, fokus je na autentičnosti i poverenju u lokalnoj trgovini.',
+      'Širenje fizičkog prisustva i kreiranje prostora gde ljubitelji satova mogu uživo doživeti kvalitet našeg asortimana uz stručno savetovanje.',
   },
   {
-    year: '2012',
-    title: 'Otvaranje Centralnog Maloprodajnog Objekta',
+    year: '2014', // NOVO
+    title: 'Obećanje Trajnosti',
     description:
-      'Uspostavljanje fizičkog prisustva u TPC Kalča, čime je brend postao lako dostupan centralnoj niškoj klijenteli.',
+      'Shvatanje da sat nije samo ukras, već mehanizam koji živi. Fokus na stručnu podršku i edukaciju tima, čime garantujemo da naš odnos sa kupcem ne prestaje samim činom prodaje.',
   },
   {
-    year: '2016',
-    title: 'Digitalna Tranzicija i Prva Online Prodaja',
+    year: '2017',
+    title: 'Digitalni Iskorak',
     description:
-      'Lansiranje prve verzije e-commerce platforme, šireći domet prodaje satova van Niša na teritoriju cele Srbije.',
+      'Prepoznavanje potreba modernog doba i otvaranje vrata naše prodavnice celoj zemlji putem prve online platforme. Kvalitet postaje dostupan na jedan klik.',
   },
   {
     year: '2020',
-    title: 'Strategija Brend Partnerstva i Sertifikacija',
+    title: 'Stabilnost i Integritet',
     description:
-      'Potpisivanje ključnih ugovora za distribuciju vodećih svetskih brendova, uz zvaničnu garanciju autentičnosti.',
+      'U vremenima neizvesnosti, kvalitet ostaje jedina konstanta. Učvrstili smo našu poziciju na tržištu kao garant originalnosti, pružajući sigurnost svakom kupcu koji ceni trajnu vrednost.',
   },
   {
-    year: '2024',
-    title: 'Fokus na Premium Online Iskustvo',
+    year: '2026',
+    title: 'Nova Era Kupovine',
     description:
-      'Potpuna optimizacija sajta, uvođenje naprednih tehnologija i usavršavanje digitalne korisničke podrške za besprekorno iskustvo.',
+      'Implementacija najsavremenijih tehnologija za vrhunsko korisničko iskustvo. Spoj moderne estiteke, brzine i sigurnosti u službi vašeg vremena.',
   },
 ];
 
