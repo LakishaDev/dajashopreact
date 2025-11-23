@@ -333,3 +333,21 @@
     font-size: 11px;
   }
 }
+/* ... (tvoj postojeći kod iznad) ... */
+
+/* Dodatak za aktivni link */
+.navbar__all.active {
+  background: var(--color-text, #111);
+  color: var(--color-bg, #fff);
+  border-color: var(--color-text, #111);
+}
+
+/* Klasa koja forsira prikaz dropdowna (za Ostalo) */
+.show-override {
+  display: grid !important;
+}
+
+/* Sitna korekcija za chevron ikonicu */
+.navbar__label svg {
+  vertical-align: middle;
+}

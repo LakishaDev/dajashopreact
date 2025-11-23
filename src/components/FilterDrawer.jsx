@@ -178,7 +178,8 @@ export default function FilterDrawer({ className = '', products }) {
             </div>
 
             <div className="fd-content">
-              <Filters products={products} />
+              {/* PROSLEĐUJEMO onClose funkciju */}
+              <Filters products={products} onClose={() => setOpen(false)} />
             </div>
           </div>
         </div>
