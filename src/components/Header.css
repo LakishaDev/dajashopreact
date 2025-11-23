@@ -1,10 +1,8 @@
 /* ===== Vars ===== */
 :root {
-  --header-bar-h: 64px;     /* visina zaglavlja na desktopu (jedan red) */
-  --header-search-h: 56px;  /* visina reda sa pretragom na mobilnom */
---header-sticky-offset: calc(var(--header-bar-h) + 48px);
- /* offset za lepljivi navbar ispod hedera */
-  
+  --header-bar-h: 64px;
+  --header-search-h: 56px;
+  --header-sticky-offset: calc(var(--header-bar-h) + 48px);
 }
 
 @media (max-width: 768px) {
@@ -24,10 +22,10 @@
   -webkit-backdrop-filter: saturate(140%) blur(8px);
 }
 
-/* ===== GRID: desktop = 3 kolone; mobilni = 2 reda ===== */
+/* ===== GRID ===== */
 .header__grid {
   display: grid;
-  grid-template-columns: auto 1fr auto;           /* brand | search | actions */
+  grid-template-columns: auto 1fr auto;
   grid-template-areas: "brand search actions";
   align-items: center;
   gap: 16px;
@@ -35,10 +33,9 @@
   padding-block: 6px;
 }
 
-/* Mobile: 1. red brand + actions (desno), 2. red full-width search */
 @media (max-width: 768px) {
   .header__grid {
-    grid-template-columns: 1fr auto;              /* brand | actions */
+    grid-template-columns: 1fr auto;
     grid-template-areas:
       "brand actions"
       "search search";
@@ -47,9 +44,15 @@
   }
 }
 
-.header__brand { grid-area: brand; }
-.header__search { grid-area: search; }
-.header__actions { grid-area: actions; }
+.header__brand {
+  grid-area: brand;
+}
+.header__search {
+  grid-area: search;
+}
+.header__actions {
+  grid-area: actions;
+}
 
 /* Brand */
 .header__brand {
@@ -67,8 +70,10 @@
   gap: 14px;
 }
 
+/* Dodata klasa .header__wishlist */
 .header__cart,
-.header__account {
+.header__account,
+.header__wishlist {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -76,7 +81,9 @@
   position: relative;
 }
 
-.header__cart .badge {
+/* Badge stilovi za sve */
+.header__cart .badge,
+.header__wishlist .badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -99,21 +106,24 @@
 
 /* ===== MOBILE tweaks ===== */
 @media (max-width: 768px) {
-  .header__brand { font-size: 1.1rem; }
-  .header__actions { gap: 8px; }
-  .header__actions > * { transform: translateZ(0); }
+  .header__brand {
+    font-size: 1.1rem;
+  }
+  .header__actions {
+    gap: 8px;
+  }
+  .header__actions > * {
+    transform: translateZ(0);
+  }
 
-  /* Korpa kao ikonica */
+  /* Korpa - specifično za mobilni (dodaje ikonicu 🛒) */
+  /* NAPOMENA: Ovo se sada neće ni videti jer je korpa sakrivena sa .desktop-only */
   .header__cart {
-    padding: 8px 10px;
+    padding: 8px 1px;
     border-radius: 12px;
     font-size: 0;
   }
-  .header__cart::before {
-    content: "🛒";
-    font-size: 20px;
-    line-height: 1;
-  }
+
   .header__cart .badge {
     position: absolute;
     top: -6px;
@@ -122,7 +132,23 @@
     height: 18px;
     padding: 0 5px;
     font-size: 11px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Lista želja - BEZ ::before ikonice */
+  .header__wishlist {
+    padding: 8px 10px;
+    border-radius: 12px;
+  }
+  .header__wishlist .badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    font-size: 11px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
   }
 
   /* Nalog kao ikonica */
@@ -137,7 +163,6 @@
     line-height: 1;
   }
 
-  /* ThemeSwitcher kompaktan */
   .header .ThemeSwitcher,
   .header button[aria-label*="theme" i],
   .header .theme-switcher {
@@ -149,7 +174,6 @@
     border-radius: 12px;
   }
 
-  /* NavBar lepljiv ispod celog hedera (bar + search) na mobilnom */
   .header + .navbar,
   .header + nav,
   .header + .NavBar {
@@ -163,7 +187,8 @@
     -webkit-backdrop-filter: saturate(140%) blur(8px);
   }
 }
-/* ===== Hamburger dugme u headeru ===== */
+
+/* ===== Hamburger ===== */
 .hamburger {
   --size: 40px;
   inline-size: var(--size);
@@ -176,11 +201,16 @@
   gap: 4px;
   padding: 0 10px;
   cursor: pointer;
-  transition: transform .15s ease, background .15s ease, border-color .15s ease;
+  transition: transform 0.15s ease, background 0.15s ease,
+    border-color 0.15s ease;
 }
 .hamburger:hover {
   transform: translateY(-1px);
-  background: color-mix(in oklab, var(--color-surface, #f5f5f7) 100%, transparent);
+  background: color-mix(
+    in oklab,
+    var(--color-surface, #f5f5f7) 100%,
+    transparent
+  );
 }
 .hamburger span {
   display: block;
@@ -189,14 +219,3 @@
   background: var(--color-text, #111);
   border-radius: 999px;
 }
-
-/* ako želiš da bude vidljiv samo na mobilu, odkomentariši:
-@media (min-width: 1024px) {
-  .hamburger { display: none; }
-}
-*/
-
-/* (ispravka ranijeg offseta ako ti treba u rootu)
-:root { --header-sticky-offset: calc(var(--header-bar-h) + 48px); }
-*/
-

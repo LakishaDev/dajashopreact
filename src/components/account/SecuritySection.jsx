@@ -1,74 +1,139 @@
-// src/components/account/SecuritySection.jsx
-
 import React, { useState } from 'react';
+import { useAuth } from '../../hooks/useAuth.js';
 import { useFlash } from '../../hooks/useFlash.js';
+import { usePasskey } from '../../hooks/usePasskey.js';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, Lock, KeyRound, ShieldCheck } from 'lucide-react';
+import {
+  Lock,
+  ShieldCheck,
+  Save,
+  Loader2,
+  Fingerprint,
+  KeyRound,
+  CheckCircle2,
+  AlertCircle,
+  AlertTriangle,
+  Check,
+} from 'lucide-react';
 
 import { auth } from '../../services/firebase';
 import {
   updatePassword,
-  reauthenticateWithCredential,
   EmailAuthProvider,
+  reauthenticateWithCredential,
+  GoogleAuthProvider,
+  linkWithPopup,
 } from 'firebase/auth';
 
-import SecuritySettings from '../account/SecuritySettings.jsx';
+// Google Icon (Inline SVG)
+const GoogleIcon = () => (
+  <svg className="w-6 h-6" viewBox="0 0 24 24">
+    <path
+      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+      fill="#4285F4"
+    />
+    <path
+      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+      fill="#34A853"
+    />
+    <path
+      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+      fill="#FBBC05"
+    />
+    <path
+      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+      fill="#EA4335"
+    />
+  </svg>
+);
 
-// --- SECURITY SECTION (Change Password) ---
-function SecuritySection({ user }) {
+export default function SecuritySection({ user }) {
   const { flash } = useFlash();
-  const [currentPass, setCurrentPass] = useState('');
-  const [newPass, setNewPass] = useState('');
-  const [confirmPass, setConfirmPass] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleUpdate = async (e) => {
+  // --- PASSKEY HOOK ---
+  const { registerPasskey, loading: pkLoading, error: pkError } = usePasskey();
+  const [isPasskeyEnabled, setIsPasskeyEnabled] = useState(false); // Idealno povući sa servera
+
+  // State za Lozinku
+  const [isEditingPassword, setIsEditingPassword] = useState(false);
+  const [passForm, setPassForm] = useState({
+    current: '',
+    new: '',
+    confirm: '',
+  });
+
+  // Google Linked Status
+  const isGoogleLinked = user?.providerData.some(
+    (p) => p.providerId === 'google.com'
+  );
+
+  // --- HANDLER ZA GOOGLE ---
+  const handleGoogleLink = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await linkWithPopup(auth.currentUser, provider);
+      flash('Uspeh', 'Google nalog uspešno povezan!', 'success');
+    } catch (err) {
+      console.error(err);
+      flash('Greška', err.message, 'error');
+    }
+  };
+
+  // --- HANDLER ZA PASSKEY ---
+  const handleAddPasskey = async () => {
+    try {
+      await registerPasskey();
+      setIsPasskeyEnabled(true);
+      flash('Uspeh', 'Passkey uspešno dodat!', 'success');
+    } catch (error) {
+      console.error(error);
+      flash('Greška', 'Dodavanje Passkey-a nije uspelo.', 'error');
+    }
+  };
+
+  // --- HANDLERS ZA LOZINKU ---
+  const handlePassChange = (e) => {
+    setPassForm({ ...passForm, [e.target.name]: e.target.value });
+  };
+
+  const onUpdatePassword = async (e) => {
     e.preventDefault();
-    if (newPass !== confirmPass) {
-      flash('Greška', 'Lozinke se ne poklapaju.', 'error');
+    if (passForm.new.length < 6) {
+      flash('Greška', 'Lozinka mora imati bar 6 karaktera.', 'error');
       return;
     }
-    if (newPass.length < 6) {
-      flash('Greška', 'Nova lozinka mora imati bar 6 karaktera.', 'error');
+    if (passForm.new !== passForm.confirm) {
+      flash('Greška', 'Nove lozinke se ne poklapaju.', 'error');
       return;
     }
 
     setLoading(true);
     try {
-      if (user.providerData.some((p) => p.providerId === 'password')) {
-        const cred = EmailAuthProvider.credential(user.email, currentPass);
-        await reauthenticateWithCredential(user, cred);
+      const credential = EmailAuthProvider.credential(
+        user.email,
+        passForm.current
+      );
+      await reauthenticateWithCredential(auth.currentUser, credential);
+      await updatePassword(auth.currentUser, passForm.new);
 
-        await updatePassword(user, newPass);
-
-        flash('Uspeh', 'Lozinka je uspešno promenjena.', 'success');
-        setCurrentPass('');
-        setNewPass('');
-        setConfirmPass('');
+      flash('Uspeh', 'Lozinka je uspešno promenjena.', 'success');
+      setIsEditingPassword(false);
+      setPassForm({ current: '', new: '', confirm: '' });
+    } catch (error) {
+      console.error(error);
+      if (
+        error.code === 'auth/wrong-password' ||
+        error.code === 'auth/invalid-credential'
+      ) {
+        flash('Greška', 'Trenutna lozinka nije tačna.', 'error');
       } else {
-        flash(
-          'Greška',
-          'Promena lozinke nije moguća za korisnike prijavljene preko društvenih mreža.',
-          'error'
-        );
-      }
-    } catch (err) {
-      console.error(err);
-      if (err.code === 'auth/wrong-password') {
-        flash('Greška', 'Pogrešna trenutna lozinka.', 'error');
-      } else if (err.code === 'auth/too-many-requests') {
-        flash('Greška', 'Previše pokušaja. Probajte kasnije.', 'error');
-      } else {
-        flash('Greška', 'Došlo je do greške prilikom izmene.', 'error');
+        flash('Greška', 'Došlo je do greške. Pokušajte ponovo.', 'error');
       }
     } finally {
       setLoading(false);
     }
   };
-
-  const isEmailPasswordUser = user.providerData.some(
-    (p) => p.providerId === 'password'
-  );
 
   return (
     <motion.div
@@ -76,114 +141,251 @@ function SecuritySection({ user }) {
       animate={{ opacity: 1, y: 0 }}
       className="section-content"
     >
-      <div className="section-header-row">
-        <h3>Bezbednost & Privatnost</h3>
+      <div className="section-header-row mb-6">
+        <h3>Bezbednost i prijava</h3>
       </div>
 
-      <div className="card glass" style={{ padding: '24px' }}>
-        <h4
-          className="text-lg font-bold mb-4 flex items-center gap-2"
-          style={{ marginBottom: '20px', fontSize: '1.1rem' }}
-        >
-          <ShieldCheck size={20} className="text-[var(--color-primary)]" />{' '}
-          Promena lozinke
-        </h4>
-
-        <AnimatePresence mode="wait">
-          {isEmailPasswordUser ? (
-            <motion.form
-              key="form"
-              onSubmit={handleUpdate}
-              className="max-w-md"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-            >
-              <div
-                className="form-grid"
-                style={{ gridTemplateColumns: '1fr', gap: '16px' }}
-              >
-                <label>
-                  <span>Trenutna lozinka</span>
-                  <div className="input-with-icon">
-                    <KeyRound size={16} className="input-icon-left" />
-                    <input
-                      type="password"
-                      value={currentPass}
-                      onChange={(e) => setCurrentPass(e.target.value)}
-                      placeholder="••••••"
-                      required
-                    />
-                  </div>
-                </label>
-                <label>
-                  <span>Nova lozinka</span>
-                  <div className="input-with-icon">
-                    <Lock size={16} className="input-icon-left" />
-                    <input
-                      type="password"
-                      value={newPass}
-                      onChange={(e) => setNewPass(e.target.value)}
-                      placeholder="Min. 6 karaktera"
-                      required
-                    />
-                  </div>
-                </label>
-                <label>
-                  <span>Potvrdi novu lozinku</span>
-                  <div className="input-with-icon">
-                    <Lock size={16} className="input-icon-left" />
-                    <input
-                      type="password"
-                      value={confirmPass}
-                      onChange={(e) => setConfirmPass(e.target.value)}
-                      placeholder="Ponovi novu lozinku"
-                      required
-                    />
-                  </div>
-                </label>
+      {/* GRID SISTEM */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        {/* KARTICA 1: LOZINKA */}
+        <div className="card glass flex flex-col h-full relative overflow-hidden">
+          <div className="p-4 flex flex-col h-full">
+            <div className="flex items-start justify-between mb-4 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-[var(--color-primary)]/10 text-[var(--color-primary)]">
+                  <Lock size={24} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-[var(--color-text)] m-0">
+                    Lozinka
+                  </h4>
+                  <p className="text-xs text-[var(--color-muted)]">
+                    Poslednja izmena: pre 3 meseca
+                  </p>
+                </div>
               </div>
-              <div className="form-actions mt-6">
-                <button className="btn-primary" disabled={loading}>
-                  {loading ? (
-                    <Loader2 className="animate-spin" size={16} />
-                  ) : (
-                    'Promeni lozinku'
-                  )}
+
+              {!isEditingPassword && (
+                <button
+                  onClick={() => setIsEditingPassword(true)}
+                  className="px-3 py-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-bg-subtle)] text-xs font-bold text-[var(--color-text)] transition shadow-sm"
+                >
+                  Promeni lozinku
                 </button>
-              </div>
-            </motion.form>
-          ) : (
-            <motion.div
-              key="info"
-              className="p-4 bg-blue-500/10 border border-blue-500/20 text-blue-500 rounded-xl"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              <p className="font-semibold">
-                Nije moguće menjati lozinku ovde. Koristite svoj nalog na
-                društvenoj mreži ({user.providerData[0]?.providerId}) za
-                prijavu.
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-      <div className="card glass" style={{ padding: '24px' }}>
-        <h4
-          className="text-lg font-bold mb-4 flex items-center gap-2"
-          style={{ marginBottom: '20px', fontSize: '1.1rem' }}
-        >
-          <KeyRound size={20} className="text-[var(--color-primary)]" />{' '}
-          Autentifikacija
-        </h4>
+              )}
+            </div>
 
-        <AnimatePresence mode="wait">
-          <SecuritySettings />
-        </AnimatePresence>
+            <div className="flex-1">
+              <AnimatePresence mode="wait">
+                {!isEditingPassword ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="h-full flex flex-col justify-between"
+                  >
+                    <p className="text-sm text-[var(--color-muted)] leading-relaxed">
+                      Koristite jaku lozinku koju ne koristite na drugim
+                      sajtovima. Preporučujemo kombinaciju slova, brojeva i
+                      simbola.
+                    </p>
+                    <div className="mt-4 flex items-center gap-2 text-xs font-medium text-green-500 bg-green-500/10 px-3 py-1.5 rounded-lg w-fit">
+                      <CheckCircle2 size={14} />
+                      <span>Lozinka je aktivna</span>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.form
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    onSubmit={onUpdatePassword}
+                    className="flex flex-col gap-3 mt-2"
+                  >
+                    <div className="input-group">
+                      <input
+                        type="password"
+                        name="current"
+                        placeholder="Trenutna lozinka"
+                        value={passForm.current}
+                        onChange={handlePassChange}
+                        required
+                        className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:border-[var(--color-primary)] outline-none text-[var(--color-text)]"
+                      />
+                    </div>
+                    <div className="input-group">
+                      <input
+                        type="password"
+                        name="new"
+                        placeholder="Nova lozinka (min. 6)"
+                        value={passForm.new}
+                        onChange={handlePassChange}
+                        required
+                        className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:border-[var(--color-primary)] outline-none text-[var(--color-text)]"
+                      />
+                    </div>
+                    <div className="input-group">
+                      <input
+                        type="password"
+                        name="confirm"
+                        placeholder="Potvrdite novu lozinku"
+                        value={passForm.confirm}
+                        onChange={handlePassChange}
+                        required
+                        className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:border-[var(--color-primary)] outline-none text-[var(--color-text)]"
+                      />
+                    </div>
+
+                    <div className="flex gap-2 mt-2 justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditingPassword(false);
+                          setPassForm({ current: '', new: '', confirm: '' });
+                        }}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold text-[var(--color-text)] bg-[var(--color-surface)] hover:bg-[var(--color-bg-subtle)] transition"
+                      >
+                        Otkaži
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold text-[var(--color-bg)] bg-[var(--color-primary)] hover:opacity-90 transition flex items-center gap-2"
+                      >
+                        {loading ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Save size={14} />
+                        )}
+                        Sačuvaj
+                      </button>
+                    </div>
+                  </motion.form>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+
+        {/* KARTICA 2: BIOMETRIJA / PASSKEY */}
+        <div className="card glass flex flex-col h-full relative overflow-hidden">
+          <div className="p-4 flex flex-col h-full">
+            <div className="flex items-start justify-between mb-4 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-500">
+                  <Fingerprint size={24} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-[var(--color-text)] m-0">
+                    Biometrija
+                  </h4>
+                  <p className="text-xs text-[var(--color-muted)]">
+                    Passkeys & Touch ID
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center">
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    isPasskeyEnabled ? 'bg-green-500' : 'bg-gray-500'
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div className="flex-1 flex flex-col justify-between">
+              <div>
+                <p className="text-sm text-[var(--color-muted)] leading-relaxed mb-4">
+                  Prijavite se bez lozinke koristeći otisak prsta, prepoznavanje
+                  lica ili PIN uređaja. Brže i sigurnije od klasične lozinke.
+                </p>
+                {pkError && (
+                  <div className="mb-3 p-2 bg-red-500/10 border border-red-500/20 rounded-lg flex gap-2 items-center text-xs text-red-500">
+                    <AlertTriangle size={14} /> {pkError}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                {isPasskeyEnabled ? (
+                  <div className="p-3 rounded-lg bg-purple-500/5 border border-purple-500/20 flex items-center gap-3">
+                    <ShieldCheck
+                      size={18}
+                      className="text-purple-500 shrink-0"
+                    />
+                    <div className="text-xs">
+                      <span className="block font-bold text-[var(--color-text)]">
+                        Zaštićeno
+                      </span>
+                      <span className="text-[var(--color-muted)]">
+                        Uređaj je registrovan.
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    className="w-full py-2.5 rounded-lg border border-dashed border-[var(--color-border)] hover:border-purple-500 hover:bg-purple-500/5 text-[var(--color-muted)] hover:text-purple-500 transition flex items-center justify-center gap-2 text-sm font-medium disabled:opacity-50"
+                    onClick={handleAddPasskey}
+                    disabled={pkLoading}
+                  >
+                    {pkLoading ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <KeyRound size={16} />
+                    )}
+                    {pkLoading ? 'Dodavanje...' : 'Dodaj Passkey'}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* --- KARTICA 3: GOOGLE NALOG (Full Width) --- */}
+      <div className="card glass p-4 flex items-center justify-between gap-4 mb-4">
+        <div className="flex items-center gap-4">
+          <div className="p-2 bg-white rounded-full shadow-sm border border-gray-100">
+            <GoogleIcon />
+          </div>
+          <div>
+            <h4 className="font-bold text-[var(--color-text)] text-sm mb-0.5">
+              Google Nalog
+            </h4>
+            <p className="text-xs text-[var(--color-muted)]">
+              Povežite Google nalog za brzu prijavu jednim klikom.
+            </p>
+          </div>
+        </div>
+
+        {isGoogleLinked ? (
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 text-green-500 rounded-lg text-xs font-bold border border-green-500/20">
+            <Check size={14} />
+            <span>Povezano</span>
+          </div>
+        ) : (
+          <button
+            onClick={handleGoogleLink}
+            className="px-4 py-2 bg-white text-gray-800 text-xs font-bold rounded-lg border border-gray-300 hover:bg-gray-50 transition shadow-sm whitespace-nowrap"
+          >
+            Poveži nalog
+          </button>
+        )}
+      </div>
+
+      {/* INFO: ACTIVE SESSIONS */}
+      <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10 flex items-start gap-3">
+        <AlertCircle size={20} className="text-blue-400 shrink-0 mt-0.5" />
+        <div>
+          <h5 className="font-bold text-[var(--color-text)] text-sm mb-1">
+            Aktivne sesije
+          </h5>
+          <p className="text-xs text-[var(--color-muted)]">
+            Trenutno ste prijavljeni na ovom uređaju. Ako primetite sumnjivu
+            aktivnost, promenite lozinku odmah.
+          </p>
+        </div>
       </div>
     </motion.div>
   );
 }
-
-export default SecuritySection;

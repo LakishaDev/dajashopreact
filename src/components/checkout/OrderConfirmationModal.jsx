@@ -120,7 +120,8 @@ function OrderConfirmationModal({ order, money, onClose }) {
             <h4>{isPickup ? 'Adresa preuzimanja:' : 'Adresa dostave:'}</h4>
             {isPickup ? (
               <>
-                <p>Niš, TPC Gorča lokal C31</p>
+                <p>Niš, Podzemni prolaz lokal C31</p>
+                <p>Telefon: {order.customer.phone}</p>
                 <button
                   type="button"
                   className="btn-map-receipt"
@@ -172,7 +173,6 @@ function OrderConfirmationModal({ order, money, onClose }) {
                 </p>
               </>
             )}
-            <p>Telefon: {order.customer.phone}</p>
           </div>
         </div>
         <div className="order-actions">

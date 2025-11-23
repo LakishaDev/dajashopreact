@@ -18,6 +18,7 @@ import {
   X,
   Lock,
   ArrowRight,
+  Phone,
 } from 'lucide-react';
 import ErrorMessage from './ErrorMessage';
 
@@ -49,49 +50,37 @@ const POPULAR_DOMAINS = [
 // ************************************************************
 function loadGoogleMapsScript(apiKey) {
   return new Promise((resolve, reject) => {
-    // Proveri da li je već učitano
     if (window.google && window.google.maps && window.google.maps.places) {
       resolve();
       return;
     }
 
-    // Proveri da li se skripta već učitava
     if (document.getElementById('google-maps-script')) {
-      // Ako se već učitava, ne radi ništa, čekaj na onload event
-      // Pošto ne možemo ovde lako da dodamo listener, oslanjamo se na initAutocomplete
-      // koji će se desiti kada se DOM i globalni objekat formiraju
       resolve();
       return;
     }
 
     const script = document.createElement('script');
     script.type = 'text/javascript';
-    // Bitno: API ključ i libraries=places
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
     script.async = true;
     script.defer = true;
     script.id = 'google-maps-script';
 
-    // Koristimo onload event umesto globalnog callback-a
     script.onload = () => {
       if (window.google && window.google.maps && window.google.maps.places) {
         resolve();
       } else {
-        // Iako se učitalo, API ključ je možda nevažeći, pa nije definisan globalni objekat
         reject(
           new Error(
-            'Google Maps API učitan, ali globalni objekat nije definisan. Proverite API ključ i dozvole.'
+            'Google Maps API učitan, ali globalni objekat nije definisan.'
           )
         );
       }
     };
 
     script.onerror = () => {
-      reject(
-        new Error(
-          'Neuspešno učitavanje Google Maps skripte. Proverite konekciju.'
-        )
-      );
+      reject(new Error('Neuspešno učitavanje Google Maps skripte.'));
     };
 
     document.head.appendChild(script);
@@ -122,7 +111,7 @@ export default function DeliveryForm({
   const emailInputRef = useRef(null);
   const countryDropdownRef = useRef(null);
   const autocompleteInstance = useRef(null);
-  const addressInputRef = useRef(null); // Čuvamo referencu na input
+  const addressInputRef = useRef(null);
 
   const [mapsReady, setMapsReady] = useState(false);
   const [emailSuggestions, setEmailSuggestions] = useState([]);
@@ -131,23 +120,34 @@ export default function DeliveryForm({
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const [mapsScriptLoaded, setMapsScriptLoaded] = useState(false);
 
-  const currentCountry = useMemo(() => {
-    const val = formData.phone;
-    if (!val) return COUNTRY_CODES.find((c) => c.code === 'RS');
-    const found = COUNTRY_CODES.find((c) => val.startsWith(c.dial));
-    if (found) return found;
-    return COUNTRY_CODES.find((c) => c.code === 'RS');
+  // --- LOGIKA ZA RAZDVAJANJE PREFIKSA I BROJA ---
+  const { phonePrefix, localPhone } = useMemo(() => {
+    const fullNumber = formData.phone || '';
+    const sortedCodes = [...COUNTRY_CODES].sort(
+      (a, b) => b.dial.length - a.dial.length
+    );
+    const found = sortedCodes.find((c) => fullNumber.startsWith(c.dial));
+
+    if (found) {
+      return {
+        phonePrefix: found.dial,
+        localPhone: fullNumber.replace(found.dial, '').trim(),
+      };
+    }
+    return { phonePrefix: '+381', localPhone: fullNumber };
   }, [formData.phone]);
 
+  const selectedCountry =
+    COUNTRY_CODES.find((c) => c.dial === phonePrefix) ||
+    COUNTRY_CODES.find((c) => c.code === 'RS');
+
   // ************************************************************
-  // GLAVNI HOOK ZA UČITAVANJE SKRIPTE I INICIJALIZACIJU
+  // GLAVNI HOOK ZA UČITAVANJE SKRIPTE
   // ************************************************************
   useEffect(() => {
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
     if (!apiKey) {
-      console.error(
-        'VITE_GOOGLE_MAPS_KEY nije definisan u .env fajlu. Autocomplete je onemogućen.'
-      );
+      console.error('VITE_GOOGLE_MAPS_KEY nije definisan.');
       setMapsReady(false);
       return;
     }
@@ -155,28 +155,23 @@ export default function DeliveryForm({
     loadGoogleMapsScript(apiKey)
       .then(() => {
         setMapsScriptLoaded(true);
-        // Ako je skripta učitana, inicijalizuj Autocomplete
         if (addressInputRef.current) {
           initAutocomplete(addressInputRef.current);
         }
       })
       .catch((error) => {
         console.error('Greška pri učitavanju Google Maps:', error.message);
-        setMapsReady(false); // Onemogući Autocomplete
+        setMapsReady(false);
       });
   }, []);
 
   // ************************************************************
-  // FUNKCIJA ZA INICIJALIZACIJU AUTOCMPLETE-A
+  // INICIJALIZACIJA AUTOCMPLETE-A
   // ************************************************************
   const initAutocomplete = (node) => {
-    // Provera da li je Google Places API dostupan
-    if (!window.google || !window.google.maps || !window.google.maps.places) {
-      console.warn('Google Maps Places API nije dostupan za inicijalizaciju.');
+    if (!window.google || !window.google.maps || !window.google.maps.places)
       return;
-    }
 
-    // Sprečavamo dvostruku inicijalizaciju
     if (
       node.classList.contains('pac-target-input') ||
       autocompleteInstance.current
@@ -212,14 +207,13 @@ export default function DeliveryForm({
         if (zip) handleChange({ target: { name: 'postalCode', value: zip } });
       });
       autocompleteInstance.current = autocomplete;
-      setMapsReady(true); // Signaliziraj UI-u da je Autocomplete spreman
+      setMapsReady(true);
     } catch (error) {
       console.error('Google Maps Autocomplete greška:', error);
       setMapsReady(false);
     }
   };
 
-  // --- CLICK OUTSIDE ---
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (
@@ -238,13 +232,9 @@ export default function DeliveryForm({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // --- CALLBACK REF ZA ADDRESS INPUT ---
-  // Ova ref funkcija povezuje DOM element sa React ref-om i pokreće Autocomplete
   const onAddressInputMount = useCallback(
     (node) => {
-      addressInputRef.current = node; // Čuvamo referencu na input polje
-
-      // Inicijalizuj ako je skripta već učitana
+      addressInputRef.current = node;
       if (mapsScriptLoaded && node) {
         initAutocomplete(node);
       }
@@ -252,7 +242,7 @@ export default function DeliveryForm({
     [mapsScriptLoaded]
   );
 
-  // --- HANDLERS (OSTATAK KODA JE NEPROMENJEN) ---
+  // --- HANDLERS ---
   const handleEmailInput = (e) => {
     handleChange(e);
     const val = e.target.value;
@@ -303,6 +293,7 @@ export default function DeliveryForm({
       setShowRegPopover(true);
     }
   };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Tab' && prediction) {
       e.preventDefault();
@@ -313,6 +304,7 @@ export default function DeliveryForm({
       setShowEmailSuggestions(false);
     }
   };
+
   const selectEmail = (email) => {
     handleChange({ target: { name: 'email', value: email } });
     setShowEmailSuggestions(false);
@@ -320,35 +312,19 @@ export default function DeliveryForm({
     emailInputRef.current?.focus();
     if (!user && !popoverDismissed && !createAccount) setShowRegPopover(true);
   };
+
   const handleCountrySelect = (country) => {
-    let raw = formData.phone.replace(/\s/g, '');
-    let localPart = raw;
-    if (currentCountry && raw.startsWith(currentCountry.dial)) {
-      localPart = raw.substring(currentCountry.dial.length);
-    } else if (raw.startsWith('0')) {
-      localPart = raw.substring(1);
-    }
-    localPart = localPart.replace(/^0+/, '');
-    const newValue = `${country.dial} ${localPart}`;
-    handleChange({ target: { name: 'phone', value: newValue } });
+    const full = `${country.dial} ${localPhone}`;
+    handleChange({ target: { name: 'phone', value: full } });
     setIsCountryDropdownOpen(false);
-    const inputEl = document.querySelector('input[name="phone"]');
-    if (inputEl) {
-      inputEl.focus();
-      setTimeout(() => {
-        inputEl.setSelectionRange(newValue.length, newValue.length);
-      }, 10);
-    }
+    const inputEl = document.querySelector('input[name="phone-local"]');
+    if (inputEl) inputEl.focus();
   };
-  const handlePhoneChange = (e) => {
-    handleChange({ target: { name: 'phone', value: e.target.value } });
-  };
-  const handlePhoneFocus = (e) => {
-    const el = e.target;
-    setTimeout(() => {
-      const len = el.value.length;
-      el.setSelectionRange(len, len);
-    }, 0);
+
+  const handleLocalPhoneChange = (e) => {
+    const val = e.target.value;
+    const full = `${phonePrefix} ${val}`;
+    handleChange({ target: { name: 'phone', value: full } });
   };
 
   return (
@@ -357,11 +333,10 @@ export default function DeliveryForm({
         showSuccessModal ? 'z-high' : ''
       }`}
     >
-      {/* Fix za z-index Google Mape (sada se učitava dinamički, ostavljamo CSS) */}
       <style>{`
         .pac-container {
-          background-color: #151923;
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background-color: var(--color-surface);
+          border: 1px solid var(--color-border);
           border-radius: 12px;
           box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
           font-family: inherit;
@@ -372,11 +347,11 @@ export default function DeliveryForm({
           border-top: none;
           padding: 10px 14px;
           cursor: pointer;
-          color: #ececec;
+          color: var(--color-text);
         }
-        .pac-item:hover { background-color: rgba(255, 255, 255, 0.1); }
-        .pac-item-query { color: #fff; font-weight: 700; }
-        .pac-item span { color: #9ca3af; }
+        .pac-item:hover { background-color: var(--color-bg-subtle); }
+        .pac-item-query { color: var(--color-text); font-weight: 700; }
+        .pac-item span { color: var(--color-muted); }
         .pac-logo:after { filter: invert(1) opacity(0.5); margin: 8px 12px; }
       `}</style>
 
@@ -470,64 +445,71 @@ export default function DeliveryForm({
           </AnimatePresence>
         </div>
 
-        {/* TELEFON */}
+        {/* TELEFON - USKLAĐEN SA ADDRESS SECTION */}
         <div className="input-wrapper-col full-width">
-          <div
-            className={`input-group ghost-container ${getInputClass('phone')}`}
-          >
+          <div className="flex gap-2">
+            {/* DROPDOWN ZA DRŽAVU (Boje iz teme) */}
             <div
-              className="flag-trigger-wrapper z-index-fix"
+              className="relative w-[110px] shrink-0"
               ref={countryDropdownRef}
-              style={{ left: '6px' }}
             >
               <button
                 type="button"
-                className="flag-btn"
+                className="w-full p-3 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] focus:outline-none focus:border-[var(--color-primary)] flex items-center justify-between gap-2 transition-colors hover:bg-[var(--color-bg-subtle)] h-full"
                 onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
               >
-                <img
-                  src={getFlagUrl(currentCountry?.code || 'RS')}
-                  alt={currentCountry?.code}
-                  className="w-5 h-auto rounded-[2px]"
-                />
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <img
+                    src={getFlagUrl(selectedCountry.code)}
+                    alt={selectedCountry.code}
+                    className="w-5 h-auto rounded-[2px]"
+                  />
+                  <span className="text-sm font-medium text-[var(--color-text)]">
+                    {selectedCountry.dial}
+                  </span>
+                </div>
                 <ChevronDown
-                  size={12}
-                  className={`transition-transform ${
+                  size={14}
+                  className={`text-[var(--color-muted)] transition-transform ${
                     isCountryDropdownOpen ? 'rotate-180' : ''
                   }`}
                 />
               </button>
+
               <AnimatePresence>
                 {isCountryDropdownOpen && (
                   <motion.div
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 5 }}
-                    className="flag-dropdown country-dropdown-scroll"
+                    className="absolute top-full left-0 mt-1 w-[240px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-xl z-50 max-h-[250px] overflow-y-auto country-dropdown-scroll"
                     data-lenis-prevent
                   >
                     {COUNTRY_CODES.map((country) => (
                       <button
                         key={country.code}
                         type="button"
-                        className="flag-item"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[var(--color-primary)]/10 hover:text-[var(--color-primary)] transition-all rounded-md"
                         onClick={() => handleCountrySelect(country)}
                       >
                         <img
                           src={getFlagUrl(country.code)}
                           alt={country.code}
-                          className="w-5"
+                          className="w-5 h-auto rounded-[2px]"
                         />
-                        <div className="flag-text">
-                          <span className="font-bold text-gray-200">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-semibold text-[var(--color-text)]">
                             {country.label}
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-[var(--color-muted)]">
                             {country.dial}
                           </span>
                         </div>
-                        {currentCountry?.code === country.code && (
-                          <Check size={14} className="text-[#40a840] ml-auto" />
+                        {selectedCountry.code === country.code && (
+                          <Check
+                            size={16}
+                            className="text-[var(--color-primary)] ml-auto"
+                          />
                         )}
                       </button>
                     ))}
@@ -535,25 +517,36 @@ export default function DeliveryForm({
                 )}
               </AnimatePresence>
             </div>
-            <input
-              type="tel"
-              name="phone"
-              placeholder="Telefon"
-              value={formData.phone}
-              onChange={handlePhoneChange}
-              onFocus={handlePhoneFocus}
-              onClick={handlePhoneFocus}
-              required
-              className="real-input"
-              style={{ paddingLeft: '75px' }}
-            />
+
+            {/* INPUT ZA BROJ - Direktno stilizovan da se slaže sa dugmetom */}
+            <div className="relative flex-1">
+              <Phone
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)]"
+                size={18}
+              />
+              <input
+                type="tel"
+                name="phone-local"
+                placeholder="64 1234567"
+                style={{ paddingLeft: 36 }}
+                value={localPhone}
+                onChange={handleLocalPhoneChange}
+                required
+                className={`w-full p-3 pl-10 bg-[var(--color-surface)] rounded-xl border ${
+                  errors.phone
+                    ? 'border-red-500'
+                    : 'border-[var(--color-border)]'
+                } focus:outline-none focus:border-[var(--color-primary)] text-[var(--color-text)] placeholder:text-[var(--color-muted)]`}
+              />
+            </div>
           </div>
+
           <AnimatePresence mode="wait">
             {errors.phone && <ErrorMessage message={errors.phone} />}
           </AnimatePresence>
         </div>
 
-        {/* ADRESA (Koristi dinamičko učitavanje) */}
+        {/* ADRESA */}
         <AnimatePresence>
           {requiredForCourier && (
             <motion.div
@@ -571,7 +564,7 @@ export default function DeliveryForm({
                     size={18}
                   />
                   <input
-                    ref={onAddressInputMount} /* Callback ref za init */
+                    ref={onAddressInputMount}
                     type="text"
                     name="address"
                     placeholder={
