@@ -1,6 +1,6 @@
 // src/pages/Admin/components/AdminProductModal.jsx
-import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, Reorder } from "framer-motion";
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import {
   X,
   Save,
@@ -11,15 +11,15 @@ import {
   GripHorizontal,
   UploadCloud,
   Check,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   brandService,
   categoryService,
   specKeyService,
-} from "../../../services/admin";
-import { saveProduct, uploadImages } from "../../../services/products";
-import FlashModal from "../../../components/modals/FlashModal.jsx";
-import UploadProgressBar from "../../../components/UploadProgressBar.jsx";
+} from '../../../services/admin';
+import { saveProduct, uploadImages } from '../../../services/products';
+import FlashModal from '../../../components/modals/FlashModal.jsx';
+import UploadProgressBar from '../../../components/UploadProgressBar.jsx';
 
 // --- 1. Custom Animated Dropdown Component ---
 function CustomSelect({
@@ -27,7 +27,8 @@ function CustomSelect({
   value,
   options,
   onChange,
-  placeholder = "Izaberi...",
+  placeholder = 'Izaberi...',
+  disabled = false,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
@@ -42,31 +43,35 @@ function CustomSelect({
         setIsOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const selectedLabel =
     options.find((o) => o.value === value)?.label || value || placeholder;
 
   return (
-    <div className="relative" ref={containerRef}>
+    <div
+      className={`relative ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
+      ref={containerRef}
+    >
       <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1 block">
         {label}
       </span>
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
         className={`w-full flex items-center justify-between bg-white border text-left px-4 py-3 rounded-xl transition-all duration-200 
           ${
             isOpen
-              ? "border-neutral-800 ring-2 ring-neutral-100"
-              : "border-neutral-200 hover:border-neutral-300"
+              ? 'border-neutral-800 ring-2 ring-neutral-100'
+              : 'border-neutral-200 hover:border-neutral-300'
           }`}
       >
         <span
           className={`text-sm ${
-            value ? "text-neutral-900 font-medium" : "text-neutral-400"
+            value ? 'text-neutral-900 font-medium' : 'text-neutral-400'
           }`}
         >
           {selectedLabel}
@@ -74,7 +79,7 @@ function CustomSelect({
         <ChevronDown
           size={16}
           className={`text-neutral-400 transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
+            isOpen ? 'rotate-180' : ''
           }`}
         />
       </button>
@@ -85,7 +90,7 @@ function CustomSelect({
             initial={{ opacity: 0, y: -10, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.98 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
             className="absolute z-50 mt-2 w-full bg-white border border-neutral-100 rounded-xl shadow-xl max-h-60 overflow-auto custom-scrollbar p-1"
           >
             {options.map((option) => (
@@ -99,8 +104,8 @@ function CustomSelect({
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between
                   ${
                     value === option.value
-                      ? "bg-neutral-50 text-neutral-900 font-semibold"
-                      : "text-neutral-600 hover:bg-neutral-50"
+                      ? 'bg-neutral-50 text-neutral-900 font-semibold'
+                      : 'text-neutral-600 hover:bg-neutral-50'
                   }`}
               >
                 {option.label}
@@ -111,7 +116,7 @@ function CustomSelect({
             ))}
             {options.length === 0 && (
               <div className="px-3 py-2 text-xs text-neutral-400 text-center">
-                Nema opcija
+                Nema dostupnih opcija
               </div>
             )}
           </motion.div>
@@ -132,15 +137,14 @@ function ImageManager({ images, onChange }) {
     if (!files?.length) return;
     setUploading(true);
     try {
-      // Simulacija ID-a posto proizvod mozda jos nema ID
-      const tempId = "temp_" + Date.now();
+      const tempId = 'temp_' + Date.now();
       const uploaded = await uploadImages(tempId, files, ({ progress }) =>
         setProgress(progress)
       );
       onChange([...images, ...uploaded]);
     } catch (err) {
-      console.error("Upload failed", err);
-      alert("Greška pri otpremanju slika.");
+      console.error('Upload failed', err);
+      alert('Greška pri otpremanju slika.');
     } finally {
       setUploading(false);
       setProgress(0);
@@ -176,12 +180,11 @@ function ImageManager({ images, onChange }) {
         />
       </div>
 
-      {/* Progress Bar */}
       <AnimatePresence>
         {uploading && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
+            animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
           >
             <UploadProgressBar progress={progress} label="Otpremanje..." />
@@ -189,7 +192,6 @@ function ImageManager({ images, onChange }) {
         )}
       </AnimatePresence>
 
-      {/* Draggable List */}
       <Reorder.Group
         axis="y"
         values={images}
@@ -220,7 +222,7 @@ function ImageManager({ images, onChange }) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-neutral-500 truncate">
-                  {img.path ? img.path.split("/").pop() : "Eksterna slika"}
+                  {img.path ? img.path.split('/').pop() : 'Eksterna slika'}
                 </p>
               </div>
               <button
@@ -255,19 +257,19 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
   const [specKeys, setSpecKeys] = useState([]);
 
   const [form, setForm] = useState({
-    name: "",
-    brand: "",
-    category: "",
-    price: "",
-    images: [], // Array of {url, path}
-    description: "",
-    gender: "",
+    name: '',
+    brand: '',
+    category: '',
+    price: '',
+    images: [],
+    description: '',
+    gender: '',
     specs: {},
-    model3DUrl: "",
+    model3DUrl: '',
   });
 
-  const [tempSpecKey, setTempSpecKey] = useState("");
-  const [tempSpecVal, setTempSpecVal] = useState("");
+  const [tempSpecKey, setTempSpecKey] = useState('');
+  const [tempSpecVal, setTempSpecVal] = useState('');
   const [loading, setLoading] = useState(false);
   const [flash, setFlash] = useState({ open: false });
 
@@ -278,7 +280,6 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     const sub3 = specKeyService.subscribe(setSpecKeys);
 
     if (product) {
-      // Normalizuj slike u niz objekata ako je stari format
       let loadedImages = [];
       if (product.images && Array.isArray(product.images)) {
         loadedImages = product.images;
@@ -290,7 +291,7 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
         ...product,
         images: loadedImages,
         specs: product.specs || {},
-        model3DUrl: product.model3DUrl || "", // <--- UČITAVANJE 3D URL-A
+        model3DUrl: product.model3DUrl || '',
       });
     }
 
@@ -301,8 +302,17 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     };
   }, [product]);
 
+  // Handler za izmene forme
   const handleChange = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev) => {
+      const next = { ...prev, [field]: value };
+
+      // KLJUČNO: Ako se menja brend, resetuj kategoriju!
+      if (field === 'brand') {
+        next.category = '';
+      }
+      return next;
+    });
   };
 
   const addSpec = () => {
@@ -311,8 +321,8 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
       ...prev,
       specs: { ...prev.specs, [tempSpecKey]: tempSpecVal },
     }));
-    setTempSpecKey("");
-    setTempSpecVal("");
+    setTempSpecKey('');
+    setTempSpecVal('');
   };
 
   const removeSpec = (key) => {
@@ -322,18 +332,17 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
   };
 
   const handleSubmit = async () => {
-    if (!form.name || !form.price) return alert("Naziv i cena su obavezni.");
+    if (!form.name || !form.price) return alert('Naziv i cena su obavezni.');
     setLoading(true);
     try {
       const payload = {
         ...form,
         price: Number(form.price),
-        // Glavna slika je prva u nizu
-        image: form.images[0]?.url || "",
+        image: form.images[0]?.url || '',
         slug:
           form.slug ||
-          form.name.toLowerCase().replace(/ /g, "-") +
-            "-" +
+          form.name.toLowerCase().replace(/ /g, '-') +
+            '-' +
             Date.now().toString().slice(-4),
       };
       if (!product) delete payload.id;
@@ -341,14 +350,14 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
 
       await saveProduct(payload);
 
-      setFlash({ open: true, title: "Uspešno sačuvano!", ok: true });
+      setFlash({ open: true, title: 'Uspešno sačuvano!', ok: true });
       setTimeout(() => {
         onSuccess?.();
         onClose();
       }, 1200);
     } catch (err) {
       console.error(err);
-      setFlash({ open: true, title: "Greška", ok: false });
+      setFlash({ open: true, title: 'Greška', ok: false });
     } finally {
       setLoading(false);
     }
@@ -360,15 +369,24 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     label: b.name,
     id: b.id,
   }));
-  const catOptions = cats.map((c) => ({
+
+  // --- FILTRIRANJE KATEGORIJA PO BRENDU ---
+  const filteredCats = useMemo(() => {
+    if (!form.brand) return cats; // Ako nema brenda, vrati sve (ili prazno, zavisno od želje)
+    // Vrati samo kategorije koje su vezane za ovaj brend
+    return cats.filter((c) => c.brand === form.brand);
+  }, [cats, form.brand]);
+
+  const catOptions = filteredCats.map((c) => ({
     value: c.name,
     label: c.name,
     id: c.id,
   }));
+
   const genderOptions = [
-    { value: "", label: "Unisex" },
-    { value: "MUŠKI", label: "Muški" },
-    { value: "ŽENSKI", label: "Ženski" },
+    { value: '', label: 'Unisex' },
+    { value: 'MUŠKI', label: 'Muški' },
+    { value: 'ŽENSKI', label: 'Ženski' },
   ];
   const specOptions = specKeys.map((k) => ({
     value: k.name,
@@ -394,7 +412,7 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
         <div className="px-8 py-5 border-b border-neutral-200/60 bg-white/50 backdrop-blur-md flex justify-between items-center sticky top-0 z-10">
           <div>
             <h2 className="text-2xl font-extrabold text-neutral-900 tracking-tight">
-              {product ? "Izmena proizvoda" : "Novi proizvod"}
+              {product ? 'Izmena proizvoda' : 'Novi proizvod'}
             </h2>
             <p className="text-sm text-neutral-500">
               Popuni detalje i upravljaj inventarom.
@@ -422,7 +440,7 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                     </span>
                     <input
                       value={form.name}
-                      onChange={(e) => handleChange("name", e.target.value)}
+                      onChange={(e) => handleChange('name', e.target.value)}
                       className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-neutral-900 outline-none focus:ring-2 focus:ring-neutral-200 focus:border-neutral-400 transition-all font-medium"
                       placeholder="Unesi naziv proizvoda..."
                     />
@@ -436,7 +454,7 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                     <input
                       type="number"
                       value={form.price}
-                      onChange={(e) => handleChange("price", e.target.value)}
+                      onChange={(e) => handleChange('price', e.target.value)}
                       className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-neutral-900 font-mono outline-none focus:ring-2 focus:ring-neutral-200 transition-all"
                       placeholder="0"
                     />
@@ -448,9 +466,9 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                       Opis (Opciono)
                     </span>
                     <input
-                      value={form.description || ""}
+                      value={form.description || ''}
                       onChange={(e) =>
-                        handleChange("description", e.target.value)
+                        handleChange('description', e.target.value)
                       }
                       className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-neutral-900 outline-none focus:ring-2 focus:ring-neutral-200 transition-all"
                       placeholder="Kratak opis..."
@@ -465,21 +483,27 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                   label="Brend"
                   value={form.brand}
                   options={brandOptions}
-                  onChange={(v) => handleChange("brand", v)}
+                  onChange={(v) => handleChange('brand', v)}
                 />
+
+                {/* KATEGORIJA - Sada filtrirana */}
                 <CustomSelect
                   label="Kategorija"
                   value={form.category}
                   options={catOptions}
-                  onChange={(v) => handleChange("category", v)}
+                  onChange={(v) => handleChange('category', v)}
+                  placeholder={
+                    form.brand ? 'Izaberi kategoriju...' : 'Prvo izaberi brend'
+                  }
+                  disabled={!form.brand && catOptions.length === 0}
                 />
+
                 <CustomSelect
                   label="Pol"
                   value={form.gender}
                   options={genderOptions}
-                  onChange={(v) => handleChange("gender", v)}
+                  onChange={(v) => handleChange('gender', v)}
                 />
-                {/* NOVO: 3D Model URL */}
                 <div className="md:col-span-3">
                   <label className="block">
                     <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1 block">
@@ -488,7 +512,7 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                     <input
                       value={form.model3DUrl}
                       onChange={(e) =>
-                        handleChange("model3DUrl", e.target.value)
+                        handleChange('model3DUrl', e.target.value)
                       }
                       className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-neutral-900 outline-none focus:ring-2 focus:ring-neutral-200 focus:border-neutral-400 transition-all font-medium"
                       placeholder="/models/moj-sat.glb (iz Storage-a)"
@@ -574,7 +598,7 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 h-full">
                 <ImageManager
                   images={form.images}
-                  onChange={(imgs) => handleChange("images", imgs)}
+                  onChange={(imgs) => handleChange('images', imgs)}
                 />
 
                 {/* Preview grid tip */}
@@ -606,7 +630,7 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
             className="bg-neutral-900 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-black hover:shadow-lg hover:shadow-neutral-200 transition-all active:scale-95 flex items-center gap-2 disabled:opacity-70 disabled:cursor-wait"
           >
             {loading ? (
-              "Čuvanje..."
+              'Čuvanje...'
             ) : (
               <>
                 <Save size={18} /> Sačuvaj promene

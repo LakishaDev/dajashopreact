@@ -1,10 +1,9 @@
-import Product from "../models/Product.js";
-import data from "../data/mock/products.js";
+import Product from '../models/Product.js';
+import data from '../data/mock/products.js';
 
 // Preimenovan Repository da bude jasno da obrađuje MOCK podatke
 class MockProductRepository {
   constructor(rows) {
-    // Repository se i dalje oslanja na Mock Data za izdvajanje filter opcija
     this.rows = rows.map((r) => new Product(r));
   }
   all() {
@@ -19,8 +18,16 @@ class MockProductRepository {
       out = out.filter((p) => `${p.brand} ${p.name}`.toLowerCase().includes(s));
     }
     if (brand && brand.length) out = out.filter((p) => brand.includes(p.brand));
-    if (gender && gender.length)
-      out = out.filter((p) => gender.includes(p.gender));
+
+    // --- IZMENA ZA UNISEX ---
+    if (gender && gender.length) {
+      out = out.filter((p) => {
+        if (gender.includes(p.gender)) return true;
+        if (!p.gender || p.gender === 'Unisex') return true;
+        return false;
+      });
+    }
+
     if (category && category.length)
       out = out.filter((p) => category.includes(p.category));
     if (min != null) out = out.filter((p) => p.price >= min);
@@ -44,9 +51,8 @@ class CatalogService {
    */
   list(params) {
     console.warn(
-      "CatalogService.list() je zastareo; molimo koristite useProducts za real-time podatke."
+      'CatalogService.list() je zastareo; molimo koristite useProducts za real-time podatke.'
     );
-    // Vraća filtrirane mock podatke za back-up kompatibilnost
     return this.repo.filter(params || {});
   }
 
@@ -56,9 +62,8 @@ class CatalogService {
    */
   get(slug) {
     console.warn(
-      "CatalogService.get() je zastareo; molimo koristite useProduct(slug) za asinhrono dohvaćanje."
+      'CatalogService.get() je zastareo; molimo koristite useProduct(slug) za asinhrono dohvaćanje.'
     );
-    // Vraća proizvod iz mock podataka za back-up kompatibilnost
     return this.repo.bySlug(slug);
   }
 

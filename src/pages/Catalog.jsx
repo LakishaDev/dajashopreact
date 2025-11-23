@@ -1,32 +1,31 @@
-import React, { useEffect, useMemo, useState } from "react";
-import "./Catalog.css";
-import { useSearchParams, Link } from "react-router-dom";
-// eslint-disable-next-line no-unused-vars
-import { motion } from "framer-motion";
-import { Loader2, AlertTriangle, ArrowLeft } from "lucide-react";
+import React, { useEffect, useMemo, useState } from 'react';
+import './Catalog.css';
+import { useSearchParams, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Loader2, AlertTriangle, ArrowLeft } from 'lucide-react';
 
 // Komponente
-import Breadcrumbs from "../components/Breadcrumbs.jsx";
-import ProductGrid from "../components/ProductGrid.jsx";
-import Filters from "../components/Filters.jsx";
-import Pagination from "../components/Pagination.jsx";
-import FilterDrawer from "../components/FilterDrawer.jsx";
+import Breadcrumbs from '../components/Breadcrumbs.jsx';
+import ProductGrid from '../components/ProductGrid.jsx';
+import Filters from '../components/Filters.jsx';
+import Pagination from '../components/Pagination.jsx';
+import FilterDrawer from '../components/FilterDrawer.jsx';
 
 // Hook za bazu
-import useProducts from "../hooks/useProducts.js";
+import useProducts from '../hooks/useProducts.js';
 
 const PER_PAGE = 12;
 
 export default function Catalog() {
   const [sp] = useSearchParams();
 
-  // 1. Dohvatamo SVE proizvode iz baze
+  // 1. Dohvatamo SVE proizvode iz baze (uključujući one sa novim specifikacijama)
   const {
     items: allItems,
     loading,
     err,
   } = useProducts({
-    order: sp.get("sort") || "name",
+    order: sp.get('sort') || 'name',
   });
 
   // 2. Filtriranje podataka u memoriji
@@ -35,29 +34,60 @@ export default function Catalog() {
 
     let out = [...allItems];
 
-    const q = sp.get("q")?.toLowerCase() || "";
-    const brands = sp.getAll("brand");
-    const genders = sp.getAll("gender");
-    const categories = sp.getAll("category");
-    const min = sp.get("min") ? Number(sp.get("min")) : null;
-    const max = sp.get("max") ? Number(sp.get("max")) : null;
+    const q = sp.get('q')?.toLowerCase() || '';
+    const brands = sp.getAll('brand');
+    const genders = sp.getAll('gender');
+    const categories = sp.getAll('category');
+    const min = sp.get('min') ? Number(sp.get('min')) : null;
+    const max = sp.get('max') ? Number(sp.get('max')) : null;
 
-    // A) Tekstualna pretraga
+    // A) Pretraga
     if (q) {
       out = out.filter((p) =>
-        (p.brand + " " + p.name).toLowerCase().includes(q)
+        (p.brand + ' ' + p.name).toLowerCase().includes(q)
       );
     }
 
-    // B) Checkbox filteri
+    // B) Brend
     if (brands.length) out = out.filter((p) => brands.includes(p.brand));
-    if (genders.length) out = out.filter((p) => genders.includes(p.gender));
+
+    // C) Pol (Unisex logika)
+    if (genders.length) {
+      out = out.filter((p) => {
+        if (genders.includes(p.gender)) return true;
+        if (!p.gender || p.gender === 'Unisex') return true;
+        return false;
+      });
+    }
+
+    // D) Kategorija
     if (categories.length)
       out = out.filter((p) => categories.includes(p.category));
 
-    // C) Cena
+    // E) Cena
     if (min !== null) out = out.filter((p) => p.price >= min);
     if (max !== null) out = out.filter((p) => p.price <= max);
+
+    // F) Specifikacije (DOHVATA VISINU I OSTALE)
+    const specParams = Array.from(sp.keys()).filter((k) =>
+      k.startsWith('spec_')
+    );
+
+    specParams.forEach((paramKey) => {
+      const specName = paramKey.replace('spec_', '');
+      const selectedValues = sp.getAll(paramKey);
+
+      if (selectedValues.length > 0) {
+        out = out.filter((p) => {
+          // Proveravamo da li proizvod ima tu specifikaciju i da li je vrednost izabrana
+          return (
+            p.specs &&
+            p.specs[specName] &&
+            selectedValues.includes(p.specs[specName])
+          );
+        });
+      }
+    });
 
     return out;
   }, [allItems, sp]);
@@ -66,7 +96,6 @@ export default function Catalog() {
   const [page, setPage] = useState(1);
   const totalCount = filteredData.length;
 
-  // Vrati na prvu stranu ako se promene filteri
   useEffect(() => {
     setPage(1);
   }, [sp]);
@@ -74,14 +103,14 @@ export default function Catalog() {
   const start = (page - 1) * PER_PAGE;
   const itemsToShow = filteredData.slice(start, start + PER_PAGE);
 
-  // --- RENDER LOGIKA ---
+  // Render logika (Loading, Error, Empty)
   const renderContent = () => {
     if (loading) {
       return (
         <div className="flex justify-center items-center h-64 text-muted">
           <motion.div
             animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           >
             <Loader2 size={32} className="text-primary" />
           </motion.div>
@@ -105,9 +134,7 @@ export default function Catalog() {
     if (totalCount === 0) {
       return (
         <div className="flex flex-col items-center justify-center h-64 p-8 rounded-2xl border border-(--color-border) bg-surface text-center">
-          <p className="text-xl font-semibold text-text">
-            Nema rezultata
-          </p>
+          <p className="text-xl font-semibold text-text">Nema rezultata</p>
           <p className="text-muted mt-2 max-w-xs mx-auto">
             Pokušajte da promenite filtere ili termin pretrage.
           </p>
@@ -143,38 +170,34 @@ export default function Catalog() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      {/* MOBILNI TRIGGER */}
+      {/* MOBILNI TRIGGER - KLJUČNO: PROSLEDI allItems */}
       <div className="catalog-mobile-trigger lg:hidden mb-4">
-        <FilterDrawer />
+        <FilterDrawer products={allItems} />
       </div>
 
       <div className="catalog-layout lg:grid lg:grid-cols-[260px_1fr] lg:gap-8 items-start">
-        {/* DESKTOP SIDEBAR */}
+        {/* DESKTOP SIDEBAR - KLJUČNO: PROSLEDI allItems */}
         <aside className="sidebar-filters hidden lg:block sticky top-24">
-          <Filters />
+          <Filters products={allItems} />
         </aside>
 
         <main className="catalog-main min-w-0">
           <div className="mb-6">
-            <Breadcrumbs trail={[{ label: "Katalog", href: "/catalog" }]} />
-
+            <Breadcrumbs trail={[{ label: 'Katalog', href: '/catalog' }]} />
             <div className="catalog__toprow flex items-center justify-between mt-4 pb-4 border-b border-(--color-border)">
-              <h1 className="text-2xl font-bold text-text">
-                Svi proizvodi
-              </h1>
+              <h1 className="text-2xl font-bold text-text">Svi proizvodi</h1>
               <div className="catalog__count text-sm font-semibold text-muted bg-surface px-3 py-1 rounded-full border border-(--color-border)">
                 {totalCount} kom.
               </div>
             </div>
           </div>
 
-          {/* IZMENA OVDE: Uklonjen 'layout' prop, ostavljena samo opacity animacija */}
           <motion.div
-            key={sp.toString()} /* Ključ forsira re-render i fade animaciju pri promeni filtera */
+            key={sp.toString()}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
           >
             {renderContent()}
           </motion.div>

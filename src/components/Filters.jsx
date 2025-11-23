@@ -2,39 +2,156 @@ import React, { useEffect, useMemo, useState } from 'react';
 import './Filters.css';
 import { useSearchParams } from 'react-router-dom';
 import catalog from '../services/CatalogService.js';
+import { motion, AnimatePresence } from 'framer-motion';
 
-/** Mali header za sekciju sa badge i "Očisti" */
-function SectionHeader({ title, count, onClear }) {
+function SectionHeader({ title, count, onClear, isOpen, onToggle }) {
   return (
-    <div className="f-head">
+    <div
+      className="f-head cursor-pointer"
+      onClick={onToggle}
+      role="button"
+      aria-expanded={isOpen}
+    >
       <span className="f-title">{title}</span>
-      <div className="f-actions">
-        {count > 0 && (
-          <span className="f-badge" aria-label={`${count} izabrano`}>
-            {count}
-          </span>
-        )}
-        {count > 0 && (
-          <button type="button" className="f-clear" onClick={onClear}>
-            Očisti
-          </button>
-        )}
+      <div className="f-head-right">
+        <div className="f-actions">
+          {count > 0 && (
+            <span className="f-badge" aria-label={`${count} izabrano`}>
+              {count}
+            </span>
+          )}
+          {count > 0 && (
+            <button
+              type="button"
+              className="f-clear"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClear();
+              }}
+            >
+              Očisti
+            </button>
+          )}
+        </div>
+        <motion.svg
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.3 }}
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="f-chevron"
+        >
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </motion.svg>
       </div>
     </div>
   );
 }
 
-export default function Filters() {
-  // Pretpostavka: catalog.* vraća niz stringova
-  const brands = useMemo(() => catalog.brands(), []);
-  const genders = useMemo(() => catalog.genders(), []);
-  const categories = useMemo(() => catalog.categories(), []);
-
+export default function Filters({ products }) {
   const [sp, setSp] = useSearchParams();
+
+  const baseData = useMemo(() => {
+    return products && products.length > 0 ? products : catalog.list();
+  }, [products]);
+
+  // 1. Brendovi
+  const brands = useMemo(() => {
+    const b = baseData.map((p) => p.brand).filter(Boolean);
+    return [...new Set(b)].sort();
+  }, [baseData]);
+
+  // 2. Polovi
+  const genders = useMemo(() => {
+    const g = baseData.map((p) => p.gender).filter(Boolean);
+    return [...new Set(g)].sort();
+  }, [baseData]);
+
+  // 3. Kategorije (Dinamičke)
+  const categories = useMemo(() => {
+    const selectedBrands = sp.getAll('brand');
+    if (selectedBrands.length === 0) {
+      const allCats = baseData.map((p) => p.category).filter(Boolean);
+      return [...new Set(allCats)].sort();
+    }
+    const filteredProducts = baseData.filter((p) =>
+      selectedBrands.includes(p.brand)
+    );
+    const dynamicCats = filteredProducts.map((p) => p.category).filter(Boolean);
+    return [...new Set(dynamicCats)].sort();
+  }, [sp, baseData]);
+
+  // 4. SPECIFIKACIJE (Dinamičke)
+  // Izvlači specifikacije samo iz proizvoda koji odgovaraju trenutnim filterima
+  const specifications = useMemo(() => {
+    const selectedBrands = sp.getAll('brand');
+    const selectedCategories = sp.getAll('category');
+    const selectedGenders = sp.getAll('gender');
+
+    let filtered = baseData;
+
+    if (selectedBrands.length > 0) {
+      filtered = filtered.filter((p) => selectedBrands.includes(p.brand));
+    }
+    if (selectedCategories.length > 0) {
+      filtered = filtered.filter((p) =>
+        selectedCategories.includes(p.category)
+      );
+    }
+    if (selectedGenders.length > 0) {
+      filtered = filtered.filter((p) => {
+        if (selectedGenders.includes(p.gender)) return true;
+        if (!p.gender || p.gender === 'Unisex') return true;
+        return false;
+      });
+    }
+
+    // Mapa: "Mehanizam" -> Set("Quartz", "Automatic")
+    const specsMap = {};
+
+    filtered.forEach((p) => {
+      if (!p.specs) return;
+      Object.entries(p.specs).forEach(([key, val]) => {
+        if (!val) return;
+        if (!specsMap[key]) specsMap[key] = new Set();
+        specsMap[key].add(val);
+      });
+    });
+
+    return Object.entries(specsMap)
+      .map(([key, valuesSet]) => ({
+        key, // npr. "Mehanizam"
+        values: [...valuesSet].sort(), // npr. ["Automatic", "Quartz"]
+      }))
+      .sort((a, b) => a.key.localeCompare(b.key));
+  }, [sp, baseData]);
+
+  // 5. Cena
+  const maxPriceLimit = useMemo(() => {
+    if (!baseData || baseData.length === 0) return 50000;
+    return Math.max(...baseData.map((p) => p.price));
+  }, [baseData]);
+
   const [min, setMin] = useState(sp.get('min') || '');
   const [max, setMax] = useState(sp.get('max') || '');
 
-  // Helper za sigurno menjanje URLSearchParams
+  const [openSections, setOpenSections] = useState({
+    brand: true,
+    gender: true,
+    category: false,
+    price: true,
+    // Specifikacije će biti dinamičke, pa ako nema u state-u, smatra se zatvorenim
+  });
+
+  const toggleSection = (sec) => {
+    setOpenSections((prev) => ({ ...prev, [sec]: !prev[sec] }));
+  };
+
   function setParams(mutator) {
     const next = new URLSearchParams(sp);
     mutator(next);
@@ -52,6 +169,35 @@ export default function Filters() {
     });
   }
 
+  function toggleCategory(val) {
+    setParams((p) => {
+      const currentCats = p.getAll('category');
+      const has = currentCats.includes(val);
+      p.delete('category');
+      const newCats = has
+        ? currentCats.filter((x) => x !== val)
+        : [...currentCats, val];
+      newCats.forEach((v) => p.append('category', v));
+
+      if (!has) {
+        const matchingProducts = baseData.filter(
+          (prod) => prod.category === val
+        );
+        const associatedBrands = [
+          ...new Set(
+            matchingProducts.map((prod) => prod.brand).filter(Boolean)
+          ),
+        ];
+        const currentBrands = p.getAll('brand');
+        associatedBrands.forEach((brand) => {
+          if (!currentBrands.includes(brand)) {
+            p.append('brand', brand);
+          }
+        });
+      }
+    });
+  }
+
   function checked(key, val) {
     return sp.getAll(key).includes(val);
   }
@@ -66,7 +212,12 @@ export default function Filters() {
 
   function clearAll() {
     setParams((p) => {
+      // Briši standardne
       ['brand', 'gender', 'category', 'min', 'max'].forEach((k) => p.delete(k));
+      // Briši specifikacije (sve što počinje sa spec_)
+      Array.from(p.keys()).forEach((k) => {
+        if (k.startsWith('spec_')) p.delete(k);
+      });
     });
     setMin('');
     setMax('');
@@ -74,24 +225,49 @@ export default function Filters() {
 
   function setRange() {
     setParams((p) => {
-      if (min) p.set('min', min);
+      if (min && Number(min) > 0) p.set('min', min);
       else p.delete('min');
-      if (max) p.set('max', max);
+      if (max && Number(max) < maxPriceLimit) p.set('max', max);
       else p.delete('max');
     });
   }
 
-  // Sync local state sa URL-a
   useEffect(() => {
     setMin(sp.get('min') || '');
     setMax(sp.get('max') || '');
   }, [sp]);
 
-  const activeTotal =
+  const handleSliderChange = (e, type) => {
+    const val = Number(e.target.value);
+    if (type === 'min') {
+      const newMin = Math.min(val, (Number(max) || maxPriceLimit) - 100);
+      setMin(newMin.toString());
+    } else {
+      const newMax = Math.max(val, (Number(min) || 0) + 100);
+      setMax(newMax.toString());
+    }
+  };
+
+  const handleSliderCommit = () => {
+    setRange();
+  };
+
+  const getPercent = (value) => {
+    if (maxPriceLimit === 0) return 0;
+    return Math.round((value / maxPriceLimit) * 100);
+  };
+
+  // Računanje ukupnog broja aktivnih filtera (uključujući specifikacije)
+  let activeTotal =
     countSelected('brand') +
     countSelected('gender') +
     countSelected('category') +
     (sp.get('min') || sp.get('max') ? 1 : 0);
+
+  // Dodaj specifikacije u broj
+  Array.from(sp.keys()).forEach((k) => {
+    if (k.startsWith('spec_')) activeTotal += sp.getAll(k).length;
+  });
 
   return (
     <aside
@@ -99,7 +275,6 @@ export default function Filters() {
       aria-label="Filteri kataloga"
       data-lenis-prevent
     >
-      {/* Top bar */}
       <div className="f-top">
         <h3 className="f-top-title">Filteri</h3>
         <div className="f-top-actions">
@@ -112,126 +287,339 @@ export default function Filters() {
         </div>
       </div>
 
-      {/* Brend */}
-      <section className="f-section" aria-label="Brend">
-        <SectionHeader
-          title="Brend"
-          count={countSelected('brand')}
-          onClear={() => clearKey('brand')}
-        />
-        <div className="chips" role="group" aria-label="Brend">
-          {brands.map((b) => (
-            <label key={b} className="chip">
-              <input
-                type="checkbox"
-                checked={checked('brand', b)}
-                onChange={() => toggleParam('brand', b)}
-              />
-              <span>{b}</span>
-            </label>
-          ))}
+      <div className="f-scroll-container">
+        {/* Brend */}
+        <div className={`f-section ${openSections.brand ? 'is-open' : ''}`}>
+          <SectionHeader
+            title="Brend"
+            count={countSelected('brand')}
+            onClear={() => clearKey('brand')}
+            isOpen={openSections.brand}
+            onToggle={() => toggleSection('brand')}
+          />
+          <AnimatePresence initial={false}>
+            {openSections.brand && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="f-content-wrapper"
+              >
+                <div className="f-content-inner">
+                  <div className="filter-list" role="group">
+                    {brands.map((b) => (
+                      <label
+                        key={b}
+                        className={`filter-row ${
+                          checked('brand', b) ? 'is-active' : ''
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked('brand', b)}
+                          onChange={() => toggleParam('brand', b)}
+                          className="filter-input-hidden"
+                        />
+                        <span className="filter-text">{b}</span>
+                        {checked('brand', b) && (
+                          <div className="filter-check">
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                            >
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          </div>
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      </section>
 
-      {/* Pol */}
-      <section className="f-section" aria-label="Pol">
-        <SectionHeader
-          title="Pol"
-          count={countSelected('gender')}
-          onClear={() => clearKey('gender')}
-        />
-        <div className="chips" role="group" aria-label="Pol">
-          {genders.map((g) => (
-            <label key={g} className="chip">
-              <input
-                type="checkbox"
-                checked={checked('gender', g)}
-                onChange={() => toggleParam('gender', g)}
-              />
-              <span>{g}</span>
-            </label>
-          ))}
+        {/* Pol */}
+        <div className={`f-section ${openSections.gender ? 'is-open' : ''}`}>
+          <SectionHeader
+            title="Pol"
+            count={countSelected('gender')}
+            onClear={() => clearKey('gender')}
+            isOpen={openSections.gender}
+            onToggle={() => toggleSection('gender')}
+          />
+          <AnimatePresence initial={false}>
+            {openSections.gender && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="f-content-wrapper"
+              >
+                <div className="f-content-inner">
+                  <div className="filter-list" role="group">
+                    {genders.map((g) => (
+                      <label
+                        key={g}
+                        className={`filter-row ${
+                          checked('gender', g) ? 'is-active' : ''
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked('gender', g)}
+                          onChange={() => toggleParam('gender', g)}
+                          className="filter-input-hidden"
+                        />
+                        <span className="filter-text">{g}</span>
+                        {checked('gender', g) && (
+                          <div className="filter-check">
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                            >
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          </div>
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      </section>
 
-      {/* Kategorija */}
-      <section className="f-section" aria-label="Kategorija">
-        <SectionHeader
-          title="Kategorija"
-          count={countSelected('category')}
-          onClear={() => clearKey('category')}
-        />
-        <div className="chips" role="group" aria-label="Kategorija">
-          {categories.map((c) => (
-            <label key={c} className="chip">
-              <input
-                type="checkbox"
-                checked={checked('category', c)}
-                onChange={() => toggleParam('category', c)}
-              />
-              <span>{c}</span>
-            </label>
-          ))}
+        {/* Kategorija */}
+        <div className={`f-section ${openSections.category ? 'is-open' : ''}`}>
+          <SectionHeader
+            title="Kategorija"
+            count={countSelected('category')}
+            onClear={() => clearKey('category')}
+            isOpen={openSections.category}
+            onToggle={() => toggleSection('category')}
+          />
+          <AnimatePresence initial={false}>
+            {openSections.category && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="f-content-wrapper"
+              >
+                <div className="f-content-inner">
+                  {categories.length > 0 ? (
+                    <div className="filter-list" role="group">
+                      {categories.map((c) => (
+                        <label
+                          key={c}
+                          className={`filter-row ${
+                            checked('category', c) ? 'is-active' : ''
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked('category', c)}
+                            onChange={() => toggleCategory(c)}
+                            className="filter-input-hidden"
+                          />
+                          <span className="filter-text">{c}</span>
+                          {checked('category', c) && (
+                            <div className="filter-check">
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                              >
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            </div>
+                          )}
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        padding: '8px 12px',
+                        color: 'var(--color-muted)',
+                        fontSize: '13px',
+                      }}
+                    >
+                      Nema dostupnih kategorija.
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      </section>
 
-      {/* Cena */}
-      <section className="f-section" aria-label="Cena">
-        <SectionHeader
-          title="Cena"
-          count={sp.get('min') || sp.get('max') ? 1 : 0}
-          onClear={() =>
-            setParams((p) => {
-              p.delete('min');
-              p.delete('max');
-            })
-          }
-        />
-        <div className="price">
-          <div className="price-inputs">
-            <div className="input">
-              <span className="prefix">Min</span>
-              <input
-                inputMode="numeric"
-                value={min}
-                onChange={(e) => setMin(e.target.value.replace(/\D/g, ''))}
-                onBlur={() => setMin((v) => (v.length > 9 ? v.slice(0, 9) : v))}
-                placeholder="0"
-                aria-label="Minimalna cena"
-              />
-              <span className="suffix">RSD</span>
-            </div>
-            <div className="input">
-              <span className="prefix">Max</span>
-              <input
-                inputMode="numeric"
-                value={max}
-                onChange={(e) => setMax(e.target.value.replace(/\D/g, ''))}
-                onBlur={() => setMax((v) => (v.length > 9 ? v.slice(0, 9) : v))}
-                placeholder="50000"
-                aria-label="Maksimalna cena"
-              />
-              <span className="suffix">RSD</span>
-            </div>
+        {/* --- NOVE DINAMIČKE SEKCIJE ZA SPECIFIKACIJE --- */}
+        {specifications.map((spec) => (
+          <div
+            key={spec.key}
+            className={`f-section ${openSections[spec.key] ? 'is-open' : ''}`}
+          >
+            <SectionHeader
+              title={spec.key}
+              count={countSelected(`spec_${spec.key}`)}
+              onClear={() => clearKey(`spec_${spec.key}`)}
+              isOpen={!!openSections[spec.key]}
+              onToggle={() => toggleSection(spec.key)}
+            />
+            <AnimatePresence initial={false}>
+              {openSections[spec.key] && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="f-content-wrapper"
+                >
+                  <div className="f-content-inner">
+                    <div className="filter-list" role="group">
+                      {spec.values.map((val) => (
+                        <label
+                          key={val}
+                          className={`filter-row ${
+                            checked(`spec_${spec.key}`, val) ? 'is-active' : ''
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked(`spec_${spec.key}`, val)}
+                            onChange={() =>
+                              toggleParam(`spec_${spec.key}`, val)
+                            }
+                            className="filter-input-hidden"
+                          />
+                          <span className="filter-text">{val}</span>
+                          {checked(`spec_${spec.key}`, val) && (
+                            <div className="filter-check">
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                              >
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            </div>
+                          )}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
+        ))}
 
-          <div className="price-actions">
-            <button type="button" className="btn-primary" onClick={setRange}>
-              Primeni
-            </button>
+        {/* Cena */}
+        <div className={`f-section ${openSections.price ? 'is-open' : ''}`}>
+          <SectionHeader
+            title="Cena"
+            count={sp.get('min') || sp.get('max') ? 1 : 0}
+            onClear={() => {
+              setParams((p) => {
+                p.delete('min');
+                p.delete('max');
+              });
+              setMin('');
+              setMax('');
+            }}
+            isOpen={openSections.price}
+            onToggle={() => toggleSection('price')}
+          />
+          <AnimatePresence initial={false}>
+            {openSections.price && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="f-content-wrapper"
+              >
+                <div className="f-content-inner">
+                  <div className="price-wrapper">
+                    <div className="price-values">
+                      <span>{Number(min || 0).toLocaleString()} RSD</span>
+                      <span>
+                        {Number(max || maxPriceLimit).toLocaleString()} RSD
+                      </span>
+                    </div>
+                    <div className="slider-container">
+                      <div className="slider-track-bg"></div>
+                      <div
+                        className="slider-track-fill"
+                        style={{
+                          left: `${getPercent(Number(min) || 0)}%`,
+                          width: `${
+                            getPercent(Number(max) || maxPriceLimit) -
+                            getPercent(Number(min) || 0)
+                          }%`,
+                        }}
+                      ></div>
+                      <input
+                        type="range"
+                        min="0"
+                        max={maxPriceLimit}
+                        value={Number(min) || 0}
+                        onChange={(e) => handleSliderChange(e, 'min')}
+                        onMouseUp={handleSliderCommit}
+                        onTouchEnd={handleSliderCommit}
+                        className="thumb thumb--left"
+                        style={{
+                          zIndex:
+                            (Number(min) || 0) > maxPriceLimit - 100 ? 5 : 3,
+                        }}
+                      />
+                      <input
+                        type="range"
+                        min="0"
+                        max={maxPriceLimit}
+                        value={Number(max) || maxPriceLimit}
+                        onChange={(e) => handleSliderChange(e, 'max')}
+                        onMouseUp={handleSliderCommit}
+                        onTouchEnd={handleSliderCommit}
+                        className="thumb thumb--right"
+                        style={{ zIndex: 4 }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {activeTotal > 0 && (
+          <div className="f-bottom-actions">
             <button
               type="button"
-              className="btn-ghost"
-              onClick={() => {
-                setMin('');
-                setMax('');
-              }}
+              className="btn-large-reset"
+              onClick={clearAll}
             >
-              Reset polja
+              Ukloni sve filtere
             </button>
           </div>
-        </div>
-      </section>
+        )}
+      </div>
     </aside>
   );
 }

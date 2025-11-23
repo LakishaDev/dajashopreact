@@ -1,9 +1,9 @@
 // src/pages/Admin/AdminDashboard.jsx
-import React, { useState, useEffect } from "react";
-import { useAuth } from "../../hooks/useAuth";
-import { isAdminEmail } from "../../services/firebase";
-import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../hooks/useAuth';
+import { isAdminEmail } from '../../services/firebase';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Package,
   Tag,
@@ -12,22 +12,22 @@ import {
   Search,
   Edit3,
   Plus,
-  X, // <--- X ikonica za brisanje
-} from "lucide-react";
-import useProducts from "../../hooks/useProducts";
-import { deleteProduct } from "../../services/products"; // <--- import servisa
+  X,
+} from 'lucide-react';
+import useProducts from '../../hooks/useProducts';
+import { deleteProduct } from '../../services/products';
 
 // Components
-import ManageList from "./components/ManageList.jsx";
-import AdminProductModal from "./components/AdminProductModal.jsx";
-import ConfirmModal from "../../components/modals/ConfirmModal.jsx"; // <--- import modala
+import ManageList from './components/ManageList.jsx';
+import AdminProductModal from './components/AdminProductModal.jsx';
+import ConfirmModal from '../../components/modals/ConfirmModal.jsx';
 import {
   brandService,
   categoryService,
   specKeyService,
-} from "../../services/admin";
-import { money } from "../../utils/currency";
-import { useLenis } from "lenis/react";
+} from '../../services/admin';
+import { money } from '../../utils/currency';
+import { useLenis } from 'lenis/react';
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -35,20 +35,29 @@ export default function AdminDashboard() {
   const { items: products } = useProducts();
   const lenis = useLenis();
 
-  const [activeTab, setActiveTab] = useState("products");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState('products');
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Modal states
   const [modalOpen, setModalOpen] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
-
-  // Delete state
   const [deleteId, setDeleteId] = useState(null);
+
+  // NOVO: Učitavamo brendove da ih prosledimo kategorijama
+  const [brands, setBrands] = useState([]);
+
+  useEffect(() => {
+    // Pretplata na brendove samo da bi ih imali za "Kategorije" tab
+    const unsub = brandService.subscribe(setBrands, (err) =>
+      console.error(err)
+    );
+    return () => unsub();
+  }, []);
 
   // Auth Check
   useEffect(() => {
     if (!user || !isAdminEmail(user.email)) {
-      nav("/");
+      nav('/');
     }
   }, [user, nav]);
 
@@ -76,15 +85,13 @@ export default function AdminDashboard() {
     setModalOpen(true);
   };
 
-  // Brisanje
   const handleDelete = async () => {
     if (deleteId) {
       try {
         await deleteProduct(deleteId);
-        // Optimistic update nije neophodan jer useProducts slusa realtime promene
       } catch (error) {
-        console.error("Greška pri brisanju:", error);
-        alert("Došlo je do greške prilikom brisanja.");
+        console.error('Greška pri brisanju:', error);
+        alert('Došlo je do greške prilikom brisanja.');
       }
       setDeleteId(null);
     }
@@ -92,8 +99,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen pb-20 bg-[#f5f5f7] rounded-b-2xl">
-      {" "}
-      {/* Svetlija pozadina generalno */}
       {/* Header Admin Panela */}
       <div className="bg-white border-b border-neutral-200 sticky top-[var(--header-bar-h)] z-30 shadow-sm">
         <div className="container py-6">
@@ -104,26 +109,26 @@ export default function AdminDashboard() {
           {/* Tabs */}
           <div className="flex gap-2 overflow-x-auto px-2 py-4 custom-scrollbar">
             <TabButton
-              active={activeTab === "products"}
-              onClick={() => setActiveTab("products")}
+              active={activeTab === 'products'}
+              onClick={() => setActiveTab('products')}
               icon={Package}
               label="Proizvodi"
             />
             <TabButton
-              active={activeTab === "brands"}
-              onClick={() => setActiveTab("brands")}
+              active={activeTab === 'brands'}
+              onClick={() => setActiveTab('brands')}
               icon={Tag}
               label="Brendovi"
             />
             <TabButton
-              active={activeTab === "categories"}
-              onClick={() => setActiveTab("categories")}
+              active={activeTab === 'categories'}
+              onClick={() => setActiveTab('categories')}
               icon={Layers}
               label="Kategorije"
             />
             <TabButton
-              active={activeTab === "specs"}
-              onClick={() => setActiveTab("specs")}
+              active={activeTab === 'specs'}
+              onClick={() => setActiveTab('specs')}
               icon={List}
               label="Specifikacije"
             />
@@ -132,7 +137,7 @@ export default function AdminDashboard() {
       </div>
       <div className="container mt-8">
         {/* CONTENT: PROIZVODI */}
-        {activeTab === "products" && (
+        {activeTab === 'products' && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -183,7 +188,7 @@ export default function AdminDashboard() {
                         <td className="p-4">
                           <div className="w-12 h-12 rounded-lg border border-neutral-200 bg-neutral-100 overflow-hidden">
                             <img
-                              src={p.image || "/placeholder.png"}
+                              src={p.image || '/placeholder.png'}
                               alt=""
                               className="w-full h-full object-cover"
                             />
@@ -210,8 +215,6 @@ export default function AdminDashboard() {
                             >
                               <Edit3 size={18} />
                             </button>
-
-                            {/* DUGME ZA BRISANJE - X IKONICA */}
                             <button
                               onClick={() => setDeleteId(p.id)}
                               className="p-2 text-neutral-400 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors"
@@ -236,23 +239,29 @@ export default function AdminDashboard() {
         )}
 
         {/* CONTENT: BRENDOVI / KATEGORIJE / SPECS */}
-        {activeTab !== "products" && (
+        {activeTab !== 'products' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="max-w-2xl mx-auto"
           >
-            {activeTab === "brands" && (
+            {activeTab === 'brands' && (
               <ManageList service={brandService} title="Brendovi" icon={Tag} />
             )}
-            {activeTab === "categories" && (
+
+            {/* IZMENA: Kategorije sada primaju listu brendova kao opcije */}
+            {activeTab === 'categories' && (
               <ManageList
                 service={categoryService}
                 title="Kategorije"
                 icon={Layers}
+                dependencyOptions={brands} // <--- PROSLEĐUJEMO BRENDOVE
+                dependencyLabel="Brend"
+                dependencyField="brand"
               />
             )}
-            {activeTab === "specs" && (
+
+            {activeTab === 'specs' && (
               <ManageList
                 service={specKeyService}
                 title="Karakteristike"
@@ -262,19 +271,15 @@ export default function AdminDashboard() {
           </motion.div>
         )}
       </div>
-      {/* MODAL ZA EDIT/NEW */}
       <AnimatePresence>
         {modalOpen && (
           <AdminProductModal
             product={editProduct}
             onClose={() => setModalOpen(false)}
-            onSuccess={() => {
-              /* refresh handled automatically */
-            }}
+            onSuccess={() => {}}
           />
         )}
       </AnimatePresence>
-      {/* CONFIRM MODAL ZA BRISANJE */}
       <ConfirmModal
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
@@ -288,7 +293,6 @@ export default function AdminDashboard() {
   );
 }
 
-// Pomoćna komponenta za tabove (Svetla tema)
 function TabButton({ active, onClick, icon: Icon, label }) {
   return (
     <button
@@ -296,8 +300,8 @@ function TabButton({ active, onClick, icon: Icon, label }) {
       className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all whitespace-nowrap
         ${
           active
-            ? "bg-neutral-900 text-white shadow-lg shadow-neutral-300 scale-105"
-            : "bg-white text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 border border-neutral-200"
+            ? 'bg-neutral-900 text-white shadow-lg shadow-neutral-300 scale-105'
+            : 'bg-white text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 border border-neutral-200'
         }
       `}
     >
