@@ -1,17 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import "./ProductCard.css";
-import { Link } from "react-router-dom";
-import { money } from "../utils/currency.js";
-import { useCart } from "../hooks/useCart.js";
-import { useFlash } from "../hooks/useFlash.js"; // 1. Importujemo hook
+import { useEffect, useMemo, useRef, useState } from 'react';
+import './ProductCard.css';
+import { Link } from 'react-router-dom';
+import { money } from '../utils/currency.js';
+import { useCart } from '../hooks/useCart.js';
+import { useFlash } from '../hooks/useFlash.js';
+import { useWishlist } from '../context/WishlistProvider.jsx';
 import {
   saveProduct,
   uploadImages,
   removeImagesByPaths,
-} from "../services/products";
-import UploadProgressBar from "./UploadProgressBar.jsx";
-// eslint-disable-next-line no-unused-vars
-import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
+} from '../services/products';
+import UploadProgressBar from './UploadProgressBar.jsx';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import {
   Edit3,
   Save,
@@ -20,8 +20,9 @@ import {
   ImagePlus,
   Trash2,
   Check,
-} from "lucide-react";
-import { auth, ADMIN_EMAILS } from "../services/firebase";
+  Heart,
+} from 'lucide-react';
+import { auth, ADMIN_EMAILS } from '../services/firebase';
 
 const slideVariants = {
   enter: (direction) => ({
@@ -47,15 +48,18 @@ const swipePower = (offset, velocity) => {
 
 export default function ProductCard({ p }) {
   const { dispatch } = useCart();
-  const { flash } = useFlash(); // 2. Inicijalizacija hook-a
+  const { flash } = useFlash();
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
-  // Stanje za slider (stranica i smer)
+  const isLiked = isInWishlist(p.id);
+
+  // Stanje za slider
   const [[page, direction], setPage] = useState([0, 0]);
 
   // ===== LOKALNA STANJA =====
   const [isEditing, setIsEditing] = useState(false);
-  const [draft, setDraft] = useState(null); // lokalni draft izmena
-  const [optimistic, setOptimistic] = useState(null); // za instant UI update
+  const [draft, setDraft] = useState(null);
+  const [optimistic, setOptimistic] = useState(null);
   // eslint-disable-next-line no-unused-vars
   const [mainIdx, setMainIdx] = useState(0);
 
@@ -66,22 +70,18 @@ export default function ProductCard({ p }) {
     return Array.isArray(arr) ? arr : [];
   }, [p.images, p.image, optimistic]);
 
-  // Sinhronizacija page-a sa brojem slika
   const imageIndex = Math.abs(page % imgs.length);
 
-  // Funkcija za promenu slike (sledeća/prethodna)
   const paginate = (newDirection) => {
     if (imgs.length <= 1) return;
     setPage([page + newDirection, newDirection]);
   };
 
-  // Funkcija za klik na tačkicu (dots) ili thumbnail
   const setIndex = (index) => {
     const newDirection = index > imageIndex ? 1 : -1;
     setPage([index, newDirection]);
   };
 
-  // Da li prikazujemo kontrole za slider?
   const showSliderControls = imgs.length > 1;
 
   // ===== ADMIN DETEKCIJA =====
@@ -100,7 +100,6 @@ export default function ProductCard({ p }) {
   );
 
   useEffect(() => {
-    // reset glavne slike kad se promeni lista
     setMainIdx((idx) => (imgs[idx] ? idx : 0));
   }, [imgs]);
 
@@ -109,12 +108,10 @@ export default function ProductCard({ p }) {
   const [uploadPct, setUploadPct] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
 
-  // (Uklonjen lokalni [flash, setFlash] state jer koristimo globalni context)
-
   // ===== HANDLERS: KORPA =====
   const addToCart = () => {
     dispatch({
-      type: "ADD",
+      type: 'ADD',
       item: {
         id: p.id,
         name: p.name,
@@ -124,8 +121,7 @@ export default function ProductCard({ p }) {
         slug: p.slug,
       },
     });
-    // 3. Flash za korpu
-    flash("Dodato u korpu", `${p.name} je u vašoj korpi.`, "cart");
+    flash('Dodato u korpu', `${p.name} je u vašoj korpi.`, 'cart');
   };
 
   // ===== HANDLERS: EDIT =====
@@ -138,7 +134,7 @@ export default function ProductCard({ p }) {
       price: p.price,
       slug: p.slug,
       novo: !!p.novo,
-      images: imgs, // {url, path?}
+      images: imgs,
     });
   };
 
@@ -151,7 +147,6 @@ export default function ProductCard({ p }) {
   };
 
   const applyOptimistic = async () => {
-    // optimistički UI
     setOptimistic((prev) => ({ ...(prev ?? {}), ...draft }));
     try {
       await saveProduct({
@@ -164,45 +159,39 @@ export default function ProductCard({ p }) {
         images: (draft.images ?? []).map((x) => ({ url: x.url, path: x.path })),
       });
 
-      // 4. Flash za čuvanje
-      flash("Izmene sačuvane", "Proizvod je uspešno ažuriran.", "success");
+      flash('Izmene sačuvane', 'Proizvod je uspešno ažuriran.', 'success');
 
       setIsEditing(false);
       setDraft(null);
       setTimeout(() => setOptimistic(null), 300);
     } catch (e) {
-      // revert
       setOptimistic(null);
-      // 5. Flash za grešku
       flash(
-        "Greška pri čuvanju",
-        e?.message ?? "Pokušaj ponovo.",
+        'Greška pri čuvanju',
+        e?.message ?? 'Pokušaj ponovo.',
         <XCircle className="text-red-500" size={22} />
       );
     }
   };
 
-  // ===== HANDLERS: INPUTI =====
   const bind = (field) => ({
-    value: draft?.[field] ?? "",
+    value: draft?.[field] ?? '',
     onChange: (e) =>
       setDraft((d) => ({
         ...d,
         [field]:
-          field === "price"
-            ? e.target.value.replace(/[^\d]/g, "")
+          field === 'price'
+            ? e.target.value.replace(/[^\d]/g, '')
             : e.target.value,
       })),
   });
 
-  // toggle NOVO
   const toggleNovo = () =>
     setDraft((d) => ({
       ...d,
       novo: !d.novo,
     }));
 
-  // ===== HANDLERS: SLIKE =====
   const openFilePicker = () => fileInputRef.current?.click();
 
   const onUploadFiles = async (e) => {
@@ -214,7 +203,6 @@ export default function ProductCard({ p }) {
       const uploaded = await uploadImages(p.id, files, ({ progress }) =>
         setUploadPct(progress)
       );
-      // momentalno dodaj u draft + UI
       setDraft((d) => ({
         ...d,
         images: [...(d?.images ?? imgs), ...uploaded],
@@ -223,32 +211,29 @@ export default function ProductCard({ p }) {
         ...(o ?? {}),
         images: [...imgs, ...uploaded],
       }));
-      // Firestore zapis
       await saveProduct({
         id: p.id,
         images: [...imgs, ...uploaded],
       });
 
-      // 6. Flash za upload
       flash(
-        "Slike dodate",
+        'Slike dodate',
         `${uploaded.length} fajl(a) uspešno otpremljeno.`,
-        "success"
+        'success'
       );
     } catch (err) {
       flash(
-        "Upload neuspešan",
-        err?.message ?? "Pokušaj ponovo.",
+        'Upload neuspešan',
+        err?.message ?? 'Pokušaj ponovo.',
         <XCircle className="text-red-500" size={22} />
       );
     } finally {
       setIsUploading(false);
       setUploadPct(0);
-      e.target.value = "";
+      e.target.value = '';
     }
   };
 
-  // selekcija za grupno brisanje
   const [selectedPaths, setSelectedPaths] = useState([]);
   const toggleSelect = (path) =>
     setSelectedPaths((prev) =>
@@ -257,7 +242,6 @@ export default function ProductCard({ p }) {
 
   const removeSelected = async () => {
     if (!selectedPaths.length) return;
-    // optimistic – skloni odmah iz UI
     const rest = (draft?.images ?? imgs).filter(
       (x) => !selectedPaths.includes(x.path ?? x.url)
     );
@@ -267,16 +251,15 @@ export default function ProductCard({ p }) {
       await removeImagesByPaths(p.id, selectedPaths);
       await saveProduct({ id: p.id, images: rest });
 
-      // 7. Flash za brisanje
       flash(
-        "Slike obrisane",
+        'Slike obrisane',
         `${selectedPaths.length} fajl(a) uklonjeno.`,
-        "success"
+        'success'
       );
     } catch (e) {
       flash(
-        "Brisanje neuspešno",
-        e?.message ?? "Pokušaj ponovo.",
+        'Brisanje neuspešno',
+        e?.message ?? 'Pokušaj ponovo.',
         <XCircle className="text-red-500" size={22} />
       );
     } finally {
@@ -284,7 +267,6 @@ export default function ProductCard({ p }) {
     }
   };
 
-  // ===== RENDER DATA =====
   const data = optimistic ? { ...p, ...optimistic } : p;
 
   return (
@@ -293,9 +275,9 @@ export default function ProductCard({ p }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
     >
-      {/* NOVO bedž */}
+      {/* Bedž NOVO */}
       {(data.novo ?? false) && (
         <div className="pointer-events-none absolute left-2 top-2 z-20">
           <motion.div
@@ -320,10 +302,10 @@ export default function ProductCard({ p }) {
             animate="center"
             exit="exit"
             transition={{
-              x: { type: "spring", stiffness: 300, damping: 30 },
+              x: { type: 'spring', stiffness: 300, damping: 30 },
               opacity: { duration: 0.2 },
             }}
-            drag={showSliderControls ? "x" : false}
+            drag={showSliderControls ? 'x' : false}
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={1}
             onDragEnd={(e, { offset, velocity }) => {
@@ -351,7 +333,6 @@ export default function ProductCard({ p }) {
           </motion.div>
         </AnimatePresence>
 
-        {/* PLUS za dodavanje (samo admin, u edit modu) */}
         {isAdmin && isEditing && (
           <motion.button
             initial={{ scale: 0 }}
@@ -376,7 +357,6 @@ export default function ProductCard({ p }) {
           className="hidden"
         />
 
-        {/* Upload progress */}
         <AnimatePresence>
           {isUploading && (
             <motion.div
@@ -390,12 +370,10 @@ export default function ProductCard({ p }) {
           )}
         </AnimatePresence>
 
-        {/* NAVIGATION AREA (Dots or Thumbs) */}
         <LayoutGroup>
           <div className="absolute inset-x-0 bottom-0 z-20 p-3  from-black/60 to-transparent pointer-events-none">
             <div className="pointer-events-auto">
               <AnimatePresence mode="wait" initial={false}>
-                {/* CASE 1: ADMIN EDIT MODE - Thumbnails */}
                 {isAdmin && isEditing && imgs.length > 0 ? (
                   <motion.div
                     key="thumbs"
@@ -421,8 +399,8 @@ export default function ProductCard({ p }) {
                             onClick={() => setIndex(idx)}
                             className={`h-12 w-12 overflow-hidden rounded-lg border-2 transition-all ${
                               selected
-                                ? "border-blue-500 scale-105 shadow-md opacity-100"
-                                : "border-white/40 opacity-80 hover:opacity-100"
+                                ? 'border-blue-500 scale-105 shadow-md opacity-100'
+                                : 'border-white/40 opacity-80 hover:opacity-100'
                             }`}
                           >
                             <img
@@ -432,7 +410,6 @@ export default function ProductCard({ p }) {
                             />
                           </button>
 
-                          {/* Modern Glass Checkbox */}
                           <label className="absolute -top-2 -right-2 cursor-pointer z-30">
                             <input
                               type="checkbox"
@@ -453,7 +430,6 @@ export default function ProductCard({ p }) {
                     })}
                   </motion.div>
                 ) : (
-                  /* CASE 2: USER VIEW MODE - Dots */
                   imgs.length > 1 && (
                     <motion.div
                       key="dots"
@@ -477,8 +453,8 @@ export default function ProductCard({ p }) {
                             animate={{
                               width: active ? 24 : 6,
                               backgroundColor: active
-                                ? "rgba(255, 255, 255, 1)"
-                                : "rgba(255, 255, 255, 0.4)",
+                                ? 'rgba(255, 255, 255, 1)'
+                                : 'rgba(255, 255, 255, 0.4)',
                             }}
                           />
                         );
@@ -494,26 +470,53 @@ export default function ProductCard({ p }) {
 
       {/* Telo kartice */}
       <div className="product-card__body relative bg-zinc-100 z-10 p-4">
-        {/* BRAND */}
-        <div className="product-card__brand text-xs uppercase tracking-wider text-zinc-500 mb-1">
-          {isAdmin && isEditing ? (
-            <input
-              className="w-full rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-sm bg-transparent outline-none focus:border-blue-500"
-              placeholder="Brend"
-              {...bind("brand")}
-            />
-          ) : (
-            data.brand
+        {/* RED 1: Brend (levo) i Srce (desno) */}
+        <div className="flex justify-between items-start mb-1 gap-2">
+          <div className="product-card__brand text-xs uppercase tracking-wider text-zinc-500 flex-1 min-w-0 truncate pt-1">
+            {isAdmin && isEditing ? (
+              <input
+                className="w-full rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-sm bg-transparent outline-none focus:border-blue-500"
+                placeholder="Brend"
+                {...bind('brand')}
+              />
+            ) : (
+              data.brand
+            )}
+          </div>
+
+          {/* DUGME ZA WISHLIST (Desno od brenda) */}
+          {!isEditing && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleWishlist({
+                  id: p.id,
+                  name: p.name,
+                  price: p.price,
+                  image: imgs?.[0]?.url ?? p.image,
+                  brand: p.brand,
+                  slug: p.slug,
+                });
+              }}
+              className="p-1.5 rounded-full hover:bg-zinc-200 transition-colors text-zinc-400 hover:text-zinc-600 -mr-1"
+              title={isLiked ? 'Ukloni iz želja' : 'Dodaj u želje'}
+            >
+              <Heart
+                size={18}
+                className={isLiked ? 'fill-red-500 text-red-500' : ''}
+              />
+            </button>
           )}
         </div>
 
-        {/* NAME */}
+        {/* RED 2: Naziv */}
         <div className="product-card__name font-bold text-lg text-zinc-800 mb-1 leading-tight">
           {isAdmin && isEditing ? (
             <input
               className="w-full rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 bg-transparent outline-none focus:border-blue-500"
               placeholder="Naziv"
-              {...bind("name")}
+              {...bind('name')}
             />
           ) : (
             <Link
@@ -525,13 +528,13 @@ export default function ProductCard({ p }) {
           )}
         </div>
 
-        {/* PRICE */}
+        {/* RED 3: Cena */}
         <div className="product-card__price text-zinc-900 dark:text-white font-medium">
           {isAdmin && isEditing ? (
             <input
               className="w-full rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-right tabular-nums bg-transparent outline-none focus:border-blue-500"
               placeholder="Cena (RSD)"
-              {...bind("price")}
+              {...bind('price')}
             />
           ) : (
             money(data.price)
@@ -600,9 +603,9 @@ export default function ProductCard({ p }) {
                     <motion.button
                       initial={{ width: 0, opacity: 0, padding: 0 }}
                       animate={{
-                        width: "auto",
+                        width: 'auto',
                         opacity: 1,
-                        padding: "0.5rem 0.75rem",
+                        padding: '0.5rem 0.75rem',
                       }}
                       exit={{ width: 0, opacity: 0, padding: 0 }}
                       whileTap={{ scale: 0.98 }}
@@ -610,7 +613,7 @@ export default function ProductCard({ p }) {
                       className="inline-flex items-center gap-2 rounded-lg bg-red-500 text-white text-sm whitespace-nowrap overflow-hidden"
                       title="Obriši izabrane slike"
                     >
-                      <Trash2 size={14} />{" "}
+                      <Trash2 size={14} />{' '}
                       <span className="text-xs font-bold">
                         {selectedPaths.length}
                       </span>
@@ -622,11 +625,6 @@ export default function ProductCard({ p }) {
           </div>
         )}
       </div>
-
-      {/* UKLONJEN: <FlashModal /> 
-        Razlog: Sada se FlashModal renderuje globalno u FlashProvider-u (App.jsx/Context),
-        a mi ga samo pozivamo preko useFlash() hook-a.
-      */}
     </motion.div>
   );
 }

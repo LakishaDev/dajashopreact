@@ -10,6 +10,8 @@ import {
   Edit2,
   PenTool,
   Loader2,
+  Phone,
+  ChevronDown,
 } from 'lucide-react';
 
 import { db } from '../../services/firebase';
@@ -25,14 +27,25 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 
-// Uvezeni eksterni resursi
 import { FORM_RULES } from '../../data/validationRules';
 import ConfirmModal from '../modals/ConfirmModal.jsx';
 import ErrorMessage from '../ui/ErrorMessage.jsx';
 import { ADDRESS_ICONS, renderIcon } from '../../utils/accountHelpers.jsx';
 
-// *** KLJUČNO: Korišćenje Vite varijable okruženja za API ključ ***
 const GMAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY;
+
+// --- LISTA POZIVNIH BROJEVA ---
+const COUNTRY_CODES = [
+  { code: '+381', country: 'RS', label: '🇷🇸 +381' },
+  { code: '+382', country: 'ME', label: '🇲🇪 +382' },
+  { code: '+387', country: 'BA', label: '🇧🇦 +387' },
+  { code: '+385', country: 'HR', label: '🇭🇷 +385' },
+  { code: '+389', country: 'MK', label: '🇲🇰 +389' },
+  { code: '+386', country: 'SI', label: '🇸🇮 +386' },
+  { code: '+43', country: 'AT', label: '🇦🇹 +43' },
+  { code: '+49', country: 'DE', label: '🇩🇪 +49' },
+  { code: '+41', country: 'CH', label: '🇨🇭 +41' },
+];
 
 function AddressSection({ user }) {
   const { flash } = useFlash();
@@ -45,6 +58,25 @@ function AddressSection({ user }) {
   const [deleteId, setDeleteId] = useState(null);
   const addressInputRef = useRef(null);
 
+  // State za prefiks telefona
+  const [phonePrefix, setPhonePrefix] = useState('+381');
+
+  // Pomoćna funkcija za razdvajanje broja
+  const parsePhoneNumber = (fullNumber) => {
+    if (!fullNumber) return { prefix: '+381', number: '' };
+    const sortedCodes = [...COUNTRY_CODES].sort(
+      (a, b) => b.code.length - a.code.length
+    );
+    const found = sortedCodes.find((c) => fullNumber.startsWith(c.code));
+    if (found) {
+      return {
+        prefix: found.code,
+        number: fullNumber.replace(found.code, '').trim(),
+      };
+    }
+    return { prefix: '+381', number: fullNumber };
+  };
+
   const initialFormState = {
     label: 'Kuća',
     icon: 'home',
@@ -52,11 +84,21 @@ function AddressSection({ user }) {
     address: '',
     city: '',
     zip: '',
-    phone: user.phoneNumber || '',
+    phone: '',
   };
+
   const [form, setForm] = useState(initialFormState);
 
-  // --- REAL-TIME DATA FETCHING (Firebase Firestore) ---
+  // Postavi telefon korisnika pri učitavanju
+  useEffect(() => {
+    if (user.phoneNumber) {
+      const { prefix, number } = parsePhoneNumber(user.phoneNumber);
+      setPhonePrefix(prefix);
+      setForm((f) => ({ ...f, phone: number }));
+    }
+  }, [user.phoneNumber]);
+
+  // --- REAL-TIME DATA FETCHING ---
   useEffect(() => {
     if (!user?.uid) return;
     const q = query(
@@ -78,38 +120,27 @@ function AddressSection({ user }) {
     return () => unsubscribe();
   }, [user]);
 
-  // --- DYNAMIC GOOGLE MAPS SCRIPT LOADING ---
+  // --- GOOGLE MAPS ---
   useEffect(() => {
-    // Ako nismo u modu dodavanja/izmena ILI je skripta već učitana, ne radimo ništa
-    if (!isAdding || (window.google && window.google.maps)) {
-      return;
-    }
-
+    if (!isAdding || (window.google && window.google.maps)) return;
     const existingScript = document.getElementById('google-maps-script');
     if (existingScript) return;
-
-    // Kreiranje novog Script taga
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${GMAPS_API_KEY}&libraries=places&language=sr`;
     script.async = true;
     script.defer = true;
     script.id = 'google-maps-script';
-
     document.head.appendChild(script);
   }, [isAdding]);
 
-  // --- GOOGLE PLACES AUTOCOMPLETE INITIALIZATION ---
+  // --- GOOGLE PLACES AUTOCOMPLETE ---
   useEffect(() => {
     if (!isAdding) return;
     let autocomplete = null;
-
     const initGooglePlaces = () => {
-      // Provera da li je Google Maps API učitan
       if (!window.google || !window.google.maps || !window.google.maps.places)
         return false;
-
       if (addressInputRef.current) {
-        // Logika inicijalizacije Google Autocomplete-a
         autocomplete = new window.google.maps.places.Autocomplete(
           addressInputRef.current,
           {
@@ -152,16 +183,12 @@ function AddressSection({ user }) {
       }
       return false;
     };
-
-    // Ako Autocomplete nije odmah inicijalizovan (skripta se još učitava), pokušavajmo svakih 500ms
     if (!initGooglePlaces()) {
       const i = setInterval(() => {
         if (initGooglePlaces()) clearInterval(i);
       }, 500);
       return () => clearInterval(i);
     }
-
-    // Cleanup funkcija za uklanjanje slušalaca i Places kontejnera
     return () => {
       if (autocomplete)
         window.google.maps.event.clearInstanceListeners(autocomplete);
@@ -170,8 +197,7 @@ function AddressSection({ user }) {
     };
   }, [isAdding]);
 
-  // --- VALIDACIJA, RUKOVANJE FORME I CRUD OPERACIJE ---
-
+  // --- VALIDACIJA ---
   const validateField = (name, value) => {
     if (name === 'name' && !FORM_RULES.name.regex.test(value))
       return FORM_RULES.name.message;
@@ -181,8 +207,10 @@ function AddressSection({ user }) {
       return 'Unesite validan naziv grada.';
     if (name === 'zip' && !FORM_RULES.postalCode.regex.test(value))
       return FORM_RULES.postalCode.message;
-    if (name === 'phone' && !FORM_RULES.phone.regex.test(value))
-      return FORM_RULES.phone.message;
+    if (name === 'phone') {
+      const cleanNumber = value.replace(/\D/g, '');
+      if (cleanNumber.length < 6) return 'Unesite ispravan broj telefona.';
+    }
     return null;
   };
 
@@ -198,15 +226,9 @@ function AddressSection({ user }) {
   };
 
   const handleEdit = (addr) => {
-    setForm({
-      label: addr.label,
-      icon: addr.icon || 'mapPin',
-      name: addr.name,
-      address: addr.address,
-      city: addr.city,
-      zip: addr.zip,
-      phone: addr.phone,
-    });
+    const { prefix, number } = parsePhoneNumber(addr.phone);
+    setForm({ ...addr, phone: number });
+    setPhonePrefix(prefix);
     setEditingId(addr.id);
     setIsAdding(true);
     setErrors({});
@@ -216,6 +238,8 @@ function AddressSection({ user }) {
     setIsAdding(false);
     setEditingId(null);
     setForm(initialFormState);
+    const { prefix } = parsePhoneNumber(user.phoneNumber);
+    setPhonePrefix(prefix || '+381');
     setErrors({});
     setSubmitCount(0);
   };
@@ -235,61 +259,37 @@ function AddressSection({ user }) {
       return;
     }
 
-    const isEditing = !!editingId;
-    const optimisticAddress = { ...form };
-    let localId;
+    const fullPhoneNumber = `${phonePrefix} ${form.phone}`;
+    const dataToSave = { ...form, phone: fullPhoneNumber };
 
+    const isEditing = !!editingId;
     try {
       if (isEditing) {
-        // Optimistički update za EDIT
-        setAddresses((prev) =>
-          prev.map((addr) =>
-            addr.id === editingId ? { ...addr, ...form } : addr
-          )
-        );
-
         await updateDoc(doc(db, 'users', user.uid, 'addresses', editingId), {
-          ...form,
+          ...dataToSave,
           updatedAt: serverTimestamp(),
         });
-
         flash('Uspeh', 'Adresa izmenjena.', 'success');
       } else {
-        // Optimistički update za NOVO
-        localId = 'temp-' + Date.now();
-        optimisticAddress.id = localId;
-        optimisticAddress.isOptimistic = true;
-        setAddresses((prev) => [optimisticAddress, ...prev]);
-
-        const colRef = collection(db, 'users', user.uid, 'addresses');
-        await addDoc(colRef, { ...form, createdAt: serverTimestamp() });
-
-        flash('Uspeh', 'Adresa sačuvana.', 'success');
+        await addDoc(collection(db, 'users', user.uid, 'addresses'), {
+          ...dataToSave,
+          createdAt: serverTimestamp(),
+        });
+        flash('Uspeh', 'Nova adresa dodata.', 'success');
       }
       handleCancel();
     } catch (error) {
       console.error(error);
       flash('Greška', 'Greška pri čuvanju.', 'error');
-
-      // Rollback
-      if (!isEditing && localId) {
-        setAddresses((prev) => prev.filter((addr) => addr.id !== localId));
-      }
     }
   };
 
   const handleConfirmDelete = async () => {
-    const idToDelete = deleteId;
-    if (!idToDelete) return;
-
-    // Optimističko brisanje
-    setAddresses((prev) => prev.filter((addr) => addr.id !== idToDelete));
-
+    if (!deleteId) return;
     try {
-      await deleteDoc(doc(db, 'users', user.uid, 'addresses', idToDelete));
+      await deleteDoc(doc(db, 'users', user.uid, 'addresses', deleteId));
       flash('Obrisano', 'Adresa uklonjena.', 'info');
     } catch (error) {
-      console.error(error);
       flash('Greška', 'Greška pri brisanju.', 'error');
     } finally {
       setDeleteId(null);
@@ -305,7 +305,6 @@ function AddressSection({ user }) {
 
   const isStandardLabel = ['Kuća', 'Posao'].includes(form.label);
 
-  // --- RENDER ---
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -320,6 +319,8 @@ function AddressSection({ user }) {
             onClick={() => {
               setEditingId(null);
               setForm(initialFormState);
+              const { prefix } = parsePhoneNumber(user.phoneNumber);
+              setPhonePrefix(prefix || '+381');
               setIsAdding(true);
             }}
           >
@@ -486,16 +487,49 @@ function AddressSection({ user }) {
                   )}
                 </AnimatePresence>
               </label>
+
+              {/* NOVO POLJE ZA TELEFON SA SELEKTOROM DRŽAVE */}
               <label className="full">
                 <span>Telefon</span>
-                <input
-                  name="phone"
-                  value={form.phone}
-                  onChange={handleInputChange}
-                  onBlur={handleBlur}
-                  placeholder="064..."
-                  className={errors.phone ? 'input-error' : ''}
-                />
+                <div className="flex gap-2">
+                  <div className="relative w-[110px] shrink-0">
+                    <select
+                      value={phonePrefix}
+                      onChange={(e) => setPhonePrefix(e.target.value)}
+                      className="w-full p-3 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] focus:outline-none focus:border-[var(--color-primary)] appearance-none font-medium text-[var(--color-text)]"
+                    >
+                      {COUNTRY_CODES.map((country) => (
+                        <option key={country.code} value={country.code}>
+                          {country.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      size={16}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-muted)] pointer-events-none"
+                    />
+                  </div>
+                  <div className="relative flex-1">
+                    <Phone
+                      size={18}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)]"
+                    />
+                    <input
+                      name="phone"
+                      type="tel"
+                      value={form.phone}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      className={`w-full p-3 pl-10 bg-[var(--color-surface)] rounded-xl border ${
+                        errors.phone
+                          ? 'border-red-500'
+                          : 'border-[var(--color-border)]'
+                      } focus:outline-none focus:border-[var(--color-primary)]`}
+                      placeholder="64 1234567"
+                      style={{ paddingLeft: '36px' }}
+                    />
+                  </div>
+                </div>
                 <AnimatePresence mode="wait">
                   {errors.phone && (
                     <ErrorMessage
