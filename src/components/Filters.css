@@ -1,7 +1,7 @@
 /* ===== Container ===== */
 .filters {
   position: sticky;
-  top: 500; /* 48px = visina NavBar-a */
+  top: 5rem; /* KLJUČNO: Fiksna sticky pozicija (npr. 80px) da stoji ispod headera */
   z-index: 1050;
   margin-top: 6vh;
 
@@ -12,6 +12,24 @@
   box-shadow: var(--shadow-1, 0 1px 2px rgba(52, 52, 52, 0.06));
   background: var(--color-surface, #f5f5f7);
   color: var(--color-text, #111);
+
+  /* NOVO: Responzivnost za visinu ekrana */
+  /* Ograničavamo visinu filtera na 93% visine ekrana minus gornja margina (top: 5rem) */
+  max-height: calc(100vh - 7rem);
+  overflow-y: auto; /* Omogućava skrolovanje unutar panela filtera */
+
+  /* Estetika skrolovanja (za minimalistički izgled) */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-muted, #6e6e73) transparent;
+}
+.filters::-webkit-scrollbar-thumb {
+  background-color: var(--color-muted, #6e6e73);
+  border-radius: 999px;
+  border: 3px solid var(--color-surface, #f5f5f7);
+}
+.filters::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 /* Glass var (ako imaš varijable u temi) */
@@ -22,7 +40,7 @@
   border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.35));
 }
 
-/* ===== Top header ===== */
+/* ===== Top header, Sections, Badge & Clear (Ovi stilovi su već dobri i minimalistički) ===== */
 .f-top {
   display: flex;
   align-items: center;
@@ -38,8 +56,6 @@
   gap: 8px;
   align-items: center;
 }
-
-/* ===== Sections ===== */
 .f-section {
   padding: 10px 0 6px;
 }
@@ -61,8 +77,6 @@
   gap: 8px;
   align-items: center;
 }
-
-/* ===== Badge & Clear ===== */
 .f-badge {
   display: inline-flex;
   align-items: center;
@@ -93,7 +107,7 @@
   background: var(--accent-8, rgba(0, 0, 0, 0.06));
 }
 
-/* ===== Chips ===== */
+/* ===== Chips (Poboljšan UX na mobilnom) ===== */
 .chips {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
@@ -106,6 +120,15 @@
     overflow-x: auto;
     padding-bottom: 4px;
     scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch; /* Bolji scrolling na iOS */
+  }
+  /* Sakrij scrollbar za čistiji minimalistički izgled na mobilnom */
+  .chips::-webkit-scrollbar {
+    display: none;
+  }
+  .chips {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
   }
 }
 .chip {
@@ -152,26 +175,23 @@
   transform: translateY(-1px);
 }
 
-/* ===== Cena (overflow fix) ===== */
+/* ===== Cena (Estetika i responzivnost) ===== */
 .price {
   display: grid;
   gap: 10px;
   max-inline-size: 100%;
   box-sizing: border-box;
 }
-
 .price-inputs {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); /* anti-overflow */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 8px;
 }
-
 @media (max-width: 480px) {
   .price-inputs {
     grid-template-columns: 1fr;
   }
 }
-
 .input {
   position: relative;
   display: flex;
@@ -181,15 +201,13 @@
   border: 1px solid var(--color-border, #e5e7eb);
   border-radius: 12px;
   padding: 6px 10px;
-  overflow: hidden; /* seče višak ako baš zatreba */
+  overflow: hidden;
   box-sizing: border-box;
 }
-
 .input:has(input:focus-visible) {
   box-shadow: 0 0 0 3px var(--accent-8, rgba(0, 0, 0, 0.06)),
     0 0 0 6px var(--color-ring, #4f46e5);
 }
-
 .input .prefix,
 .input .suffix {
   flex: 0 0 auto;
@@ -204,10 +222,9 @@
 .input .suffix {
   margin-left: 2px;
 }
-
 .input input {
   flex: 1 1 auto;
-  min-width: 0; /* MAGIC: dozvoljava skupljanje bez overflow-a */
+  min-width: 0;
   width: 100%;
   background: transparent;
   border: 0;
@@ -225,7 +242,6 @@
   gap: 8px;
   flex-wrap: wrap;
 }
-
 .btn-primary {
   background: var(--color-primary, #000);
   color: var(--color-on-primary, #fff);
@@ -247,7 +263,6 @@
   box-shadow: 0 0 0 3px var(--accent-8, rgba(0, 0, 0, 0.06)),
     0 0 0 6px var(--color-ring, #4f46e5);
 }
-
 .btn-ghost {
   background: transparent;
   border: 1px dashed var(--color-border, #e5e7eb);
