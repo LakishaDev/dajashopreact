@@ -6,7 +6,8 @@ import SearchBar from './SearchBar.jsx';
 import { useCart } from '../hooks/useCart.js';
 import HeaderLoginButton from './HeaderLoginButton.jsx';
 import { useAuth } from '../hooks/useAuth.js';
-import { Heart } from 'lucide-react';
+// [NOVO] Dodat import za ShoppingBag
+import { Heart, ShoppingBag } from 'lucide-react';
 import { useWishlist } from '../context/WishlistProvider.jsx';
 
 import HamburgerMenu from './HamburgerMenu.jsx';
@@ -31,13 +32,16 @@ export default function Header() {
         </div>
 
         <div className="header__actions">
-          {/* IZMENA OVDE: Dodato ?tab=wishlist */}
-
-          <Link className="header__cart" to="/cart">
-            Korpa <span className="badge">{count}</span>
+          {/* KORPA: Ima 'ShoppingBag' ikonicu za desktop i klasu 'desktop-only' da se sakrije na mobilnom */}
+          <Link className="header__cart desktop-only" to="/cart">
+            <ShoppingBag size={22} />
+            {/* <span>Korpa</span> */}
+            <span className="badge">{count}</span>
           </Link>
+
+          {/* LISTA ŽELJA: Klasa 'header__wishlist' (nema korpu na mobilnom) */}
           <Link
-            className="header__cart"
+            className="header__wishlist"
             to="/account?tab=wishlist"
             title="Lista želja"
           >
@@ -46,6 +50,7 @@ export default function Header() {
               <span className="badge">{wishlistCount}</span>
             )}
           </Link>
+
           <HeaderLoginButton />
 
           <button

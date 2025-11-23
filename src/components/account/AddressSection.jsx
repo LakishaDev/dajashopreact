@@ -12,6 +12,7 @@ import {
   Loader2,
   Phone,
   ChevronDown,
+  Check,
 } from 'lucide-react';
 
 import { db } from '../../services/firebase';
@@ -30,7 +31,11 @@ import {
 import { FORM_RULES } from '../../data/validationRules';
 import ConfirmModal from '../modals/ConfirmModal.jsx';
 import ErrorMessage from '../ui/ErrorMessage.jsx';
-import { ADDRESS_ICONS, renderIcon } from '../../utils/accountHelpers.jsx';
+import {
+  ADDRESS_ICONS,
+  renderIcon,
+  getFlagUrl,
+} from '../../utils/accountHelpers.jsx';
 
 const GMAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY;
 
@@ -57,6 +62,10 @@ function AddressSection({ user }) {
   const [submitCount, setSubmitCount] = useState(0);
   const [deleteId, setDeleteId] = useState(null);
   const addressInputRef = useRef(null);
+
+  // State i Ref za custom dropdown
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   // State za prefiks telefona
   const [phonePrefix, setPhonePrefix] = useState('+381');
@@ -97,6 +106,19 @@ function AddressSection({ user }) {
       setForm((f) => ({ ...f, phone: number }));
     }
   }, [user.phoneNumber]);
+
+  // Zatvaranje dropdown-a na klik sa strane
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsCountryDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // --- REAL-TIME DATA FETCHING ---
   useEffect(() => {
@@ -207,9 +229,12 @@ function AddressSection({ user }) {
       return 'Unesite validan naziv grada.';
     if (name === 'zip' && !FORM_RULES.postalCode.regex.test(value))
       return FORM_RULES.postalCode.message;
+
+    // [IZMENA] Nova validacija za telefon: Tačno 9 cifara
     if (name === 'phone') {
       const cleanNumber = value.replace(/\D/g, '');
-      if (cleanNumber.length < 6) return 'Unesite ispravan broj telefona.';
+      if (cleanNumber.length !== 9)
+        return 'Broj mora imati tačno 9 cifara (npr. 641234567).';
     }
     return null;
   };
@@ -242,6 +267,7 @@ function AddressSection({ user }) {
     setPhonePrefix(prefix || '+381');
     setErrors({});
     setSubmitCount(0);
+    setIsCountryDropdownOpen(false);
   };
 
   const handleSave = async (e) => {
@@ -337,6 +363,7 @@ function AddressSection({ user }) {
             className="address-form card glass"
             onSubmit={handleSave}
             noValidate
+            style={{ position: 'relative', zIndex: 20 }}
           >
             <h4>{editingId ? 'Izmeni adresu' : 'Nova adresa'}</h4>
             <div className="form-grid">
@@ -488,27 +515,87 @@ function AddressSection({ user }) {
                 </AnimatePresence>
               </label>
 
-              {/* NOVO POLJE ZA TELEFON SA SELEKTOROM DRŽAVE */}
+              {/* CUSTOM DROPDOWN */}
               <label className="full">
                 <span>Telefon</span>
                 <div className="flex gap-2">
-                  <div className="relative w-[110px] shrink-0">
-                    <select
-                      value={phonePrefix}
-                      onChange={(e) => setPhonePrefix(e.target.value)}
-                      className="w-full p-3 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] focus:outline-none focus:border-[var(--color-primary)] appearance-none font-medium text-[var(--color-text)]"
+                  <div
+                    className="relative w-[110px] shrink-0"
+                    ref={dropdownRef}
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setIsCountryDropdownOpen(!isCountryDropdownOpen)
+                      }
+                      className="w-full p-3 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] focus:outline-none focus:border-[var(--color-primary)] flex items-center justify-between gap-2 transition-colors hover:bg-[var(--color-bg-subtle)]"
                     >
-                      {COUNTRY_CODES.map((country) => (
-                        <option key={country.code} value={country.code}>
-                          {country.label}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      size={16}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-muted)] pointer-events-none"
-                    />
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <img
+                          src={getFlagUrl(
+                            COUNTRY_CODES.find((c) => c.code === phonePrefix)
+                              ?.country || 'RS'
+                          )}
+                          alt="flag"
+                          className="w-5 h-auto object-cover rounded-sm"
+                        />
+                        <span className="font-medium text-[var(--color-text)] text-sm">
+                          {phonePrefix}
+                        </span>
+                      </div>
+                      <ChevronDown
+                        size={16}
+                        className={`text-[var(--color-muted)] transition-transform duration-200 ${
+                          isCountryDropdownOpen ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+
+                    <AnimatePresence>
+                      {isCountryDropdownOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 5 }}
+                          className="absolute top-full left-0 mt-1 w-[240px] max-h-[200px] overflow-y-auto bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-xl z-50 country-dropdown-scroll"
+                          data-lenis-prevent
+                        >
+                          {COUNTRY_CODES.map((country) => (
+                            <button
+                              key={country.code}
+                              type="button"
+                              onClick={() => {
+                                setPhonePrefix(country.code);
+                                setIsCountryDropdownOpen(false);
+                              }}
+                              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[var(--color-primary)]/10 hover:text-[var(--color-primary)] transition-all rounded-md"
+                            >
+                              <img
+                                src={getFlagUrl(country.country)}
+                                alt={country.country}
+                                className="w-5 h-auto object-cover rounded-sm shadow-sm"
+                              />
+                              <div className="flex flex-col">
+                                <span className="text-sm font-semibold text-[var(--color-text)]">
+                                  {country.label.split(' ')[0]}
+                                </span>
+                                <span className="text-xs text-[var(--color-muted)] font-medium">
+                                  {country.code}
+                                </span>
+                              </div>
+                              {phonePrefix === country.code && (
+                                <Check
+                                  size={16}
+                                  className="ml-auto text-[var(--color-primary)]"
+                                />
+                              )}
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
+
                   <div className="relative flex-1">
                     <Phone
                       size={18}
@@ -555,7 +642,7 @@ function AddressSection({ user }) {
           </motion.form>
         )}
       </AnimatePresence>
-      <div className="addresses-grid">
+      <div className="addresses-grid" style={{ zIndex: 0 }}>
         {loading ? (
           <div className="loading-state">
             <Loader2 className="animate-spin" size={32} />

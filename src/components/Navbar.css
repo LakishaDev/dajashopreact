@@ -351,3 +351,9 @@
 .navbar__label svg {
   vertical-align: middle;
 }
+@media (max-width: 1023px) {
+  /* Dozvoli prikaz, ali stilizuj kao čip ako koristiš kombinovanu klasu */
+  .navbar__label {
+    display: inline-flex;
+  }
+}

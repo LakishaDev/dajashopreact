@@ -72,7 +72,7 @@ export default function ShippingSection({
               <div>
                 <span className="radio-title">Preuzimanje u prodavnici</span>
                 <span className="radio-desc">
-                  Niš, TPC Gorča lokal C31 (Uvek besplatno)
+                  Niš, Podzemni prolaz lokal C31 (Uvek besplatno)
                 </span>
               </div>
             </div>

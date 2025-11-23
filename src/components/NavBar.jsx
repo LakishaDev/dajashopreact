@@ -26,8 +26,11 @@ const navSatovi = [
 
 export default function NavBar() {
   const [isMobile, setIsMobile] = useState(false);
+  // openIdx može biti broj (index brenda) ili string 'ostalo'
   const [openIdx, setOpenIdx] = useState(null);
-  const [ostaloOpen, setOstaloOpen] = useState(false); // State za "Ostalo" dropdown
+
+  // State samo za desktop hover dropdown
+  const [desktopOstaloOpen, setDesktopOstaloOpen] = useState(false);
 
   const rowRef = useRef(null);
   const navigate = useNavigate();
@@ -45,8 +48,20 @@ export default function NavBar() {
     if (!isMobile) setOpenIdx(null);
   }, [isMobile]);
 
-  const handleBrandClick = (label) => {
-    navigate(`/catalog?brand=${encodeURIComponent(label)}`);
+  const handleGroupClick = (index, label) => {
+    if (isMobile) {
+      setOpenIdx((prev) => (prev === index ? null : index));
+    } else {
+      navigate(`/catalog?brand=${encodeURIComponent(label)}`);
+    }
+  };
+
+  const handleOstaloClick = () => {
+    if (isMobile) {
+      // Na mobilnom otvaramo donji red (sub-meni)
+      setOpenIdx((prev) => (prev === 'ostalo' ? null : 'ostalo'));
+    }
+    // Na desktopu se ovo ne dešava na klik (koristi se hover)
   };
 
   const isActive = (path) =>
@@ -61,7 +76,7 @@ export default function NavBar() {
             SVI SATOVI
           </Link>
 
-          {/* Brendovi Satova (Prikazuju se samo ako smo na /catalog ili Home, ili uvek ako želiš) */}
+          {/* Brendovi Satova */}
           {navSatovi.map((g, i) => (
             <div
               key={g.label}
@@ -69,20 +84,26 @@ export default function NavBar() {
               data-open={isMobile && openIdx === i ? 'true' : 'false'}
             >
               <button
-                className="navbar__label"
-                onClick={() => handleBrandClick(g.label)}
+                className={`navbar__label ${isMobile ? 'navbar__chip' : ''}`}
+                onClick={() => handleGroupClick(i, g.label)}
               >
                 {g.label}
-              </button>
-              <button
-                className="navbar__chip"
-                onClick={() =>
-                  isMobile && setOpenIdx((p) => (p === i ? null : i))
-                }
-              >
-                {g.label}
+                {/* Chevron samo na mobilnom da sugeriše dropdown */}
+                {isMobile && (
+                  <ChevronDown
+                    size={14}
+                    style={{
+                      marginLeft: 4,
+                      opacity: 0.6,
+                      transform:
+                        openIdx === i ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s',
+                    }}
+                  />
+                )}
               </button>
 
+              {/* Desktop Dropdown (Samo na hover) */}
               <div className="navbar__dropdown card">
                 <Link
                   to={`/catalog?brand=${encodeURIComponent(g.label)}`}
@@ -104,43 +125,41 @@ export default function NavBar() {
             </div>
           ))}
 
-          {/* "OSTALO" Dropdown (Daljinski, Baterije, Naočare) */}
+          {/* "OSTALO" Grupa */}
           <div
             className="navbar__group"
-            onMouseEnter={() => !isMobile && setOstaloOpen(true)}
-            onMouseLeave={() => !isMobile && setOstaloOpen(false)}
+            data-open={isMobile && openIdx === 'ostalo' ? 'true' : 'false'}
+            onMouseEnter={() => !isMobile && setDesktopOstaloOpen(true)}
+            onMouseLeave={() => !isMobile && setDesktopOstaloOpen(false)}
           >
             <button
-              className="navbar__label"
-              onClick={() => isMobile && setOstaloOpen(!ostaloOpen)}
-            >
-              Ostalo{' '}
-              <ChevronDown size={14} style={{ marginLeft: 4, opacity: 0.6 }} />
-            </button>
-            {/* Mobilni chip za Ostalo */}
-            <button
-              className="navbar__chip"
-              onClick={() => setOstaloOpen(!ostaloOpen)}
+              className={`navbar__label ${isMobile ? 'navbar__chip' : ''}`}
+              onClick={handleOstaloClick}
             >
               Ostalo
+              {/* Ikonica SAMO NA MOBILNOM */}
+              {isMobile && (
+                <ChevronDown
+                  size={14}
+                  style={{
+                    marginLeft: 4,
+                    opacity: 0.6,
+                    transform:
+                      isMobile && openIdx === 'ostalo'
+                        ? 'rotate(180deg)'
+                        : 'rotate(0deg)',
+                    transition: 'transform 0.2s',
+                  }}
+                />
+              )}
             </button>
 
-            {/* Dropdown meni */}
+            {/* Desktop Dropdown (Vidljiv samo na desktopu na hover) */}
             <div
-              className={`navbar__dropdown card ${
-                ostaloOpen ? 'show-override' : ''
-              }`}
-              style={
-                ostaloOpen && isMobile
-                  ? {
-                      display: 'grid',
-                      position: 'static',
-                      boxShadow: 'none',
-                      border: 'none',
-                      paddingLeft: 0,
-                    }
-                  : {}
-              }
+              className="navbar__dropdown card"
+              style={{
+                display: !isMobile && desktopOstaloOpen ? 'grid' : 'none',
+              }}
             >
               <Link to="/daljinski">Daljinski</Link>
               <Link to="/baterije">Baterije</Link>
@@ -149,32 +168,68 @@ export default function NavBar() {
           </div>
         </div>
 
-        {/* Mobilni pod-meni za brendove satova */}
+        {/* --- MOBILNI SUB-MENI (ZA SVE) --- */}
         {isMobile && openIdx !== null && (
           <div className="navbar__sub">
             <div className="navbar__subrow">
-              <Link
-                className="navbar__pill"
-                to={`/catalog?brand=${encodeURIComponent(
-                  navSatovi[openIdx].label
-                )}`}
-                onClick={() => setOpenIdx(null)}
-                style={{ fontWeight: 'bold' }}
-              >
-                Svi {navSatovi[openIdx].label}
-              </Link>
-              {navSatovi[openIdx].children.map((c) => (
-                <Link
-                  key={c.label}
-                  className="navbar__pill"
-                  to={`/catalog?brand=${encodeURIComponent(
-                    navSatovi[openIdx].label
-                  )}&category=${encodeURIComponent(c.label)}`}
-                  onClick={() => setOpenIdx(null)}
-                >
-                  {c.label}
-                </Link>
-              ))}
+              {/* SCENARIO 1: OTVORENO JE "OSTALO" */}
+              {openIdx === 'ostalo' ? (
+                <>
+                  <Link
+                    className="navbar__pill"
+                    to="/daljinski"
+                    onClick={() => setOpenIdx(null)}
+                  >
+                    Daljinski
+                  </Link>
+                  <Link
+                    className="navbar__pill"
+                    to="/baterije"
+                    onClick={() => setOpenIdx(null)}
+                  >
+                    Baterije
+                  </Link>
+                  <Link
+                    className="navbar__pill"
+                    to="/naocare"
+                    onClick={() => setOpenIdx(null)}
+                  >
+                    Naočare
+                  </Link>
+                </>
+              ) : (
+                /* SCENARIO 2: OTVOREN JE NEKI BREND (Broj) */
+                typeof openIdx === 'number' && (
+                  <>
+                    <Link
+                      className="navbar__pill"
+                      to={`/catalog?brand=${encodeURIComponent(
+                        navSatovi[openIdx].label
+                      )}`}
+                      onClick={() => setOpenIdx(null)}
+                      style={{
+                        fontWeight: 'bold',
+                        background: 'var(--color-text)',
+                        color: 'var(--color-bg)',
+                      }}
+                    >
+                      Svi {navSatovi[openIdx].label}
+                    </Link>
+                    {navSatovi[openIdx].children.map((c) => (
+                      <Link
+                        key={c.label}
+                        className="navbar__pill"
+                        to={`/catalog?brand=${encodeURIComponent(
+                          navSatovi[openIdx].label
+                        )}&category=${encodeURIComponent(c.label)}`}
+                        onClick={() => setOpenIdx(null)}
+                      >
+                        {c.label}
+                      </Link>
+                    ))}
+                  </>
+                )
+              )}
             </div>
           </div>
         )}
