@@ -18,7 +18,16 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/catalog" element={<Catalog />} />
+
+      {/* --- RUTE ZA ODELJENJA --- */}
+      {/* Glavni katalog (Satovi) */}
+      <Route path="/catalog" element={<Catalog department="satovi" />} />
+
+      {/* Posebne stranice za ostale proizvode */}
+      <Route path="/daljinski" element={<Catalog department="daljinski" />} />
+      <Route path="/baterije" element={<Catalog department="baterije" />} />
+      <Route path="/naocare" element={<Catalog department="naocare" />} />
+
       <Route path="/product/:slug" element={<Product />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/checkout" element={<Checkout />} />

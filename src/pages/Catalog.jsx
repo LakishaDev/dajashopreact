@@ -1,25 +1,29 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import './Catalog.css';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Loader2, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { Loader2, AlertTriangle, ArrowLeft, X } from 'lucide-react';
 
-// Komponente
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import ProductGrid from '../components/ProductGrid.jsx';
 import Filters from '../components/Filters.jsx';
 import Pagination from '../components/Pagination.jsx';
 import FilterDrawer from '../components/FilterDrawer.jsx';
 
-// Hook za bazu
 import useProducts from '../hooks/useProducts.js';
 
 const PER_PAGE = 12;
 
-export default function Catalog() {
-  const [sp] = useSearchParams();
+const TITLES = {
+  satovi: 'Ručni Satovi',
+  daljinski: 'Daljinski Upravljači',
+  baterije: 'Baterije & Oprema',
+  naocare: 'Sunčane Naočare',
+};
 
-  // 1. Dohvatamo SVE proizvode iz baze (uključujući one sa novim specifikacijama)
+export default function Catalog({ department = 'satovi' }) {
+  const [sp, setSp] = useSearchParams();
+
   const {
     items: allItems,
     loading,
@@ -28,11 +32,78 @@ export default function Catalog() {
     order: sp.get('sort') || 'name',
   });
 
-  // 2. Filtriranje podataka u memoriji
-  const filteredData = useMemo(() => {
-    if (!allItems) return [];
+  // --- LOGIKA ZA PRIKAZ AKTIVNIH FILTERA ---
+  const activeFilters = useMemo(() => {
+    const active = [];
+    const brands = sp.getAll('brand');
+    const genders = sp.getAll('gender');
+    const categories = sp.getAll('category');
+    const min = sp.get('min');
+    const max = sp.get('max');
+    const q = sp.get('q');
 
-    let out = [...allItems];
+    if (q) active.push({ key: 'q', val: q, label: `Traži: "${q}"` });
+
+    brands.forEach((b) => active.push({ key: 'brand', val: b, label: b }));
+    genders.forEach((g) => active.push({ key: 'gender', val: g, label: g }));
+    categories.forEach((c) =>
+      active.push({ key: 'category', val: c, label: c })
+    );
+
+    if (min || max) {
+      active.push({
+        key: 'price',
+        val: 'price',
+        label: `${Number(min || 0).toLocaleString()} - ${Number(
+          max || '∞'
+        ).toLocaleString()} RSD`,
+      });
+    }
+
+    Array.from(sp.keys()).forEach((k) => {
+      if (k.startsWith('spec_')) {
+        const labelKey = k.replace('spec_', '');
+        sp.getAll(k).forEach((v) => {
+          active.push({ key: k, val: v, label: `${labelKey}: ${v}` });
+        });
+      }
+    });
+
+    return active;
+  }, [sp]);
+
+  const removeFilter = (key, val) => {
+    const next = new URLSearchParams(sp);
+    if (key === 'price') {
+      next.delete('min');
+      next.delete('max');
+    } else if (key === 'q') {
+      next.delete('q');
+    } else {
+      const values = next.getAll(key).filter((v) => v !== val);
+      next.delete(key);
+      values.forEach((v) => next.append(key, v));
+    }
+    setSp(next, { replace: true });
+  };
+
+  const clearAllFilters = () => {
+    const next = new URLSearchParams();
+    if (sp.get('sort')) next.set('sort', sp.get('sort'));
+    setSp(next, { replace: true });
+  };
+
+  // --- LOGIKA KATALOGA ---
+  const departmentItems = useMemo(() => {
+    if (!allItems) return [];
+    return allItems.filter((p) => {
+      const productDept = p.department || 'satovi';
+      return productDept === department;
+    });
+  }, [allItems, department]);
+
+  const filteredData = useMemo(() => {
+    let out = [...departmentItems];
 
     const q = sp.get('q')?.toLowerCase() || '';
     const brands = sp.getAll('brand');
@@ -41,17 +112,12 @@ export default function Catalog() {
     const min = sp.get('min') ? Number(sp.get('min')) : null;
     const max = sp.get('max') ? Number(sp.get('max')) : null;
 
-    // A) Pretraga
-    if (q) {
+    if (q)
       out = out.filter((p) =>
         (p.brand + ' ' + p.name).toLowerCase().includes(q)
       );
-    }
-
-    // B) Brend
     if (brands.length) out = out.filter((p) => brands.includes(p.brand));
 
-    // C) Pol (Unisex logika)
     if (genders.length) {
       out = out.filter((p) => {
         if (genders.includes(p.gender)) return true;
@@ -60,50 +126,40 @@ export default function Catalog() {
       });
     }
 
-    // D) Kategorija
     if (categories.length)
       out = out.filter((p) => categories.includes(p.category));
-
-    // E) Cena
     if (min !== null) out = out.filter((p) => p.price >= min);
     if (max !== null) out = out.filter((p) => p.price <= max);
 
-    // F) Specifikacije (DOHVATA VISINU I OSTALE)
     const specParams = Array.from(sp.keys()).filter((k) =>
       k.startsWith('spec_')
     );
-
     specParams.forEach((paramKey) => {
       const specName = paramKey.replace('spec_', '');
       const selectedValues = sp.getAll(paramKey);
-
       if (selectedValues.length > 0) {
-        out = out.filter((p) => {
-          // Proveravamo da li proizvod ima tu specifikaciju i da li je vrednost izabrana
-          return (
+        out = out.filter(
+          (p) =>
             p.specs &&
             p.specs[specName] &&
             selectedValues.includes(p.specs[specName])
-          );
-        });
+        );
       }
     });
 
     return out;
-  }, [allItems, sp]);
+  }, [departmentItems, sp]);
 
-  // 3. Paginacija
   const [page, setPage] = useState(1);
   const totalCount = filteredData.length;
 
   useEffect(() => {
     setPage(1);
-  }, [sp]);
+  }, [sp, department]);
 
   const start = (page - 1) * PER_PAGE;
   const itemsToShow = filteredData.slice(start, start + PER_PAGE);
 
-  // Render logika (Loading, Error, Empty)
   const renderContent = () => {
     if (loading) {
       return (
@@ -114,19 +170,16 @@ export default function Catalog() {
           >
             <Loader2 size={32} className="text-primary" />
           </motion.div>
-          <span className="ml-3 text-lg font-medium">
-            Učitavanje kataloga...
-          </span>
+          <span className="ml-3 text-lg font-medium">Učitavanje...</span>
         </div>
       );
     }
 
     if (err) {
       return (
-        <div className="flex flex-col items-center justify-center h-64 p-6 rounded-2xl border border-red-500/30 bg-red-500/5 text-red-500">
+        <div className="flex flex-col items-center justify-center h-64 p-6 text-red-500">
           <AlertTriangle size={32} />
-          <p className="mt-3 font-bold text-lg">Došlo je do greške</p>
-          <p className="text-sm opacity-80">Proverite internet konekciju.</p>
+          <p className="mt-3 font-bold">Greška pri učitavanju</p>
         </div>
       );
     }
@@ -134,16 +187,15 @@ export default function Catalog() {
     if (totalCount === 0) {
       return (
         <div className="flex flex-col items-center justify-center h-64 p-8 rounded-2xl border border-(--color-border) bg-surface text-center">
-          <p className="text-xl font-semibold text-text">Nema rezultata</p>
-          <p className="text-muted mt-2 max-w-xs mx-auto">
-            Pokušajte da promenite filtere ili termin pretrage.
+          <p className="text-xl font-semibold text-text">
+            Nema rezultata za izabrane filtere.
           </p>
-          <Link
-            to="/catalog"
+          <button
+            onClick={clearAllFilters}
             className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-onPrimary font-bold shadow-lg hover:opacity-90 transition-opacity"
           >
-            <ArrowLeft size={18} /> Resetuj sve filtere
-          </Link>
+            <ArrowLeft size={18} /> Resetuj filtere
+          </button>
         </div>
       );
     }
@@ -170,30 +222,74 @@ export default function Catalog() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      {/* MOBILNI TRIGGER - KLJUČNO: PROSLEDI allItems */}
       <div className="catalog-mobile-trigger lg:hidden mb-4">
-        <FilterDrawer products={allItems} />
+        <FilterDrawer products={departmentItems} />
       </div>
 
       <div className="catalog-layout lg:grid lg:grid-cols-[260px_1fr] lg:gap-8 items-start">
-        {/* DESKTOP SIDEBAR - KLJUČNO: PROSLEDI allItems */}
         <aside className="sidebar-filters hidden lg:block sticky top-24">
-          <Filters products={allItems} />
+          <Filters products={departmentItems} />
         </aside>
 
         <main className="catalog-main min-w-0">
           <div className="mb-6">
-            <Breadcrumbs trail={[{ label: 'Katalog', href: '/catalog' }]} />
-            <div className="catalog__toprow flex items-center justify-between mt-4 pb-4 border-b border-(--color-border)">
-              <h1 className="text-2xl font-bold text-text">Svi proizvodi</h1>
-              <div className="catalog__count text-sm font-semibold text-muted bg-surface px-3 py-1 rounded-full border border-(--color-border)">
+            <Breadcrumbs
+              trail={[
+                { label: 'Početna', href: '/' },
+                {
+                  label: TITLES[department] || department,
+                  href: department === 'satovi' ? '/catalog' : `/${department}`,
+                },
+              ]}
+            />
+
+            {/* --- NOVI HEADER (Fixed Count Right) --- */}
+            <div className="catalog__toprow mt-4 pb-4 border-b border-(--color-border) relative min-h-[40px]">
+              {/* LEVA STRANA: Naslov + Čipovi */}
+              {/* Padding-right (pr-[110px]) osigurava da tekst ne pređe preko brojača */}
+              <div className="flex flex-wrap items-center gap-2 pr-[110px]">
+                <h1 className="text-2xl font-bold text-text mr-2 whitespace-nowrap">
+                  Rezultat za:
+                </h1>
+
+                {activeFilters.length === 0 && (
+                  <span className="text-muted text-sm font-medium">
+                    Svi proizvodi
+                  </span>
+                )}
+
+                {/* Čipovi */}
+                {activeFilters.map((f, idx) => (
+                  <button
+                    key={`${f.key}-${f.val}-${idx}`}
+                    onClick={() => removeFilter(f.key, f.val)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-900 text-white text-xs font-bold uppercase tracking-wide hover:bg-neutral-700 transition-colors shadow-sm"
+                    title="Ukloni filter"
+                  >
+                    {f.label}
+                    <X size={13} className="text-white/70" />
+                  </button>
+                ))}
+
+                {activeFilters.length > 0 && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-red-600 border border-red-100 text-xs font-bold uppercase tracking-wide hover:bg-red-100 transition-colors"
+                  >
+                    Obriši sve
+                  </button>
+                )}
+              </div>
+
+              {/* DESNA STRANA: Broj komada (Apsolutno pozicioniran) */}
+              <div className="absolute right-0 top-1 catalog__count text-sm font-semibold text-muted bg-surface px-3 py-1 rounded-full border border-(--color-border) whitespace-nowrap">
                 {totalCount} kom.
               </div>
             </div>
           </div>
 
           <motion.div
-            key={sp.toString()}
+            key={department + sp.toString()}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

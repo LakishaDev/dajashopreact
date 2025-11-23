@@ -341,3 +341,68 @@
   transform: translateY(0);
   background: #fecaca;
 }
+/* ... Tvoji postojeći stilovi ... */
+
+/* Bottom Actions Container */
+.f-bottom-actions {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px dashed var(--color-border, #e5e7eb);
+  display: flex;
+  flex-direction: column; /* Ređa dugmiće jedno ispod drugog */
+  gap: 12px; /* Razmak između Ukloni sve i Zatvori */
+}
+
+.btn-large-reset {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  background: var(--color-surface, #f5f5f7);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 999px;
+  color: var(--color-text, #111);
+  font-weight: 800;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-large-reset:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+  transform: translateY(-1px);
+}
+
+/* --- NOVO DUGME ZA ZATVARANJE --- */
+.btn-large-close {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px; /* Malo istaknutije */
+  background: var(--color-text, #111); /* Crno (ili tamna tema boja) */
+  color: var(--color-bg, #fff); /* Beli tekst */
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-large-close:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-large-close:active {
+  transform: translateY(0);
+}

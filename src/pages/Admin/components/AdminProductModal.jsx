@@ -264,6 +264,7 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     images: [],
     description: '',
     gender: '',
+    department: 'satovi', // Default
     specs: {},
     model3DUrl: '',
   });
@@ -292,6 +293,7 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
         images: loadedImages,
         specs: product.specs || {},
         model3DUrl: product.model3DUrl || '',
+        department: product.department || 'satovi',
       });
     }
 
@@ -302,12 +304,18 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     };
   }, [product]);
 
-  // Handler za izmene forme
+  // Handler za izmene forme (sa auto-resetom)
   const handleChange = (field, value) => {
     setForm((prev) => {
       const next = { ...prev, [field]: value };
 
-      // KLJUČNO: Ako se menja brend, resetuj kategoriju!
+      // Ako se menja Odeljenje, resetuj Brend i Kategoriju
+      if (field === 'department') {
+        next.brand = '';
+        next.category = '';
+      }
+
+      // Ako se menja Brend, resetuj Kategoriju
       if (field === 'brand') {
         next.category = '';
       }
@@ -315,11 +323,22 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     });
   };
 
+  // --- SPECIFIKACIJE (SA JEDINICAMA) ---
   const addSpec = () => {
     if (!tempSpecKey || !tempSpecVal) return;
+
+    // Nađi definiciju specifikacije da vidimo ima li jedinicu
+    const def = specKeys.find((k) => k.name === tempSpecKey);
+    let finalVal = tempSpecVal;
+
+    // Ako postoji jedinica, a korisnik je nije već upisao, dodaj je
+    if (def?.unit && !tempSpecVal.endsWith(def.unit)) {
+      finalVal = `${tempSpecVal} ${def.unit}`;
+    }
+
     setForm((prev) => ({
       ...prev,
-      specs: { ...prev.specs, [tempSpecKey]: tempSpecVal },
+      specs: { ...prev.specs, [tempSpecKey]: finalVal },
     }));
     setTempSpecKey('');
     setTempSpecVal('');
@@ -363,19 +382,30 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     }
   };
 
-  // Transform data for dropdowns
-  const brandOptions = brands.map((b) => ({
+  // --- 1. FILTRIRANJE BRENDOVA PO ODELJENJU ---
+  const filteredBrands = useMemo(() => {
+    // Prikazuj samo brendove koji pripadaju izabranom odeljenju (ili nemaju odeljenje = satovi)
+    return brands.filter((b) => (b.department || 'satovi') === form.department);
+  }, [brands, form.department]);
+
+  const brandOptions = filteredBrands.map((b) => ({
     value: b.name,
     label: b.name,
     id: b.id,
   }));
 
-  // --- FILTRIRANJE KATEGORIJA PO BRENDU ---
+  // --- 2. FILTRIRANJE KATEGORIJA PO ODELJENJU I BRENDU ---
   const filteredCats = useMemo(() => {
-    if (!form.brand) return cats; // Ako nema brenda, vrati sve (ili prazno, zavisno od želje)
-    // Vrati samo kategorije koje su vezane za ovaj brend
-    return cats.filter((c) => c.brand === form.brand);
-  }, [cats, form.brand]);
+    // Prvo po odeljenju
+    let c = cats.filter(
+      (cat) => (cat.department || 'satovi') === form.department
+    );
+    // Onda po brendu (ako je izabran)
+    if (form.brand) {
+      c = c.filter((cat) => cat.brand === form.brand);
+    }
+    return c;
+  }, [cats, form.department, form.brand]);
 
   const catOptions = filteredCats.map((c) => ({
     value: c.name,
@@ -383,16 +413,37 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     id: c.id,
   }));
 
+  // --- 3. FILTRIRANJE SPECIFIKACIJA PO ODELJENJU ---
+  const filteredSpecs = useMemo(() => {
+    return specKeys.filter(
+      (s) => (s.department || 'satovi') === form.department
+    );
+  }, [specKeys, form.department]);
+
+  const specOptions = filteredSpecs.map((k) => ({
+    value: k.name,
+    label: k.name,
+    id: k.id,
+    unit: k.unit,
+  }));
+
+  // Ostale opcije
+  const departmentOptions = [
+    { value: 'satovi', label: 'Satovi' },
+    { value: 'daljinski', label: 'Daljinski' },
+    { value: 'baterije', label: 'Baterije' },
+    { value: 'naocare', label: 'Naočare' },
+  ];
+
   const genderOptions = [
     { value: '', label: 'Unisex' },
     { value: 'MUŠKI', label: 'Muški' },
     { value: 'ŽENSKI', label: 'Ženski' },
   ];
-  const specOptions = specKeys.map((k) => ({
-    value: k.name,
-    label: k.name,
-    id: k.id,
-  }));
+
+  // Aktivna jedinica za prikaz u inputu
+  const activeUnit =
+    specOptions.find((o) => o.value === tempSpecKey)?.unit || '';
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
@@ -427,7 +478,10 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
+        <div
+          className="flex-1 overflow-y-auto custom-scrollbar p-8"
+          data-lenis-prevent
+        >
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* LEFT COLUMN (Main Info) */}
             <div className="lg:col-span-8 space-y-6">
@@ -479,23 +533,42 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
 
               {/* Dropdowns Grid */}
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* ODELJENJE (Glavni filter) */}
+                <CustomSelect
+                  label="Odeljenje"
+                  value={form.department}
+                  options={departmentOptions}
+                  onChange={(v) => handleChange('department', v)}
+                />
+
+                {/* BREND (Filtrirano po Odeljenju) */}
                 <CustomSelect
                   label="Brend"
                   value={form.brand}
                   options={brandOptions}
                   onChange={(v) => handleChange('brand', v)}
+                  placeholder={
+                    brandOptions.length === 0
+                      ? 'Nema brendova'
+                      : 'Izaberi brend'
+                  }
+                  disabled={brandOptions.length === 0}
                 />
 
-                {/* KATEGORIJA - Sada filtrirana */}
+                {/* KATEGORIJA (Filtrirano po Odeljenju i Brendu) */}
                 <CustomSelect
                   label="Kategorija"
                   value={form.category}
                   options={catOptions}
                   onChange={(v) => handleChange('category', v)}
                   placeholder={
-                    form.brand ? 'Izaberi kategoriju...' : 'Prvo izaberi brend'
+                    !form.brand
+                      ? 'Prvo izaberi brend'
+                      : catOptions.length === 0
+                      ? 'Nema kategorija'
+                      : 'Izaberi kategoriju'
                   }
-                  disabled={!form.brand && catOptions.length === 0}
+                  disabled={!form.brand || catOptions.length === 0}
                 />
 
                 <CustomSelect
@@ -504,6 +577,7 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                   options={genderOptions}
                   onChange={(v) => handleChange('gender', v)}
                 />
+
                 <div className="md:col-span-3">
                   <label className="block">
                     <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1 block">
@@ -534,19 +608,27 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                       value={tempSpecKey}
                       options={specOptions}
                       onChange={setTempSpecKey}
-                      placeholder="Izaberi..."
+                      placeholder={
+                        specOptions.length === 0 ? 'Nema opcija' : 'Izaberi...'
+                      }
                     />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 relative">
                     <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1 block">
                       Vrednost
                     </span>
                     <input
                       value={tempSpecVal}
                       onChange={(e) => setTempSpecVal(e.target.value)}
-                      className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-neutral-400"
-                      placeholder="npr. 200g, Čelik..."
+                      className="w-full bg-white border border-neutral-200 rounded-xl pl-4 pr-10 py-3 text-sm outline-none focus:border-neutral-400"
+                      placeholder="npr. 200"
                     />
+                    {/* JEDINICA (Auto-prikaz) */}
+                    {activeUnit && (
+                      <span className="absolute right-3 top-[32px] text-neutral-400 text-xs font-bold pointer-events-none">
+                        {activeUnit}
+                      </span>
+                    )}
                   </div>
                   <button
                     onClick={addSpec}
