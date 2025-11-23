@@ -493,7 +493,7 @@ function ProfileSection({ user }) {
                               initial={{ opacity: 0, y: 5 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: 5 }}
-                              className="absolute top-full left-0 mt-1 w-[280px] max-h-[300px] bg-white border border-gray-200 rounded-lg shadow-2xl z-[60] country-dropdown-scroll"
+                              className="absolute top-full left-0 mt-1 w-[280px] max-h-[210px] bg-white border border-gray-200 rounded-lg shadow-2xl z-[60] country-dropdown-scroll"
                             >
                               {COUNTRY_CODES.map((country) => (
                                 <button

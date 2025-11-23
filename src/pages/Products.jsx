@@ -1,49 +1,51 @@
-import React, { useState, useEffect, useMemo } from "react";
-import "./Product.css";
-import { useParams } from "react-router-dom";
-import Breadcrumbs from "../components/Breadcrumbs.jsx";
-import { money } from "../utils/currency.js";
-import { useCart } from "../hooks/useCart.js";
-import { useFlash } from "../hooks/useFlash.js";
-import useProduct from "../hooks/useProduct.js";
-import Watch3DViewer from "../components/Watch3DViewer.jsx";
-import { useLenis } from "lenis/react";
-import { Box, Image as ImageIcon } from "lucide-react"; // Ikone za thumbnails
+import React, { useState, useEffect, useMemo } from 'react';
+import './Product.css';
+import { useParams } from 'react-router-dom';
+import Breadcrumbs from '../components/Breadcrumbs.jsx';
+import { money } from '../utils/currency.js';
+import { useCart } from '../hooks/useCart.js';
+import { useFlash } from '../hooks/useFlash.js';
+// 1. Importujemo Wishlist
+import { useWishlist } from '../context/WishlistProvider.jsx';
+import useProduct from '../hooks/useProduct.js';
+import Watch3DViewer from '../components/Watch3DViewer.jsx';
+import { useLenis } from 'lenis/react';
+// 2. Importujemo Heart
+import { Box, Image as ImageIcon, Heart } from 'lucide-react';
 
 export default function Product() {
   const { slug } = useParams();
   const lenis = useLenis();
 
-  // 1. Podaci iz baze
   const { product: p, loading, error } = useProduct(slug);
   const { dispatch } = useCart();
   const { flash } = useFlash();
+  // 3. Koristimo hook
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
-  // 2. State za aktivni medij (3D ili Slika)
+  // 4. Provera da li je lajkovano
+  const isLiked = p ? isInWishlist(p.id) : false;
+
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // Reset indexa i scrolla pri promeni proizvoda
   useEffect(() => {
     setActiveIndex(0);
     lenis?.scrollTo(0, { duration: 1.5 });
   }, [lenis, slug]);
 
-  // 3. Objedinjena lista medija (3D Model + Slike)
   const mediaList = useMemo(() => {
     if (!p) return [];
 
     const list = [];
 
-    // A) Ako postoji 3D model, on je prvi u nizu
     if (p.model3DUrl) {
       list.push({
-        type: "3d",
+        type: '3d',
         src: p.model3DUrl,
-        id: "model-3d",
+        id: 'model-3d',
       });
     }
 
-    // B) Slike iz niza ili fallback na single image string
     const images =
       p.images && p.images.length > 0
         ? p.images
@@ -53,7 +55,7 @@ export default function Product() {
 
     images.forEach((img, i) => {
       list.push({
-        type: "image",
+        type: 'image',
         src: img.url,
         id: `img-${i}`,
       });
@@ -62,7 +64,6 @@ export default function Product() {
     return list;
   }, [p]);
 
-  // --- Loading / Error ---
   if (loading)
     return <div className="container product-loading">Učitavanje...</div>;
   if (error || !p)
@@ -74,27 +75,37 @@ export default function Product() {
 
   const handleAdd = () => {
     dispatch({
-      type: "ADD",
+      type: 'ADD',
       item: {
         id: p.id,
         name: p.name,
         price: p.price,
-        // Uvek šaljemo prvu dostupnu SLIKU u korpu (ne 3D model)
         image: p.images?.[0]?.url || p.image,
         brand: p.brand,
         slug: p.slug,
       },
     });
-    flash("Dodato u korpu", `${p.name} je spreman za isporuku.`, "cart");
+    flash('Dodato u korpu', `${p.name} je spreman za isporuku.`, 'cart');
+  };
+
+  // 5. Handler za wishlist
+  const handleWishlist = () => {
+    if (!p) return;
+    toggleWishlist({
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      image: p.images?.[0]?.url || p.image,
+      brand: p.brand,
+      slug: p.slug,
+    });
   };
 
   return (
     <div className="product product-layout">
-      {/* LEVA KOLONA - MEDIJA (3D + SLIKE) */}
       <div className="product__gallery">
-        {/* Glavni prikaz */}
         <div className="product__main-view card">
-          {activeItem?.type === "3d" ? (
+          {activeItem?.type === '3d' ? (
             <div className="view-3d-wrapper" data-lenis-prevent>
               <Watch3DViewer modelUrl={activeItem.src} />
             </div>
@@ -109,7 +120,6 @@ export default function Product() {
           )}
         </div>
 
-        {/* Thumbnail traka (samo ako ima više od 1 stavke) */}
         {mediaList.length > 1 && (
           <div className="product__thumbs">
             {mediaList.map((item, index) => {
@@ -118,14 +128,14 @@ export default function Product() {
                 <button
                   key={item.id}
                   onClick={() => setActiveIndex(index)}
-                  className={`thumb-btn ${isActive ? "is-active" : ""}`}
+                  className={`thumb-btn ${isActive ? 'is-active' : ''}`}
                   aria-label={
-                    item.type === "3d"
-                      ? "Prikaži 3D model"
+                    item.type === '3d'
+                      ? 'Prikaži 3D model'
                       : `Prikaži sliku ${index}`
                   }
                 >
-                  {item.type === "3d" ? (
+                  {item.type === '3d' ? (
                     <div className="thumb-icon">
                       <Box size={20} strokeWidth={1.5} />
                       <span>3D</span>
@@ -140,10 +150,9 @@ export default function Product() {
         )}
       </div>
 
-      {/* DESNA KOLONA - INFORMACIJE */}
       <div className="product__info">
         <Breadcrumbs
-          trail={[{ label: "Katalog", href: "/catalog" }, { label: p.brand }]}
+          trail={[{ label: 'Katalog', href: '/catalog' }, { label: p.brand }]}
         />
 
         <h1 className="product__title">
@@ -165,9 +174,25 @@ export default function Product() {
           </div>
         </div>
 
-        <div className="product__actions">
-          <button className="product__cta" onClick={handleAdd}>
+        {/* 6. IZMENJENI DUGMIĆI */}
+        <div className="product__actions flex gap-3">
+          <button className="product__cta flex-1" onClick={handleAdd}>
             Dodaj u korpu
+          </button>
+
+          <button
+            className="p-3 rounded-xl border border-[var(--color-border)] hover:bg-[var(--color-surface)] transition-colors flex items-center justify-center"
+            onClick={handleWishlist}
+            title={isLiked ? 'Ukloni iz želja' : 'Dodaj u želje'}
+          >
+            <Heart
+              size={24}
+              className={
+                isLiked
+                  ? 'fill-red-500 text-red-500'
+                  : 'text-[var(--color-text)]'
+              }
+            />
           </button>
         </div>
       </div>

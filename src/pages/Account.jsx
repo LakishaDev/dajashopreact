@@ -1,10 +1,11 @@
 // src/pages/Account.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Dodat useEffect
 import { useAuth } from '../hooks/useAuth.js';
 import { motion } from 'framer-motion';
 import { User } from 'lucide-react';
 import './Account.css';
+import { useSearchParams } from 'react-router-dom'; // <--- NOVO: Import
 
 // Uvezene izdvojene komponente
 import AccountNav from '../components/account/AccountNav.jsx';
@@ -15,12 +16,22 @@ import OrdersSection from '../components/account/OrdersSection.jsx';
 import SecuritySection from '../components/account/SecuritySection.jsx';
 import { AnimatePresence } from 'framer-motion';
 
-// NAPOMENA: Sve uvezene biblioteke i servisi (firebase, lucide-react, money, useFlash, ConfimModal, SecuritySettings, FORM_RULES)
-// su premešteni u odgovarajuće komponente/sekcije koje ih koriste.
-
 export default function Account() {
   const { user, logout, showAuth } = useAuth();
-  const [activeTab, setActiveTab] = useState('profile');
+  const [searchParams] = useSearchParams(); // <--- NOVO: Čitanje URL-a
+
+  // Inicijalno stanje uzimamo iz URL-a ili default 'profile'
+  const [activeTab, setActiveTab] = useState(
+    searchParams.get('tab') || 'profile'
+  );
+
+  // Ovo osigurava da se tab promeni ako korisnik klikne srce dok je VEĆ na account strani
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams]);
 
   if (!user) {
     return (
@@ -31,7 +42,6 @@ export default function Account() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 20 }}
         >
-          {/* Nova klasa za ikonu - veća i u primarnoj boji */}
           <div className="empty-icon-wrap large">
             <User size={64} />
           </div>
@@ -43,14 +53,12 @@ export default function Account() {
           </p>
 
           <div className="auth-actions">
-            {/* Primarno dugme za logovanje je sada fokus */}
             <button
               className="btn-primary large"
               onClick={() => showAuth('login')}
             >
               Prijavi se odmah
             </button>
-            {/* Sekundarno dugme sa novom klasom */}
             <button
               className="btn-link-primary"
               onClick={() => showAuth('register')}
