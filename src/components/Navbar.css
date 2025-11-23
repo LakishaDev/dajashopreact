@@ -20,52 +20,116 @@
 
 .navbar__row {
   display: flex;
-  align-items: center;
-  gap: 16px;
+  align-items: center; /* KLJUČNO: Vertikalno centriranje za poravnanje */
+  gap: 16px; /* Zadržavamo širi desktop razmak */
   min-width: 0;
 }
-.navbar__all {
-  flex: 0 0 auto;
-  color: var(--color-text);
-  padding: 10px 12px;
+
+/* --- UNIVERZALNI ČIP/PILULA STIL (Kopirano iz mobilnog fiksa) --- */
+/* Primenjujemo vizuelni stil čipa na Katalog i Labelu, zadržavajući funkcionalnost */
+.navbar__all,
+.navbar__label {
+  /* Osnovni stilovi za poravnanje i dimenzije */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 10px; /* Kompaktan horizontalni padding */
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 700;
+  white-space: nowrap;
   border-radius: 999px;
+
+  /* Vizuelni stil čipa */
+  border: 1px solid var(--color-border, #e5e7eb);
   background: color-mix(
     in oklab,
     var(--color-surface, #f5f5f7) 92%,
     var(--color-bg, #fff)
   );
-  border: 1px solid var(--color-border, #e5e7eb);
-  font-weight: 800;
-  white-space: nowrap;
+  color: var(--color-text, #111);
+  text-decoration: none;
+}
+
+/* Posebni stil za Katalog (nasleđuje gornji stil) */
+.navbar__all {
+  flex: 0 0 auto;
+  font-weight: 800; /* Moguće jači font za Katalog, kao u originalu */
 }
 
 /* Grupisanje */
 .navbar__group {
   position: relative;
   flex: 0 0 auto;
-  padding-bottom: 10px;
+  padding-bottom: 0px; /* Zadržavamo padding za hover zonu */
 }
+
+/* Prilagođavanje Labele da izgleda kao čip (ali je i dalje dugme/labela) */
 .navbar__label {
   display: inline-block;
-  padding: 10px 8px;
-  font-weight: 700;
-  opacity: 0.95;
+  cursor: default;
   background: transparent;
   border: 0;
-  cursor: default;
-  white-space: nowrap;
+
+  /* Poništavamo padding iz univerzalnog bloka, vraćamo na 0 padding/border jer 
+     ovaj element NE treba da izgleda kao čip, već da se ponaša kao okidač za čip koji je ispod (na hover). 
+     Ako želimo da i okidač izgleda kao čip, moramo primeniti stil i na .navbar__label. */
+
+  /* IZMENA: Da bi i labela izgledala kao čip, moramo dozvoliti da nasledi stilove iz .navbar__all, .navbar__label */
+  /* Ali moramo obezbediti da ne pokvari centriranje unutar .navbar__group. */
+
+  /* Resetujemo neke vrednosti kako bi se lakše nasleđivale dimenzije i pozicija za hover*/
+  padding: 0;
+  height: auto;
+  min-height: initial;
+  background: transparent; /* Resetujemo pozadinu za tekst, oslanjamo se na hover */
+  border: none;
+  border-radius: 0;
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.95;
 }
-/* DESKTOP: chip sakrij (ovo je glavni fix da nema duplikata) */
+
+/* Vraćamo labelu na stari izgled, ali sa centriranjem u redu da bi se poravnala. 
+   Ako želimo da i Labela izgleda kao čip, onda: */
+
+/* Poništavamo labele da bi se koristio univerzalni stil */
+.navbar__group:not([data-open="true"]) > .navbar__label {
+  /* Desktop element koji se ponaša kao čip (ali je okidač za dropdown) */
+
+  /* Ponovo definišemo čip stil za labelu, ali bez background/border miksa ako to kvari hover */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 700;
+  white-space: nowrap;
+  border-radius: 999px;
+  border: 1px solid var(--color-border, #e5e7eb);
+  background: color-mix(
+    in oklab,
+    var(--color-surface, #f5f5f7) 92%,
+    var(--color-bg, #fff)
+  );
+  cursor: pointer; /* Omogućavamo kursor za hover */
+}
+/* Sakrivanje mobilnog čipa na desktopu */
 .navbar__chip {
   display: none;
 }
 
-/* Desktop dropdown */
+/* Desktop dropdown - Ovi stilovi OSTAJU nepromenjeni (hover funkcionalnost) */
 .navbar__dropdown {
   display: none;
   position: absolute;
-  top: 100%; /* bilo: calc(100% + 6px) */
-  margin-top: 6px; /* vizuelni gap, ali je unutar hover zone zahvaljujući padding-bottom */
+  top: 100%;
+  margin-top: 6px;
   z-index: 1000;
   left: 50%;
   transform: translateX(-50%);
@@ -87,7 +151,7 @@
 }
 @media (hover: hover) and (pointer: fine) {
   .navbar__group:hover .navbar__dropdown {
-    display: grid;
+    display: grid; /* Desktop: Prikaz na hover! */
   }
 }
 .navbar__group::after {
@@ -99,20 +163,21 @@
   height: 12px; /* nevidljivi most */
 }
 
-/* Mobilni */
+/* --- MOBILNI STILOVI (media query ostaje kao override za mobilnu estetiku) --- */
+
 @media (max-width: 1023px) {
   .navbar__row {
     overflow-x: auto;
     gap: 8px;
     overflow: hidden;
     padding-bottom: 6px;
-    scroll-snap-type:initial; 
+    scroll-snap-type: initial;
   }
   .navbar__label {
-    display: none;
-  } /* sakrij label na mobilnom */
+    display: none; /* Sakrij labelu na mobilnom */
+  }
   .navbar__chip {
-    display: inline-flex;
+    display: inline-flex; /* Prikaz čipa na mobilnom */
     align-items: center;
     justify-content: center;
     scroll-snap-align: start;
@@ -140,30 +205,26 @@
     border-top: 1px dashed var(--color-border, #e5e7eb);
     padding-top: 6px;
   }
- .navbar__sub { 
-  overflow: hidden;            /* klipuj sve izvan kontejnera */
-  min-width: 0;                /* dozvoli skupljanje unutar grida */
-}
+  .navbar__sub {
+    overflow: hidden;
+    min-width: 0;
+  }
 
-.navbar__subrow {
-  display: flex;
-  gap: 8px;
-
-  width: 100%;                 /* uzmi tačno širinu kontejnera */
-  max-width: 100%;             /* ne širi stranu */
-  min-width: 0;                /* spreči “content-width overflow” u flexu */
-
-  overflow-x: auto;            /* skrol samo horizontalno unutar reda */
-  overflow-y: hidden;
-
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;
-  overscroll-behavior-x: contain;
-  overscroll-behavior-y: none;
-
-  padding-bottom: 2px;
-  scroll-snap-type: x proximity;
-}
+  .navbar__subrow {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    overscroll-behavior-x: contain;
+    overscroll-behavior-y: none;
+    padding-bottom: 2px;
+    scroll-snap-type: x proximity;
+  }
 
   .navbar__pill {
     scroll-snap-align: start;
@@ -188,26 +249,22 @@
 .navbar__wrap button {
   text-decoration: none;
 }
-/* Mobilni – red sa brendovima */
+/* Mobilni – scroll optimizacije */
 @media (max-width: 1023px) {
   .navbar__row {
     overflow-x: auto;
-    overflow-y: hidden; /* ne vertikalno u ovoj zoni */
-    -webkit-overflow-scrolling: touch; /* glatko na iOS */
-    touch-action: pan-x; /* gestovi samo horizontalno */
-    overscroll-behavior-x: contain; /* bez bounce chain-a ka parentu */
-    overscroll-behavior-y: none; /* ne povlači stranicu vertikalno */
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    overscroll-behavior-x: contain;
+    overscroll-behavior-y: none;
   }
-
-  /* po želji sakrij traku skrola */
   .navbar__row::-webkit-scrollbar {
     display: none;
   }
   .navbar__row {
     scrollbar-width: none;
   }
-
-  /* red sa podkategorijama isto horizontalno-only */
   .navbar__subrow {
     overflow-x: auto;
     overflow-y: hidden;
@@ -218,27 +275,31 @@
   }
 }
 @media (max-width: 1023px) {
-  .navbar__wrap > .navbar__row:first-of-type::-webkit-scrollbar { display: initial; height: 6px; }
-  .navbar__wrap > .navbar__row:first-of-type { scrollbar-width: thin; }
+  .navbar__wrap > .navbar__row:first-of-type::-webkit-scrollbar {
+    display: initial;
+    height: 6px;
+  }
+  .navbar__wrap > .navbar__row:first-of-type {
+    scrollbar-width: thin;
+  }
 }
 
 /* === MOBILNI: poravnaj "Katalog" i čipove u ISTU liniju === */
+/* Ovaj blok je za mobilni i mora ostati, ali sada su desktop stilovi veoma slični */
 @media (max-width: 1023px) {
   .navbar__row {
-    align-items: center;   /* vertikalno centriranje */
-    padding-bottom: 0;     /* da svi sede na istoj liniji */
+    align-items: center;
+    padding-bottom: 0;
     gap: 6px;
   }
 
-  /* Skini desktop padding koji spušta brend čipove */
   .navbar__group {
     padding-bottom: 0;
   }
   .navbar__group::after {
-    display: none;         /* ugasi “hover most” na mobilnom */
+    display: none;
   }
 
-  /* Ujednači dimenzije Katalog i čipova (ako već nisi) */
   .navbar__all,
   .navbar__chip {
     display: inline-flex;
@@ -253,7 +314,11 @@
     white-space: nowrap;
     border-radius: 999px;
     border: 1px solid var(--color-border, #e5e7eb);
-    background: color-mix(in oklab, var(--color-surface, #f5f5f7) 92%, var(--color-bg, #fff));
+    background: color-mix(
+      in oklab,
+      var(--color-surface, #f5f5f7) 92%,
+      var(--color-bg, #fff)
+    );
     color: var(--color-text, #111);
   }
 }
@@ -261,5 +326,10 @@
 /* Ekstra tesni ekrani */
 @media (max-width: 360px) {
   .navbar__all,
-  .navbar__chip { height: 32px; min-height: 32px; padding: 0 8px; font-size: 11px; }
+  .navbar__chip {
+    height: 32px;
+    min-height: 32px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
 }
