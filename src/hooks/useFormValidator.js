@@ -58,7 +58,7 @@ export function useFormValidator(initialState) {
         isValid = false;
       }
 
-      // 2. PROVERA PRAZNIH POLJA (Ovo je falilo!)
+      // 2. PROVERA PRAZNIH POLJA
       // Ako nema vrednosti, a postoji pravilo -> OBAVEZNO JE
       if (!value && rule) {
         newErrors[key] = 'Ovo polje je obavezno.';
@@ -72,6 +72,7 @@ export function useFormValidator(initialState) {
 
   return {
     formData,
+    setFormData, // <--- OVO JE KLJUČNO! SADA JE EXPORTOVANO.
     errors,
     handleChange,
     handleBlur,

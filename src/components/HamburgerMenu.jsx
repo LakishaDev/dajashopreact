@@ -1,7 +1,6 @@
 /**
  * @file src/components/HamburgerMenu.jsx
- * @description Hamburger Menu za mobilne i dropdown za desktop. Integracija sa AuthModal.
- * @version 1.0.1
+ * @description Hamburger Menu sa Admin Notifikacijama
  */
 import React, {
   useEffect,
@@ -12,11 +11,15 @@ import React, {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useLocation } from 'react-router-dom';
-// eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCart } from '../hooks/useCart.js';
-import { useAuth } from '../hooks/useAuth.js'; // <-- NOVO: Import useAuth
-// 👇 Nove ikonice za footer menija
+import { useAuth } from '../hooks/useAuth.js';
+
+// --- FIREBASE IMPORTI ZA NOTIFIKACIJE ---
+import { isAdminEmail, db } from '../services/firebase.js';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+
+// Ikonice
 import {
   Phone,
   HelpCircle,
@@ -24,9 +27,15 @@ import {
   Instagram,
   MapPin,
   X,
+  ShieldCheck,
+  Package,
+  Home,
+  ShoppingBag,
+  Info,
+  Briefcase,
+  User,
 } from 'lucide-react';
 import './HamburgerMenu.css';
-import { ADMIN_EMAILS } from '../services/firebase.js';
 
 const DROPDOWN_WIDTH = 220;
 
@@ -39,10 +48,35 @@ export default function HamburgerMenu({
 }) {
   const isDesktop = useIsDesktop();
   const loc = useLocation();
-  const { showAuth } = useAuth(); // <-- NOVO: Dohvatamo showAuth funkciju
+  const { showAuth } = useAuth();
+
+  // --- STATE ZA NOTIFIKACIJE ---
+  const [unreadOrders, setUnreadOrders] = useState(0);
+  const isAdmin = user && isAdminEmail(user.email);
+
+  // --- LISTENER ZA NEPROČITANE PORUDŽBINE ---
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    // Slušamo samo porudžbine koje nisu pročitane (isRead == false)
+    const q = query(collection(db, 'orders'), where('isRead', '==', false));
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        setUnreadOrders(snapshot.size); // Ažuriramo broj
+      },
+      (error) => {
+        console.error('Greška pri slušanju notifikacija:', error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [isAdmin]);
 
   useEffect(() => {
-    if (open) onClose?.(); // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (open) onClose?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loc.pathname]);
 
   if (typeof document === 'undefined') return null;
@@ -55,21 +89,25 @@ export default function HamburgerMenu({
         count={count}
         user={user}
         anchorEl={anchorEl}
-        showAuth={showAuth} // <-- Prosleđujemo
+        showAuth={showAuth}
+        isAdmin={isAdmin}
+        unreadOrders={unreadOrders} // <--- ŠALJEMO DOLE
       />
     ) : (
       <MobileSheet
         open={open}
         onClose={onClose}
         user={user}
-        showAuth={showAuth} // <-- Prosleđujemo
+        showAuth={showAuth}
+        isAdmin={isAdmin}
+        unreadOrders={unreadOrders} // <--- ŠALJEMO DOLE
       />
     ),
     document.body
   );
 }
 
-/* ----- hook: desktop detekcija (ostaje nepromenjen) ----- */
+/* ----- hook: desktop detekcija ----- */
 function useIsDesktop() {
   const [isDesktop, setIsDesktop] = useState(() =>
     typeof window !== 'undefined'
@@ -86,10 +124,18 @@ function useIsDesktop() {
 }
 
 /* ----- DESKTOP: centriran dropdown ----- */
-function DesktopDropdown({ open, onClose, count, user, anchorEl, showAuth }) {
+function DesktopDropdown({
+  open,
+  onClose,
+  count,
+  user,
+  anchorEl,
+  showAuth,
+  isAdmin,
+  unreadOrders,
+}) {
   const ddRef = useRef(null);
   const [pos, setPos] = useState({ top: 0, left: 0 });
-  const isAdmin = user && ADMIN_EMAILS.includes(user.email?.toLowerCase());
 
   const recalc = useCallback(() => {
     if (!anchorEl?.current) return;
@@ -160,22 +206,51 @@ function DesktopDropdown({ open, onClose, count, user, anchorEl, showAuth }) {
         >
           <nav className="hm__ddNav">
             <DDItem to="/about" label="O nama" onClose={onClose} />
-
             <DDItem to="/catalog" label="Prodavnica" onClose={onClose} />
             <DDItem to="/usluge" label="Usluge" onClose={onClose} />
-
-            {/* NOVO: Dodati Kontakt i Pomoć (FAQ) linkovi */}
             <DDItem to="/contact" label="Kontakt" onClose={onClose} />
             <DDItem to="/faq" label="Pomoć / FAQ" onClose={onClose} />
 
+            {/* ADMIN SEKCIJA */}
             {isAdmin && (
-              <DDItem to="/admin" label="Admin Panel" onClose={onClose} />
+              <>
+                <div className="border-t border-white/10 my-1"></div>
+                <DDItem
+                  to="/admin"
+                  label="Admin Dashboard"
+                  onClose={onClose}
+                  style={{ color: '#facc15' }}
+                />
+
+                {/* Link ka Porudžbinama sa brojačem */}
+                <Link
+                  to="/admin/orders"
+                  className="hm__ddItem"
+                  role="menuitem"
+                  onClick={onClose}
+                  style={{
+                    color: '#facc15',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  Admin Porudžbine
+                  {unreadOrders > 0 && (
+                    <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-2 shadow-sm">
+                      {unreadOrders}
+                    </span>
+                  )}
+                </Link>
+
+                <div className="border-t border-white/10 my-1"></div>
+              </>
             )}
 
             {user ? (
               <DDItem to="/account" label="Moj nalog" onClose={onClose} />
             ) : (
-              <button // <-- IZMENA: Dugme za otvaranje modala
+              <button
                 type="button"
                 role="menuitem"
                 className="hm__ddItem"
@@ -201,14 +276,14 @@ function DesktopDropdown({ open, onClose, count, user, anchorEl, showAuth }) {
   );
 }
 
-function DDItem({ to, label, strong, onClose }) {
-  // U DesktopDropdown-u se koristi samo za rutiranje
+function DDItem({ to, label, strong, onClose, style }) {
   return (
     <Link
       to={to}
       className={`hm__ddItem${strong ? ' is-strong' : ''}`}
       role="menuitem"
       onClick={onClose}
+      style={style}
     >
       {label}
     </Link>
@@ -216,11 +291,10 @@ function DDItem({ to, label, strong, onClose }) {
 }
 
 /* ----- MOBILE: slide-over panel ----- */
-function MobileSheet({ open, onClose, user, showAuth }) {
+function MobileSheet({ open, onClose, user, showAuth, isAdmin, unreadOrders }) {
   const panelRef = useRef(null);
   const firstFocusableRef = useRef(null);
   const { items, count } = useCart();
-  const isAdmin = user && ADMIN_EMAILS.includes(user.email?.toLowerCase());
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -292,12 +366,11 @@ function MobileSheet({ open, onClose, user, showAuth }) {
               if (info.offset.x > 120 || info.velocity.x > 800) onClose?.();
             }}
           >
-            {/* HEADER MENIJA */}
+            {/* HEADER */}
             <div className="hm__head">
               <h2 id="hm-title" className="hm__title">
                 Meni
               </h2>
-
               <button
                 ref={firstFocusableRef}
                 className="hm__close"
@@ -307,34 +380,71 @@ function MobileSheet({ open, onClose, user, showAuth }) {
                 <X size={24} />
               </button>
             </div>
+
             {/* NAVIGACIJA */}
             <nav className="hm__nav">
-              <Link className="hm__link" to="/about" onClick={onClose}>
-                O nama
+              <Link className="hm__link" to="/" onClick={onClose}>
+                <Home size={18} style={{ marginRight: 10 }} /> Početna
               </Link>
-
               <Link className="hm__link" to="/catalog" onClick={onClose}>
-                Prodavnica
+                <ShoppingBag size={18} style={{ marginRight: 10 }} /> Prodavnica
               </Link>
-
               <Link className="hm__link" to="/usluge" onClick={onClose}>
-                Usluge
+                <Briefcase size={18} style={{ marginRight: 10 }} /> Usluge
+              </Link>
+              <Link className="hm__link" to="/about" onClick={onClose}>
+                <Info size={18} style={{ marginRight: 10 }} /> O nama
               </Link>
 
               {user ? (
                 <>
                   <Link className="hm__link" to="/account" onClick={onClose}>
-                    Moj nalog
+                    <User size={18} style={{ marginRight: 10 }} /> Moj nalog
                   </Link>
 
                   {isAdmin && (
-                    <Link className="hm__link" to="/admin" onClick={onClose}>
-                      Admin Panel
-                    </Link>
+                    <div className="mt-2 border-t border-white/10 pt-2">
+                      <div className="text-xs font-bold text-neutral-500 uppercase px-4 mb-1">
+                        Admin Zona
+                      </div>
+
+                      <Link
+                        className="hm__link"
+                        to="/admin"
+                        onClick={onClose}
+                        style={{ color: '#facc15' }}
+                      >
+                        <ShieldCheck size={18} style={{ marginRight: 10 }} />
+                        Dashboard
+                      </Link>
+
+                      {/* MOBILE ADMIN PORUDŽBINE SA NOTIFIKACIJOM */}
+                      <Link
+                        className="hm__link"
+                        to="/admin/orders"
+                        onClick={onClose}
+                        style={{
+                          color: '#facc15',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        <div className="flex items-center">
+                          <Package size={18} style={{ marginRight: 10 }} />
+                          Porudžbine
+                        </div>
+                        {unreadOrders > 0 && (
+                          <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full mr-4 shadow-sm">
+                            {unreadOrders}
+                          </span>
+                        )}
+                      </Link>
+                    </div>
                   )}
                 </>
               ) : (
-                <button // <-- IZMENA: Dugme za otvaranje modala
+                <button
                   type="button"
                   className="hm__link"
                   onClick={() => {
@@ -342,19 +452,19 @@ function MobileSheet({ open, onClose, user, showAuth }) {
                     onClose();
                   }}
                 >
-                  Prijava / Registracija
+                  <User size={18} style={{ marginRight: 10 }} /> Prijava /
+                  Registracija
                 </button>
               )}
 
               <Link className="hm__link hm__cart" to="/cart" onClick={onClose}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className="hm__cartIcon" style={{ margin: 0 }}>
-                    🛒
-                  </span>
+                  <span>🛒</span>
                   <span>Korpa</span>
                 </div>
                 <span className="hm__badge">{count}</span>
               </Link>
+
               {/* Mini Cart Items */}
               {items.length > 0 && (
                 <div className="hm__miniCart">
@@ -366,10 +476,8 @@ function MobileSheet({ open, onClose, user, showAuth }) {
                         className="hm__miniImg"
                         loading="lazy"
                       />
-
                       <div className="hm__miniInfo">
                         <div className="hm__miniName">{item.name}</div>
-
                         <div className="hm__miniQty">{item.qty} kom.</div>
                       </div>
                     </div>
@@ -377,18 +485,16 @@ function MobileSheet({ open, onClose, user, showAuth }) {
                 </div>
               )}
             </nav>
-            {/* NOVI FOOTER MENIJA - "STICKY" DNO */}
+
+            {/* FOOTER */}
             <div className="hm__footer">
               <div className="hm__f-info">
                 <Link to="/contact" className="hm__f-btn" onClick={onClose}>
                   <Phone size={16} /> Kontakt
                 </Link>
-
                 <Link to="/faq" className="hm__f-btn" onClick={onClose}>
                   <HelpCircle size={16} /> Pomoć
                 </Link>
-
-                {/* IZMENJENO: Lokacija sada vodi na Contact */}
                 <Link to="/contact" className="hm__f-btn" onClick={onClose}>
                   <MapPin size={16} /> Lokacija
                 </Link>
@@ -404,7 +510,6 @@ function MobileSheet({ open, onClose, user, showAuth }) {
                   >
                     <Facebook size={18} />
                   </a>
-
                   <a
                     href="https://instagram.com"
                     target="_blank"
@@ -414,7 +519,6 @@ function MobileSheet({ open, onClose, user, showAuth }) {
                     <Instagram size={18} />
                   </a>
                 </div>
-
                 <div className="hm__f-copy">
                   Daja Shop © {new Date().getFullYear()}
                 </div>

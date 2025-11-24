@@ -1,11 +1,7 @@
-// src/components/account/OrdersSection.jsx
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth.js';
 import { motion } from 'framer-motion';
-import { money } from '../../utils/currency.js';
-import { Package, ChevronRight, Clock, Loader2 } from 'lucide-react';
-
+import { Package, Loader2 } from 'lucide-react';
 import { db } from '../../services/firebase';
 import {
   collection,
@@ -15,91 +11,90 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 
+// Uvozimo novu komponentu za prikaz pojedinačne porudžbine
+import OrderCard from './OrderCard'; // <--- Uveri se da si kreirao ovaj fajl iz prethodnog koraka
+
 function OrdersSection() {
   const { user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    // Ako korisnik nije ulogovan, nemamo šta da učitamo
+    if (!user || !user.email) {
+      setLoading(false);
+      return;
+    }
+
+    // KREIRANJE UPITA:
+    // 1. Gađamo kolekciju 'orders'
+    // 2. Tražimo samo one gde je customer.email isti kao user.email
+    // 3. Sortiramo po vremenu kreiranja (createdAt) opadajuće (najnovije prvo)
     const q = query(
       collection(db, 'orders'),
       where('customer.email', '==', user.email),
-      orderBy('date', 'desc')
+      orderBy('createdAt', 'desc')
     );
 
-    const unsub = onSnapshot(
+    // SLUŠANJE PROMENA (Real-time):
+    const unsubscribe = onSnapshot(
       q,
-      (snap) => {
-        setOrders(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      (snapshot) => {
+        const fetchedOrders = snapshot.docs.map((doc) => ({
+          id: doc.data().id || doc.id, // Koristimo naš custom ID (DAJA-...) ako postoji
+          ...doc.data(),
+        }));
+        setOrders(fetchedOrders);
         setLoading(false);
       },
       (error) => {
         console.error('Greška pri učitavanju porudžbina:', error);
+        // Napomena: Ako u konzoli vidiš grešku za index, Firebase će ti dati link da ga kreiraš
         setLoading(false);
       }
     );
-    return () => unsub();
+
+    // Čišćenje listenera kad se komponenta unmountuje
+    return () => unsubscribe();
   }, [user]);
 
   if (loading)
     return (
-      <div className="loading-state">
-        <Loader2 className="animate-spin" size={32} />
+      <div className="loading-state py-12 flex flex-col items-center justify-center text-[var(--color-muted)]">
+        <Loader2 className="animate-spin mb-4" size={32} />
+        <p>Učitavanje Vaših porudžbina...</p>
       </div>
     );
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
       className="section-content"
     >
-      <div className="section-header-row">
-        <h3>Moje porudžbine</h3>
+      <div className="section-header-row mb-6">
+        <h3 className="text-2xl font-bold text-[var(--color-text)]">
+          Moje porudžbine
+        </h3>
       </div>
+
       {orders.length === 0 ? (
-        <div className="empty-state">
-          <Package size={48} className="text-muted" style={{ opacity: 0.3 }} />
-          <p>Nemate prethodnih porudžbina.</p>
+        <div className="empty-state flex flex-col items-center justify-center py-12 text-center border border-dashed border-[var(--color-border)] rounded-2xl bg-[var(--color-surface)]">
+          <Package
+            size={48}
+            className="text-[var(--color-muted)] opacity-30 mb-4"
+          />
+          <p className="text-[var(--color-text)] font-medium">
+            Još uvek nemate porudžbina.
+          </p>
+          <p className="text-sm text-[var(--color-muted)] mt-2">
+            Istražite našu ponudu i pronađite savršen sat za sebe.
+          </p>
         </div>
       ) : (
-        <div className="orders-list">
+        <div className="orders-list space-y-4">
           {orders.map((order) => (
-            <div key={order.id} className="order-item card glass">
-              <div className="order-icon">
-                <Package size={24} />
-              </div>
-              <div className="order-details">
-                <div className="order-top">
-                  <h4>#{order.id}</h4>
-                  <span
-                    className={`status-badge ${
-                      order.status === 'Isporučeno'
-                        ? 'success'
-                        : order.status === 'Otkazano'
-                        ? 'cancelled'
-                        : 'pending'
-                    }`}
-                  >
-                    {order.status || 'Na čekanju'}
-                  </span>
-                </div>
-                <div className="order-meta">
-                  <span>
-                    <Clock size={14} /> {order.date}
-                  </span>
-                  <span>•</span>
-                  <span>{order.items?.length || 0} artikl(a)</span>
-                </div>
-              </div>
-              <div className="order-right">
-                <div className="order-total">
-                  {money(order.finalTotal || order.total)}
-                </div>
-                <ChevronRight size={20} className="text-muted" />
-              </div>
-            </div>
+            <OrderCard key={order.id} order={order} />
           ))}
         </div>
       )}
