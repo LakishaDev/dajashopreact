@@ -1,4 +1,3 @@
-// src/services/admin.js
 import {
   collection,
   addDoc,
@@ -54,33 +53,43 @@ class CollectionService {
   }
 }
 
-// --- NOVO: SERVIS ZA PORUDŽBINE ---
+// --- SERVIS ZA PORUDŽBINE (ISPRAVLJEN) ---
 export const ordersService = {
-  // Sluša sve porudžbine, sortirane od najnovije
   subscribe: (onData, onError) => {
     const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
     return onSnapshot(
       q,
       (snapshot) => {
-        const items = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+        const items = snapshot.docs.map((d) => ({
+          // Prvo uzimamo podatke (gde je id = DAJA-...)
+          ...d.data(),
+          // Zatim dodajemo PRAVI ID dokumenta kao 'docId' (ArOc...)
+          // Ovo je ključno jer nam treba za update!
+          docId: d.id,
+        }));
         onData(items);
       },
       onError
     );
   },
 
-  // Funkcija za promenu statusa u bazi
-  updateStatus: async (id, newStatus) => {
-    const docRef = doc(db, 'orders', id);
-    try {
-      return await updateDoc(docRef, { status: newStatus });
-    } catch (error) {
-      console.error('Greška pri ažuriranju statusa porudžbine:', error);
-      throw error;
-    }
+  // Ovde sada očekujemo pravi 'docId' (ArOc...), a ne 'DAJA-...'
+  updateStatus: async (docId, newStatus) => {
+    if (!docId) throw new Error('Nedostaje ID dokumenta za ažuriranje.');
+    console.log(
+      'Ažuriram status za dokument:',
+      docId,
+      'Novi status:',
+      newStatus
+    );
+
+    const docRef = doc(db, 'orders', docId);
+    return await updateDoc(docRef, { status: newStatus });
   },
-  markAsRead: async (id) => {
-    const docRef = doc(db, 'orders', id);
+
+  markAsRead: async (docId) => {
+    if (!docId) return;
+    const docRef = doc(db, 'orders', docId);
     return await updateDoc(docRef, { isRead: true });
   },
 };
