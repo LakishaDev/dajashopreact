@@ -65,7 +65,9 @@ export default function AdminOrders() {
     // Ako otvaramo porudžbinu koja NIJE pročitana, označi je u bazi kao pročitanu
     if (isExpanding && !order.isRead) {
       try {
-        await ordersService.markAsRead(order.id);
+        // --- ISPRAVKA OVDE ---
+        // Koristimo order.docId (Firebase ID), a ne order.id (Custom ID)
+        await ordersService.markAsRead(order.docId);
       } catch (error) {
         console.error('Failed to mark as read', error);
       }
@@ -266,7 +268,7 @@ export default function AdminOrders() {
 
                                       <div className="mt-2">
                                         <Link
-                                          to={`/product/${item.id}`}
+                                          to={`/product/${item.slug}`}
                                           target="_blank"
                                           className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline transition-colors"
                                         >
