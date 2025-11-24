@@ -8,7 +8,7 @@ import React, {
 import { useFlash } from '../hooks/useFlash';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../services/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 const WishlistContext = createContext();
 
@@ -28,7 +28,51 @@ export const WishlistProvider = ({ children }) => {
   const { user, userInfo } = useAuth();
   const isServerUpdate = useRef(false);
 
-  // 1. Dolazni podaci (Real-time iz baze)
+  // 1. LOGIKA PRIJAVE I ODJAVE
+  useEffect(() => {
+    // A) Prijava - Merge
+    if (user && wishlist.length > 0) {
+      const mergeWishlist = async () => {
+        try {
+          const docRef = doc(db, 'users', user.uid);
+          const snap = await getDoc(docRef);
+          let serverList = [];
+          if (snap.exists() && snap.data().wishlist) {
+            serverList = snap.data().wishlist;
+          }
+
+          const finalList = [...serverList];
+          let changed = false;
+
+          wishlist.forEach((localItem) => {
+            const exists = finalList.some(
+              (srvItem) => srvItem.id === localItem.id
+            );
+            if (!exists) {
+              finalList.push(localItem);
+              changed = true;
+            }
+          });
+
+          if (changed || (serverList.length === 0 && wishlist.length > 0)) {
+            await setDoc(docRef, { wishlist: finalList }, { merge: true });
+          }
+        } catch (err) {
+          console.error('Wishlist merge error:', err);
+        }
+      };
+      mergeWishlist();
+    }
+    // B) Odjava - Resetuj lokalno stanje
+    else if (!user) {
+      setWishlist([]); // Skloni sve sa ekrana
+      localStorage.removeItem('daja_wishlist'); // Očisti keš
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  // 2. SINHRONIZACIJA SA SERVEROM
   useEffect(() => {
     if (user && userInfo && userInfo.wishlist) {
       const currentStr = JSON.stringify(wishlist);
@@ -42,22 +86,7 @@ export const WishlistProvider = ({ children }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, userInfo]);
 
-  // 2. Merge lokalnih želja pri prvom loginu
-  useEffect(() => {
-    if (
-      user &&
-      wishlist.length > 0 &&
-      (!userInfo || !userInfo.wishlist || userInfo.wishlist.length === 0)
-    ) {
-      const syncLocal = async () => {
-        await setDoc(doc(db, 'users', user.uid), { wishlist }, { merge: true });
-      };
-      syncLocal();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
-  // 3. Čuvanje promena (User Action -> DB/Local)
+  // 3. ČUVANJE
   useEffect(() => {
     if (isServerUpdate.current) {
       isServerUpdate.current = false;
@@ -80,6 +109,7 @@ export const WishlistProvider = ({ children }) => {
     }
   }, [wishlist, user]);
 
+  // --- Funkcije ostaju iste ---
   const toggleWishlist = (product) => {
     const exists = wishlist.find((item) => item.id === product.id);
 
