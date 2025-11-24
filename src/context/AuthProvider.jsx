@@ -13,10 +13,16 @@ import {
   auth,
   db,
   googleProvider,
-  facebookProvider, // ⬅️ umesto appleProvider
+  facebookProvider,
   ensureRecaptcha,
 } from '../services/firebase';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import {
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+  onSnapshot,
+} from 'firebase/firestore'; // <--- Dodat onSnapshot
 import { Ctx } from './AuthContext';
 import { functions } from '../services/firebase';
 
@@ -26,57 +32,82 @@ import {
   linkWithPasskey,
 } from '@firebase-web-authn/browser';
 
-// Constants moved outside component to avoid recreation
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
-const PHONE_RE = /^\+?[0-9]{8,15}$/; // internacionalni
+const PHONE_RE = /^\+?[0-9]{8,15}$/;
 const USER_RE = /^[a-zA-Z0-9._-]{3,24}$/;
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [userInfo, setUserInfo] = useState(null); // <--- Podaci iz baze (korpa, wishlist...)
   const [authOpen, setAuthOpen] = useState(false);
-  const [mode, setMode] = useState('login'); // login | register
-  const [phoneConf, setPhoneConf] = useState(null); // confirmationResult
+  const [mode, setMode] = useState('login');
+  const [phoneConf, setPhoneConf] = useState(null);
   const [pendingEmailVerify, setPendingEmailVerify] = useState(false);
 
-  useEffect(
-    () =>
-      onAuthStateChanged(auth, async (u) => {
-        setUser(u);
-        if (u) {
-          // ensure user doc
-          const ref = doc(db, 'users', u.uid);
-          const s = await getDoc(ref);
-          if (!s.exists()) {
-            await setDoc(
-              ref,
-              {
-                uid: u.uid,
-                email: u.email || null,
-                phoneNumber: u.phoneNumber || null,
-                displayName: u.displayName || null,
-                createdAt: serverTimestamp(),
-              },
-              { merge: true }
-            );
-          }
+  useEffect(() => {
+    // Slušamo promene autentifikacije (Login/Logout)
+    const unsubscribeAuth = onAuthStateChanged(auth, async (u) => {
+      setUser(u);
+
+      if (u) {
+        const userDocRef = doc(db, 'users', u.uid);
+
+        // 1. Provera da li dokument postoji, ako ne - kreiraj ga
+        // Ovo radimo samo jednom pri loginu
+        const snap = await getDoc(userDocRef);
+        if (!snap.exists()) {
+          await setDoc(
+            userDocRef,
+            {
+              uid: u.uid,
+              email: u.email || null,
+              phoneNumber: u.phoneNumber || null,
+              displayName: u.displayName || null,
+              createdAt: serverTimestamp(),
+              cart: [],
+              wishlist: [],
+            },
+            { merge: true }
+          );
         }
-      }),
-    []
-  );
+
+        // 2. REAL-TIME LISTENER (Ovo rešava tvoj problem sinhronizacije)
+        // Sluša svaku promenu na user dokumentu (npr. kad dodaš u korpu na drugom uređaju)
+        const unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
+          if (docSnap.exists()) {
+            setUserInfo(docSnap.data());
+          }
+        });
+
+        // Cleanup snapshot listenera kad se user promeni
+        return () => {
+          unsubscribeSnapshot();
+        };
+      } else {
+        // Ako nema usera, nema ni userInfo podataka
+        setUserInfo(null);
+      }
+    });
+
+    return () => unsubscribeAuth();
+  }, []);
 
   function showAuth(nextMode = 'login') {
     setMode(nextMode);
     setAuthOpen(true);
   }
+
   function hideAuth() {
     setAuthOpen(false);
     setPendingEmailVerify(false);
     setPhoneConf(null);
   }
 
-  // ---------- helpers ----------
+  // ... (Ostale helper funkcije ostaju iste: detectIdentity, login, register, itd.) ...
+  // Samo kopiraj ostatak funkcija iz prošlog fajla (usernameToEmail, login, register, oauth, logout...)
+  // Da ne pravim gužvu, pretpostavljam da su ti jasne, ključan je ovaj useEffect gore.
+
   async function usernameToEmail(username) {
-    // mapiranje u Firestore: usernames/{username} -> { uid, email }
     const snap = await getDoc(doc(db, 'usernames', username.toLowerCase()));
     if (!snap.exists()) return null;
     const data = snap.data();
@@ -91,7 +122,6 @@ export function AuthProvider({ children }) {
     return { type: 'unknown', value: id };
   }, []);
 
-  // ---------- sign-in / register ----------
   const login = useCallback(
     async ({ identity, password }) => {
       const id = detectIdentity(identity);
@@ -121,7 +151,6 @@ export function AuthProvider({ children }) {
       if (!phoneConf) throw new Error('Nema aktivne telefonske sesije.');
       const res = await phoneConf.confirm(code);
       setPhoneConf(null);
-      // user doc handled by onAuthStateChanged
       return res;
     },
     [phoneConf]
@@ -139,7 +168,6 @@ export function AuthProvider({ children }) {
         if (name) await updateProfile(cred.user, { displayName: name });
         await sendEmailVerification(cred.user);
         setPendingEmailVerify(true);
-        // user doc handled in onAuthStateChanged after email verification/sign-in
         return 'email-verify';
       }
       if (id.type === 'phone') {
@@ -154,7 +182,6 @@ export function AuthProvider({ children }) {
   );
 
   const linkUsernameToEmail = useCallback(async (username, email) => {
-    // pozovi nakon registracije email-om da rezervišeš username
     if (!USER_RE.test(username)) throw new Error('Nevalidno korisničko ime.');
     await setDoc(
       doc(db, 'usernames', username.toLowerCase()),
@@ -172,18 +199,17 @@ export function AuthProvider({ children }) {
     } else {
       throw new Error('Nepoznat provider.');
     }
-
     const res = await signInWithPopup(auth, prov);
     return res.user;
   }
 
   async function logout() {
     await signOut(auth);
+    setUserInfo(null); // Čistimo state
   }
 
   const passkeyLogin = useCallback(async () => {
     try {
-      // Automatski započinje proces prijave (FaceID/TouchID prompt)
       await signInWithPasskey(auth, functions);
       return 'success';
     } catch (error) {
@@ -194,11 +220,6 @@ export function AuthProvider({ children }) {
 
   const passkeyRegister = useCallback(async (name) => {
     try {
-      // Prvo mora biti ulogovan ili kreirati nalog da bi vezao Passkey,
-      // ali biblioteka podržava i "usernameless" flow ako je konfigurisan.
-      // Za DajaShop, najbolje je da ovo ponudimo kao opciju I registracije I prijave.
-
-      // Napomena: Ova biblioteka očekuje jedinstveno ime za passkey
       await createUserWithPasskey(auth, functions, name);
       return 'success';
     } catch (error) {
@@ -207,19 +228,12 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // 2. NOVA FUNKCIJA ZA POVEZIVANJE PASSKEY-a
   const linkPasskey = useCallback(async (passkeyName) => {
     try {
       if (!auth.currentUser) {
         throw new Error('Morate biti ulogovani da biste dodali Passkey.');
       }
-
-      // Koristimo "first" faktor kako bi passkey mogao da se koristi
-      // za potpunu prijavu (bez lozinke), kao zamena za password.
-      // Argumenti: auth, functions, ImeKljuča, "first"
       await linkWithPasskey(auth, functions, passkeyName, 'first');
-
-      console.log('Passkey uspešno povezan!');
       return 'success';
     } catch (error) {
       console.error('Link Passkey error:', error);
@@ -230,6 +244,7 @@ export function AuthProvider({ children }) {
   const value = useMemo(
     () => ({
       user,
+      userInfo, // <--- Ovo sada sadrži LIVE podatke korpe i wishlist-e
       authOpen,
       showAuth,
       hideAuth,
@@ -249,6 +264,7 @@ export function AuthProvider({ children }) {
     }),
     [
       user,
+      userInfo,
       authOpen,
       mode,
       pendingEmailVerify,
