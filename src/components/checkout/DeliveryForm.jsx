@@ -19,8 +19,17 @@ import {
   Lock,
   ArrowRight,
   Phone,
+  Home,
+  Briefcase,
+  Plus,
+  Building2,
+  Heart,
 } from 'lucide-react';
 import ErrorMessage from './ErrorMessage';
+
+// --- FIREBASE IMPORTI ---
+import { db } from '../../services/firebase';
+import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 
 // Konstante
 const getFlagUrl = (code) =>
@@ -46,7 +55,7 @@ const POPULAR_DOMAINS = [
 ];
 
 // ************************************************************
-// PROFESIONALNA POMOĆNA FUNKCIJA ZA DINAMIČKO UČITAVANJE (Promise-based)
+// GOOGLE MAPS LOADER
 // ************************************************************
 function loadGoogleMapsScript(apiKey) {
   return new Promise((resolve, reject) => {
@@ -54,12 +63,10 @@ function loadGoogleMapsScript(apiKey) {
       resolve();
       return;
     }
-
     if (document.getElementById('google-maps-script')) {
       resolve();
       return;
     }
-
     const script = document.createElement('script');
     script.type = 'text/javascript';
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
@@ -71,24 +78,17 @@ function loadGoogleMapsScript(apiKey) {
       if (window.google && window.google.maps && window.google.maps.places) {
         resolve();
       } else {
-        reject(
-          new Error(
-            'Google Maps API učitan, ali globalni objekat nije definisan.'
-          )
-        );
+        reject(new Error('Google Maps API error.'));
       }
     };
-
-    script.onerror = () => {
-      reject(new Error('Neuspešno učitavanje Google Maps skripte.'));
-    };
-
+    script.onerror = () => reject(new Error('Google Maps load failed.'));
     document.head.appendChild(script);
   });
 }
 
 export default function DeliveryForm({
   formData,
+  setFormData,
   errors,
   handleChange,
   handleBlur,
@@ -112,6 +112,10 @@ export default function DeliveryForm({
   const countryDropdownRef = useRef(null);
   const autocompleteInstance = useRef(null);
   const addressInputRef = useRef(null);
+  const addressSelectorRef = useRef(null);
+
+  // --- REF ZA PRAĆENJE AUTOMATSKE SELEKCIJE ---
+  const hasAutoSelected = useRef(false);
 
   const [mapsReady, setMapsReady] = useState(false);
   const [emailSuggestions, setEmailSuggestions] = useState([]);
@@ -120,7 +124,12 @@ export default function DeliveryForm({
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const [mapsScriptLoaded, setMapsScriptLoaded] = useState(false);
 
-  // --- LOGIKA ZA RAZDVAJANJE PREFIKSA I BROJA ---
+  // --- STATE ZA ADRESE ---
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [isAddressSelectorOpen, setIsAddressSelectorOpen] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState('new');
+
+  // --- TELEFON LOGIKA ---
   const { phonePrefix, localPhone } = useMemo(() => {
     const fullNumber = formData.phone || '';
     const sortedCodes = [...COUNTRY_CODES].sort(
@@ -141,13 +150,125 @@ export default function DeliveryForm({
     COUNTRY_CODES.find((c) => c.dial === phonePrefix) ||
     COUNTRY_CODES.find((c) => c.code === 'RS');
 
-  // ************************************************************
-  // GLAVNI HOOK ZA UČITAVANJE SKRIPTE
-  // ************************************************************
+  // --- LOGIKA POPUNJAVANJA POLJA (AUTOFILL) ---
+  const selectAddress = (addr) => {
+    if (!addr) {
+      setSelectedAddressId('new');
+      if (setFormData) {
+        setFormData((prev) => ({
+          ...prev,
+          address: '',
+          city: '',
+          postalCode: '',
+        }));
+      }
+    } else {
+      setSelectedAddressId(addr.id);
+
+      const fullName = addr.name || '';
+      const parts = fullName.trim().split(/\s+/);
+      const fName = parts[0] || '';
+      const lName = parts.slice(1).join(' ') || '';
+
+      if (setFormData) {
+        setFormData((prev) => ({
+          ...prev,
+          name: fName,
+          surname: lName,
+          phone: addr.phone || '',
+          address: addr.address || '',
+          city: addr.city || '',
+          postalCode: addr.zip || '',
+          email: prev.email || user?.email || '',
+        }));
+      }
+    }
+    setIsAddressSelectorOpen(false);
+  };
+
+  // --- FETCH ADRESA ---
+  useEffect(() => {
+    hasAutoSelected.current = false; // Reset na promenu usera
+
+    const fetchAddresses = async () => {
+      if (!user) return;
+      try {
+        const q = query(
+          collection(db, 'users', user.uid, 'addresses'),
+          orderBy('createdAt', 'desc')
+        );
+        const snapshot = await getDocs(q);
+        const addresses = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setSavedAddresses(addresses);
+      } catch (err) {
+        console.error('Error fetching addresses', err);
+      }
+    };
+    fetchAddresses();
+  }, [user]);
+
+  // --- AUTOMATSKA SELEKCIJA ---
+  useEffect(() => {
+    if (savedAddresses.length > 0 && !hasAutoSelected.current) {
+      selectAddress(savedAddresses[0]);
+      hasAutoSelected.current = true;
+    }
+  }, [savedAddresses]);
+
+  // --- HELPER: ODABIR IKONICE ---
+  const getAddressIcon = (addr, size = 18) => {
+    if (!addr)
+      return <Plus size={size} className="text-[var(--color-primary)]" />;
+
+    if (addr.icon) {
+      switch (addr.icon) {
+        case 'home':
+          return <Home size={size} className="text-[var(--color-primary)]" />;
+        case 'briefcase':
+          return (
+            <Briefcase size={size} className="text-[var(--color-primary)]" />
+          );
+        case 'building':
+          return (
+            <Building2 size={size} className="text-[var(--color-primary)]" />
+          );
+        case 'heart':
+          return <Heart size={size} className="text-[var(--color-primary)]" />;
+        case 'mapPin':
+          return <MapPin size={size} className="text-[var(--color-primary)]" />;
+        default:
+          return <MapPin size={size} className="text-[var(--color-primary)]" />;
+      }
+    }
+
+    if (addr.label === 'Kuća')
+      return <Home size={size} className="text-[var(--color-primary)]" />;
+    if (addr.label === 'Posao')
+      return <Briefcase size={size} className="text-[var(--color-primary)]" />;
+
+    return <MapPin size={size} className="text-[var(--color-primary)]" />;
+  };
+
+  const getSelectedAddressLabel = () => {
+    if (selectedAddressId === 'new') return 'Nova adresa (Ručni unos)';
+    const addr = savedAddresses.find((a) => a.id === selectedAddressId);
+    return addr ? `${addr.label || 'Adresa'} - ${addr.address}` : 'Nova adresa';
+  };
+
+  const getSelectedAddressIcon = () => {
+    if (selectedAddressId === 'new')
+      return <Plus size={18} className="text-[var(--color-primary)]" />;
+    const addr = savedAddresses.find((a) => a.id === selectedAddressId);
+    return getAddressIcon(addr, 18);
+  };
+
+  // --- GOOGLE MAPS INIT ---
   useEffect(() => {
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
     if (!apiKey) {
-      console.error('VITE_GOOGLE_MAPS_KEY nije definisan.');
       setMapsReady(false);
       return;
     }
@@ -155,23 +276,14 @@ export default function DeliveryForm({
     loadGoogleMapsScript(apiKey)
       .then(() => {
         setMapsScriptLoaded(true);
-        if (addressInputRef.current) {
-          initAutocomplete(addressInputRef.current);
-        }
+        if (addressInputRef.current) initAutocomplete(addressInputRef.current);
       })
-      .catch((error) => {
-        console.error('Greška pri učitavanju Google Maps:', error.message);
-        setMapsReady(false);
-      });
+      .catch(() => setMapsReady(false));
   }, []);
 
-  // ************************************************************
-  // INICIJALIZACIJA AUTOCMPLETE-A
-  // ************************************************************
   const initAutocomplete = (node) => {
     if (!window.google || !window.google.maps || !window.google.maps.places)
       return;
-
     if (
       node.classList.contains('pac-target-input') ||
       autocompleteInstance.current
@@ -201,19 +313,37 @@ export default function DeliveryForm({
           if (types.includes('postal_code')) zip = comp.long_name;
         });
         const fullAddress = number ? `${street} ${number}` : street;
-        if (fullAddress)
-          handleChange({ target: { name: 'address', value: fullAddress } });
-        if (city) handleChange({ target: { name: 'city', value: city } });
-        if (zip) handleChange({ target: { name: 'postalCode', value: zip } });
+
+        if (setFormData) {
+          setFormData((prev) => ({
+            ...prev,
+            address: fullAddress || prev.address,
+            city: city || prev.city,
+            postalCode: zip || prev.postalCode,
+          }));
+        } else {
+          if (fullAddress)
+            handleChange({ target: { name: 'address', value: fullAddress } });
+          if (city) handleChange({ target: { name: 'city', value: city } });
+          if (zip) handleChange({ target: { name: 'postalCode', value: zip } });
+        }
       });
       autocompleteInstance.current = autocomplete;
       setMapsReady(true);
     } catch (error) {
-      console.error('Google Maps Autocomplete greška:', error);
       setMapsReady(false);
     }
   };
 
+  const onAddressInputMount = useCallback(
+    (node) => {
+      addressInputRef.current = node;
+      if (mapsScriptLoaded && node) initAutocomplete(node);
+    },
+    [mapsScriptLoaded]
+  );
+
+  // --- CLICK OUTSIDE ---
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (
@@ -227,20 +357,15 @@ export default function DeliveryForm({
         !countryDropdownRef.current.contains(e.target)
       )
         setIsCountryDropdownOpen(false);
+      if (
+        addressSelectorRef.current &&
+        !addressSelectorRef.current.contains(e.target)
+      )
+        setIsAddressSelectorOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const onAddressInputMount = useCallback(
-    (node) => {
-      addressInputRef.current = node;
-      if (mapsScriptLoaded && node) {
-        initAutocomplete(node);
-      }
-    },
-    [mapsScriptLoaded]
-  );
 
   // --- HANDLERS ---
   const handleEmailInput = (e) => {
@@ -293,18 +418,16 @@ export default function DeliveryForm({
       setShowRegPopover(true);
     }
   };
-
   const handleKeyDown = (e) => {
     if (e.key === 'Tab' && prediction) {
       e.preventDefault();
-      const fullEmail = formData.email + prediction;
-      const event = { target: { name: 'email', value: fullEmail } };
-      handleChange(event);
+      handleChange({
+        target: { name: 'email', value: formData.email + prediction },
+      });
       setPrediction('');
       setShowEmailSuggestions(false);
     }
   };
-
   const selectEmail = (email) => {
     handleChange({ target: { name: 'email', value: email } });
     setShowEmailSuggestions(false);
@@ -312,15 +435,11 @@ export default function DeliveryForm({
     emailInputRef.current?.focus();
     if (!user && !popoverDismissed && !createAccount) setShowRegPopover(true);
   };
-
   const handleCountrySelect = (country) => {
     const full = `${country.dial} ${localPhone}`;
     handleChange({ target: { name: 'phone', value: full } });
     setIsCountryDropdownOpen(false);
-    const inputEl = document.querySelector('input[name="phone-local"]');
-    if (inputEl) inputEl.focus();
   };
-
   const handleLocalPhoneChange = (e) => {
     const val = e.target.value;
     const full = `${phonePrefix} ${val}`;
@@ -333,32 +452,153 @@ export default function DeliveryForm({
         showSuccessModal ? 'z-high' : ''
       }`}
     >
+      {/* STILOVI SA TEMATSKIM VARIJABLAMA */}
       <style>{`
+        .address-selector-wrapper { position: relative; margin-bottom: 24px; z-index: 40; }
+        
+        .address-selector-btn {
+            width: 100%; display: flex; align-items: center; justify-content: space-between;
+            background: var(--color-surface); /* TEMA */
+            border: 1px solid var(--color-border); /* TEMA */
+            padding: 14px 16px; border-radius: 12px;
+            color: var(--color-text); /* TEMA */
+            font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .address-selector-btn:hover { 
+            background: var(--color-bg-subtle); /* TEMA */
+            border-color: var(--color-primary); /* TEMA */
+        }
+        
+        .address-dropdown-list {
+            position: absolute; top: 100%; left: 0; width: 100%;
+            background: var(--color-surface); /* TEMA - nije više hardcoded #18181b */
+            border: 1px solid var(--color-border); /* TEMA */
+            border-radius: 12px; margin-top: 8px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            overflow: hidden; z-index: 100;
+        }
+        
+        .addr-option {
+            width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+            text-align: left; border: none; background: transparent;
+            color: var(--color-muted); /* TEMA */
+            cursor: pointer; 
+            border-bottom: 1px solid var(--color-border); /* TEMA */
+            transition: all 0.2s;
+        }
+        .addr-option:last-child { border-bottom: none; }
+        
+        .addr-option:hover { 
+            background: var(--color-bg-subtle); /* TEMA */
+            color: var(--color-text); /* TEMA */
+        }
+        .addr-option.active { 
+            background: var(--color-bg-subtle); 
+            color: var(--color-primary); 
+        }
+
+        /* PAC (Google Maps) Container takođe prilagođen */
         .pac-container {
           background-color: var(--color-surface);
           border: 1px solid var(--color-border);
-          border-radius: 12px;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-          font-family: inherit;
-          z-index: 99999 !important; 
-          margin-top: 6px;
+          border-radius: 12px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+          font-family: inherit; z-index: 99999 !important; margin-top: 6px;
         }
-        .pac-item {
-          border-top: none;
-          padding: 10px 14px;
-          cursor: pointer;
-          color: var(--color-text);
+        .pac-item { 
+            border-top: none; padding: 10px 14px; cursor: pointer; 
+            color: var(--color-text); 
         }
         .pac-item:hover { background-color: var(--color-bg-subtle); }
         .pac-item-query { color: var(--color-text); font-weight: 700; }
         .pac-item span { color: var(--color-muted); }
-        .pac-logo:after { filter: invert(1) opacity(0.5); margin: 8px 12px; }
+        .pac-logo:after { filter: grayscale(1) opacity(0.5); margin: 8px 12px; }
       `}</style>
 
       <div className="section-header">
         <div className="step-badge">1</div>
         <h2>Podaci za isporuku</h2>
       </div>
+
+      {/* --- ADDRESS SELECTOR --- */}
+      {user && savedAddresses.length > 0 && (
+        <div className="address-selector-wrapper" ref={addressSelectorRef}>
+          <button
+            type="button"
+            className="address-selector-btn"
+            onClick={() => setIsAddressSelectorOpen(!isAddressSelectorOpen)}
+          >
+            <div className="flex items-center gap-3">
+              {getSelectedAddressIcon()}
+              <span>{getSelectedAddressLabel()}</span>
+            </div>
+            <ChevronDown
+              size={16}
+              className={`transition-transform ${
+                isAddressSelectorOpen ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+
+          <AnimatePresence>
+            {isAddressSelectorOpen && (
+              <motion.div
+                className="address-dropdown-list"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                {savedAddresses.map((addr) => (
+                  <button
+                    key={addr.id}
+                    type="button"
+                    className={`addr-option ${
+                      selectedAddressId === addr.id ? 'active' : ''
+                    }`}
+                    onClick={() => selectAddress(addr)}
+                  >
+                    {getAddressIcon(addr)}
+                    <div className="flex flex-col">
+                      <span className="font-bold text-sm text-[var(--color-text)]">
+                        {addr.label || 'Adresa'}
+                      </span>
+                      <span className="text-xs opacity-70">
+                        {addr.address}, {addr.city}
+                      </span>
+                    </div>
+                    {selectedAddressId === addr.id && (
+                      <Check
+                        size={16}
+                        className="ml-auto text-[var(--color-primary)]"
+                      />
+                    )}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className={`addr-option ${
+                    selectedAddressId === 'new' ? 'active' : ''
+                  }`}
+                  onClick={() => selectAddress(null)}
+                >
+                  <Plus size={16} />
+                  <span className="font-bold text-sm">
+                    Nova adresa (Ručni unos)
+                  </span>
+                  {selectedAddressId === 'new' && (
+                    <Check
+                      size={16}
+                      className="ml-auto text-[var(--color-primary)]"
+                    />
+                  )}
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
+      {/* --- FORMA --- */}
       <div className="form-grid">
         <div className="input-wrapper-col">
           <div className={`input-group ${getInputClass('name')}`}>
@@ -445,10 +685,9 @@ export default function DeliveryForm({
           </AnimatePresence>
         </div>
 
-        {/* TELEFON - USKLAĐEN SA ADDRESS SECTION */}
+        {/* TELEFON */}
         <div className="input-wrapper-col full-width">
           <div className="flex gap-2">
-            {/* DROPDOWN ZA DRŽAVU (Boje iz teme) */}
             <div
               className="relative w-[110px] shrink-0"
               ref={countryDropdownRef}
@@ -475,7 +714,6 @@ export default function DeliveryForm({
                   }`}
                 />
               </button>
-
               <AnimatePresence>
                 {isCountryDropdownOpen && (
                   <motion.div
@@ -517,8 +755,6 @@ export default function DeliveryForm({
                 )}
               </AnimatePresence>
             </div>
-
-            {/* INPUT ZA BROJ - Direktno stilizovan da se slaže sa dugmetom */}
             <div className="relative flex-1">
               <Phone
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)]"
@@ -540,7 +776,6 @@ export default function DeliveryForm({
               />
             </div>
           </div>
-
           <AnimatePresence mode="wait">
             {errors.phone && <ErrorMessage message={errors.phone} />}
           </AnimatePresence>

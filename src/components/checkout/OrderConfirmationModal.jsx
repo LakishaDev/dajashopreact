@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, MapPin, ShoppingBag } from 'lucide-react';
-import { useLenis } from 'lenis/react'; // <--- 1. Uvozimo Lenis hook
+import { useLenis } from 'lenis/react';
 
 const MAP_API_KEY = 'AIzaSyCwDMD-56pwnAqgEDqNCT8uMxFy_mPbAe0';
 const SHOP_ADDRESS_QUERY = 'Daja Shop, TPC Gorca lokal C31, Nis, Srbija';
@@ -14,17 +14,13 @@ function OrderConfirmationModal({ order, money, onClose }) {
   const orderId = order.id;
   const [showMap, setShowMap] = useState(false);
 
-  // 2. Uzimamo instancu Lenis-a
+  // Uzimamo instancu Lenis-a
   const lenis = useLenis();
 
   // --- BLOKIRANJE POZADINSKOG SKROLA ---
   useEffect(() => {
-    // A) Stopiramo Lenis (ovo je ključno za tvoj problem)
-    if (lenis) {
-      lenis.stop();
-    }
+    if (lenis) lenis.stop();
 
-    // B) I dalje radimo standardni body lock kao backup (za mobilne pretraživače)
     const originalOverflow = document.body.style.overflow;
     const originalOverscroll = document.body.style.overscrollBehavior;
 
@@ -32,15 +28,11 @@ function OrderConfirmationModal({ order, money, onClose }) {
     document.body.style.overscrollBehavior = 'none';
 
     return () => {
-      // C) Ponovo pokrećemo Lenis kad se modal zatvori
-      if (lenis) {
-        lenis.start();
-      }
-      // Vraćamo body stilove
+      if (lenis) lenis.start();
       document.body.style.overflow = originalOverflow;
       document.body.style.overscrollBehavior = originalOverscroll;
     };
-  }, [lenis]); // Dodajemo lenis u dependency array
+  }, [lenis]);
 
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose?.();
@@ -64,7 +56,6 @@ function OrderConfirmationModal({ order, money, onClose }) {
       exit={{ opacity: 0 }}
       onClick={onClose}
     >
-      {/* data-lenis-prevent omogućava da OVAJ div skroluje čak i kad je Lenis stopiran */}
       <motion.div
         className="order-card glass"
         role="dialog"
@@ -116,12 +107,20 @@ function OrderConfirmationModal({ order, money, onClose }) {
               <span className="total-price">{money(order.finalTotal)}</span>
             </div>
           </div>
+
+          {/* --- DELIVERY INFO SEKCIJA --- */}
           <div className="delivery-info">
             <h4>{isPickup ? 'Adresa preuzimanja:' : 'Adresa dostave:'}</h4>
+
             {isPickup ? (
+              /* --- OPCIJA 1: LIČNO PREUZIMANJE --- */
               <>
-                <p>Niš, Podzemni prolaz lokal C31</p>
-                <p>Telefon: {order.customer.phone}</p>
+                <p>Niš, TPC Gorča lokal C31</p>
+                {/* Telefon stavljamo ovde da bude odmah ispod adrese radnje */}
+                <p>
+                  Vaš kontakt telefon: {order.customer.phone || 'Nije unet'}
+                </p>
+
                 <button
                   type="button"
                   className="btn-map-receipt"
@@ -163,18 +162,22 @@ function OrderConfirmationModal({ order, money, onClose }) {
                 </AnimatePresence>
               </>
             ) : (
+              /* --- OPCIJA 2: KURIRSKA SLUŽBA --- */
               <>
-                <p>
+                <p className="font-bold">
                   {order.customer.name} {order.customer.surname}
                 </p>
                 <p>
                   {order.customer.address}, {order.customer.city}{' '}
                   {order.customer.postalCode}
                 </p>
+                {/* Telefon EKSPLICITNO ovde za kurira */}
+                <p>Telefon: {order.customer.phone || 'Nije unet'}</p>
               </>
             )}
           </div>
         </div>
+
         <div className="order-actions">
           <a
             href="/"
