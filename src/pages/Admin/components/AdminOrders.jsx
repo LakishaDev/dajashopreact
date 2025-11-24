@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { ordersService } from '../../../services/admin';
 import { money } from '../../../utils/currency';
+import ConfirmModal from '../../../components/modals/ConfirmModal'; // DODATO
 
 const STATUS_OPTIONS = [
   'Na čekanju',
@@ -29,6 +30,10 @@ export default function AdminOrders() {
   const [loading, setLoading] = useState(true);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
 
+  // NOVO: State za Modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [pendingChange, setPendingChange] = useState(null);
+
   // 1. Učitavanje podataka u realnom vremenu
   useEffect(() => {
     const unsub = ordersService.subscribe(
@@ -41,20 +46,51 @@ export default function AdminOrders() {
     return () => unsub();
   }, []);
 
-  // 2. Promena statusa (Optimistički UI + Baza)
-  const handleStatusChange = async (orderId, newStatus) => {
+  // NOVO: 2a. Iniciranje promene (Samo otvara modal)
+  const initiateStatusChange = (
+    orderId,
+    newStatus,
+    currentStatus,
+    customerName
+  ) => {
+    if (newStatus === currentStatus) return;
+
+    setPendingChange({
+      orderId, // Ovo je docId
+      newStatus,
+      oldStatus: currentStatus,
+      customerName,
+    });
+    setIsModalOpen(true);
+  };
+
+  // NOVO: 2b. Potvrda promene (Izvršava logiku koja je pre bila direktna)
+  const confirmStatusChange = async () => {
+    if (!pendingChange) return;
+
+    const { orderId, newStatus } = pendingChange;
     const oldOrders = [...orders];
+
     // Odmah ažuriraj UI da se vidi promena
     setOrders(
-      orders.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
+      orders.map((o) => (o.docId === orderId ? { ...o, status: newStatus } : o))
     );
 
     try {
       await ordersService.updateStatus(orderId, newStatus);
+      setIsModalOpen(false);
+      setPendingChange(null);
     } catch (error) {
       setOrders(oldOrders); // Vrati na staro ako pukne
       alert('Greška pri promeni statusa.');
+      setIsModalOpen(false);
     }
+  };
+
+  // NOVO: 2c. Odustajanje
+  const cancelStatusChange = () => {
+    setIsModalOpen(false);
+    setPendingChange(null);
   };
 
   // 3. Otvaranje detalja i označavanje kao PROČITANO
@@ -65,8 +101,6 @@ export default function AdminOrders() {
     // Ako otvaramo porudžbinu koja NIJE pročitana, označi je u bazi kao pročitanu
     if (isExpanding && !order.isRead) {
       try {
-        // --- ISPRAVKA OVDE ---
-        // Koristimo order.docId (Firebase ID), a ne order.id (Custom ID)
         await ordersService.markAsRead(order.docId);
       } catch (error) {
         console.error('Failed to mark as read', error);
@@ -162,8 +196,14 @@ export default function AdminOrders() {
                   <td className="p-4">
                     <select
                       value={order.status || 'Na čekanju'}
+                      // IZMENJENO: Pozivamo initiateStatusChange umesto direktne promene
                       onChange={(e) =>
-                        handleStatusChange(order.docId, e.target.value)
+                        initiateStatusChange(
+                          order.docId,
+                          e.target.value,
+                          order.status,
+                          `${order.customer.name} ${order.customer.surname}`
+                        )
                       }
                       onClick={(e) => e.stopPropagation()}
                       className={`text-xs font-bold px-3 py-1.5 rounded-lg border-2 outline-none cursor-pointer transition-all appearance-none shadow-sm uppercase tracking-wide ${getStatusColor(
@@ -384,6 +424,22 @@ export default function AdminOrders() {
           </tbody>
         </table>
       </div>
+
+      {/* NOVO: Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isModalOpen}
+        onClose={cancelStatusChange}
+        onConfirm={confirmStatusChange}
+        title="Promena statusa porudžbine"
+        message={
+          pendingChange
+            ? `Da li ste sigurni da želite da promenite status za ${pendingChange.customerName} u "${pendingChange.newStatus}"? Kupac će biti obavešten email-om.`
+            : ''
+        }
+        confirmText="Promeni status"
+        cancelText="Odustani"
+        isDanger={pendingChange?.newStatus === 'Otkazano'}
+      />
     </motion.div>
   );
 }
