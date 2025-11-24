@@ -161,7 +161,7 @@ export default function AdminOrders() {
                     <select
                       value={order.status || 'Na čekanju'}
                       onChange={(e) =>
-                        handleStatusChange(order.id, e.target.value)
+                        handleStatusChange(order.docId, e.target.value)
                       }
                       onClick={(e) => e.stopPropagation()}
                       className={`text-xs font-bold px-3 py-1.5 rounded-lg border-2 outline-none cursor-pointer transition-all appearance-none shadow-sm uppercase tracking-wide ${getStatusColor(
