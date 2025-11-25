@@ -24,8 +24,8 @@ export default function ImageGalleryModal({ images, initialIndex, onClose }) {
   // --- KAMERA EFEKAT ---
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const invertedX = useTransform(x, (v) => -v);
-  const invertedY = useTransform(y, (v) => -v);
+  const invertedX = useTransform(x, (v) => v);
+  const invertedY = useTransform(y, (v) => v);
 
   // Resetuj samo zum i poziciju kad se promeni slika
   useEffect(() => {
