@@ -11,6 +11,7 @@ import {
   GripHorizontal,
   UploadCloud,
   Check,
+  Maximize2, // Dodata ikonica za zoom hover
 } from 'lucide-react';
 import {
   brandService,
@@ -20,9 +21,10 @@ import {
 import { saveProduct, uploadImages } from '../../../services/products';
 import FlashModal from '../../../components/modals/FlashModal.jsx';
 import UploadProgressBar from '../../../components/UploadProgressBar.jsx';
+// --- NOVI IMPORT ---
+import ImageGalleryModal from '../../../components/modals/ImageGalleryModal.jsx';
 
-// --- HELPER: CLEAN SLUG GENERATOR (SEO FRIENDLY) ---
-// Pravi isti slug kao i kod Importa (bez brojeva)
+// --- HELPER: CLEAN SLUG GENERATOR ---
 const generateSlug = (text) => {
   if (!text) return '';
   return text
@@ -34,12 +36,12 @@ const generateSlug = (text) => {
     .replace(/č/g, 'c')
     .replace(/ć/g, 'c')
     .replace(/š/g, 's')
-    .replace(/\s+/g, '-') // Razmaci u crtice
-    .replace(/[^\w\-]+/g, '') // Sklanja sve osim slova i brojeva
-    .replace(/\-\-+/g, '-'); // Sklanja duple crtice
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-');
 };
 
-// --- 1. Custom Animated Dropdown Component ---
+// --- 1. Custom Select ---
 function CustomSelect({
   label,
   value,
@@ -51,7 +53,6 @@ function CustomSelect({
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
-  // Zatvori na klik van
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -144,8 +145,8 @@ function CustomSelect({
   );
 }
 
-// --- 2. Image Manager Component ---
-function ImageManager({ images, onChange }) {
+// --- 2. Image Manager (SA CLICK EVENTOM) ---
+function ImageManager({ images, onChange, onImageClick }) {
   const fileInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -216,7 +217,7 @@ function ImageManager({ images, onChange }) {
         onReorder={onChange}
         className="space-y-2"
       >
-        {images.map((img) => (
+        {images.map((img, idx) => (
           <Reorder.Item
             key={img.url}
             value={img}
@@ -226,18 +227,28 @@ function ImageManager({ images, onChange }) {
               layout
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center gap-3 p-2 bg-white border border-neutral-200 rounded-xl shadow-sm hover:shadow-md transition-shadow group"
+              className="flex items-center gap-3 p-2 bg-white border border-neutral-200 rounded-xl shadow-sm hover:shadow-md transition-shadow group relative"
             >
               <div className="p-2 text-neutral-300 group-hover:text-neutral-400">
                 <GripHorizontal size={18} />
               </div>
-              <div className="h-12 w-12 rounded-lg overflow-hidden border border-neutral-100 bg-neutral-50 shrink-0">
+
+              {/* Image Thumbnail - Click to open Gallery */}
+              <div
+                className="h-12 w-12 rounded-lg overflow-hidden border border-neutral-100 bg-neutral-50 shrink-0 cursor-zoom-in relative"
+                onClick={() => onImageClick(idx)} // Otvara modal
+              >
                 <img
-                  src={img.url}
+                  src={img.url || '/placeholder.png'}
                   alt=""
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-cover hover:scale-110 transition-transform duration-300"
                 />
+                {/* Mala ikonica lupice preko slike na hover */}
+                <div className="absolute inset-0 bg-black/0 hover:bg-black/20 flex items-center justify-center transition-colors">
+                  {/* Ovde možeš dodati iconu ako želiš, ali cursor-zoom-in je dovoljan */}
+                </div>
               </div>
+
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-neutral-500 truncate">
                   {img.path ? img.path.split('/').pop() : 'Eksterna slika'}
@@ -285,15 +296,17 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     department: 'satovi',
     specs: {},
     model3DUrl: '',
-    slug: '', // Dodato da bismo mogli ručno da ga editujemo ako treba
+    slug: '',
   });
+
+  // State za Image Gallery Modal
+  const [galleryIndex, setGalleryIndex] = useState(null);
 
   const [tempSpecKey, setTempSpecKey] = useState('');
   const [tempSpecVal, setTempSpecVal] = useState('');
   const [loading, setLoading] = useState(false);
   const [flash, setFlash] = useState({ open: false });
 
-  // Load data
   useEffect(() => {
     const sub1 = brandService.subscribe(setBrands);
     const sub2 = categoryService.subscribe(setCats);
@@ -324,18 +337,13 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     };
   }, [product]);
 
-  // Handler za izmene forme (sa auto-resetom)
   const handleChange = (field, value) => {
     setForm((prev) => {
       const next = { ...prev, [field]: value };
-
-      // Ako se menja Odeljenje, resetuj Brend i Kategoriju
       if (field === 'department') {
         next.brand = '';
         next.category = '';
       }
-
-      // Ako se menja Brend, resetuj Kategoriju
       if (field === 'brand') {
         next.category = '';
       }
@@ -343,17 +351,13 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     });
   };
 
-  // --- SPECIFIKACIJE ---
   const addSpec = () => {
     if (!tempSpecKey || !tempSpecVal) return;
-
     const def = specKeys.find((k) => k.name === tempSpecKey);
     let finalVal = tempSpecVal;
-
     if (def?.unit && !tempSpecVal.endsWith(def.unit)) {
       finalVal = `${tempSpecVal} ${def.unit}`;
     }
-
     setForm((prev) => ({
       ...prev,
       specs: { ...prev.specs, [tempSpecKey]: finalVal },
@@ -372,14 +376,12 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     if (!form.name || !form.price) return alert('Naziv i cena su obavezni.');
     setLoading(true);
     try {
-      // Ovde se sada koristi "clean" slug bez datuma
       const finalSlug = form.slug || generateSlug(form.name);
-
       const payload = {
         ...form,
         price: Number(form.price),
         image: form.images[0]?.url || '',
-        slug: finalSlug, // <-- OVO JE PROMENJENO (nema više Date.now())
+        slug: finalSlug,
       };
       if (!product) delete payload.id;
       else payload.id = product.id;
@@ -462,6 +464,15 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
         onClose={() => setFlash({ ...flash, open: false })}
       />
 
+      {/* --- IMAGE GALLERY MODAL --- */}
+      {galleryIndex !== null && (
+        <ImageGalleryModal
+          images={form.images}
+          initialIndex={galleryIndex}
+          onClose={() => setGalleryIndex(null)}
+        />
+      )}
+
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -469,7 +480,6 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
         data-lenis-prevent
         className="w-full max-w-5xl bg-[#f5f5f7] border border-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
-        {/* Header */}
         <div className="px-8 py-5 border-b border-neutral-200/60 bg-white/50 backdrop-blur-md flex justify-between items-center sticky top-0 z-10">
           <div>
             <h2 className="text-2xl font-extrabold text-neutral-900 tracking-tight">
@@ -487,15 +497,12 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
           </button>
         </div>
 
-        {/* Scrollable Content */}
         <div
           className="flex-1 overflow-y-auto custom-scrollbar p-8"
           data-lenis-prevent
         >
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* LEFT COLUMN */}
             <div className="lg:col-span-8 space-y-6">
-              {/* Naziv, Slug i Cena */}
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <label className="block">
@@ -510,8 +517,6 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                     />
                   </label>
                 </div>
-
-                {/* Prikaz Sluga (Opciono polje ako želiš ručno da menjaš) */}
                 <div className="md:col-span-2">
                   <label className="block">
                     <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1 block">
@@ -529,7 +534,6 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                     </span>
                   </label>
                 </div>
-
                 <div className="md:col-span-1">
                   <label className="block">
                     <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1 block">
@@ -561,7 +565,6 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                 </div>
               </div>
 
-              {/* Dropdowns Grid */}
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 grid grid-cols-1 md:grid-cols-3 gap-6">
                 <CustomSelect
                   label="Odeljenje"
@@ -569,7 +572,6 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                   options={departmentOptions}
                   onChange={(v) => handleChange('department', v)}
                 />
-
                 <CustomSelect
                   label="Brend"
                   value={form.brand}
@@ -582,7 +584,6 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                   }
                   disabled={brandOptions.length === 0}
                 />
-
                 <CustomSelect
                   label="Kategorija"
                   value={form.category}
@@ -597,14 +598,12 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                   }
                   disabled={!form.brand || catOptions.length === 0}
                 />
-
                 <CustomSelect
                   label="Pol"
                   value={form.gender}
                   options={genderOptions}
                   onChange={(v) => handleChange('gender', v)}
                 />
-
                 <div className="md:col-span-3">
                   <label className="block">
                     <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1 block">
@@ -622,12 +621,10 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                 </div>
               </div>
 
-              {/* Specifikacije */}
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100">
                 <h3 className="text-sm font-bold text-neutral-900 mb-4">
                   Tehničke Specifikacije
                 </h3>
-
                 <div className="flex gap-3 items-end mb-6 bg-neutral-50 p-3 rounded-xl border border-neutral-100">
                   <div className="flex-1 min-w-[140px]">
                     <CustomSelect
@@ -664,7 +661,6 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                     <Plus size={20} />
                   </button>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <AnimatePresence>
                     {Object.entries(form.specs).map(([key, val]) => (
@@ -701,19 +697,19 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
               </div>
             </div>
 
-            {/* RIGHT COLUMN (Images) */}
             <div className="lg:col-span-4 space-y-6">
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 h-full">
+                {/* PROSLEĐUJEMO onImageClick */}
                 <ImageManager
                   images={form.images}
                   onChange={(imgs) => handleChange('images', imgs)}
+                  onImageClick={(index) => setGalleryIndex(index)} // OTVARA GALERIJU
                 />
-
                 <div className="mt-4 p-3 bg-blue-50 text-blue-700 text-xs rounded-lg border border-blue-100">
                   <p className="flex gap-2 items-start">
                     <span className="text-lg">💡</span>
                     <span>
-                      Prva slika u nizu će biti glavna slika proizvoda.
+                      Klikni na sliku za pregled. Prva slika je glavna.
                     </span>
                   </p>
                 </div>
@@ -722,7 +718,6 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="px-8 py-5 bg-white border-t border-neutral-100 flex justify-end gap-4">
           <button
             onClick={onClose}

@@ -11,7 +11,7 @@ export const exportToExcel = (data, fileName = 'proizvodi') => {
       Brend: item.brand,
       Odeljenje: item.department || 'satovi',
       Kategorija: item.category,
-      Pol: item.gender || 'Unisex',
+      Pol: item.gender || 'Unisex', // <--- OVO MORA BITI TU
       Cena: item.price,
       Slika: item.image || '',
       Opis: item.description || '',
@@ -79,7 +79,7 @@ export const downloadTemplate = (
       Brend: 'Casio',
       Odeljenje: 'satovi',
       Kategorija: 'Edifice',
-      Pol: 'MUŠKI',
+      Pol: 'MUŠKI', // <--- PRIMER VREDNOSTI
       Cena: 15900,
       Slika: 'https://link-do-slike.com/sat.jpg',
       Opis: 'Opis proizvoda...',
@@ -104,17 +104,18 @@ export const downloadTemplate = (
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Unos Proizvoda');
 
+  // Pomoćni list - Šifarnik
   const refData = [];
   const maxRows = Math.max(existingBrands.length, existingCategories.length, 4);
   const depts = ['satovi', 'naocare', 'baterije', 'daljinski'];
-  const genders = ['MUŠKI', 'ŽENSKI', 'UNISEX (ostavi prazno)'];
+  const genders = ['MUŠKI', 'ŽENSKI', 'UNISEX']; // <--- MOGUĆE VREDNOSTI
 
   for (let i = 0; i < maxRows; i++) {
     refData.push({
       'Postojeći Brendovi': existingBrands[i]?.name || '',
       'Postojeće Kategorije': existingCategories[i]?.name || '',
       'Dozvoljena Odeljenja': depts[i] || '',
-      'Dozvoljeni Polovi': genders[i] || '',
+      'Pol (Opcije)': genders[i] || '',
     });
   }
 

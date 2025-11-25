@@ -31,6 +31,7 @@ const ExcelManager = ({ products, brands, categories, onImport }) => {
     setTimeout(() => setStatus(null), 4000);
   };
 
+  // Helper za čitanje kolona (Case-insensitive)
   const getVal = (row, ...keys) => {
     const foundKey = Object.keys(row).find((k) =>
       keys.some(
@@ -38,6 +39,21 @@ const ExcelManager = ({ products, brands, categories, onImport }) => {
       )
     );
     return foundKey ? row[foundKey] : null;
+  };
+
+  // --- NOVA FUNKCIJA: NORMALIZACIJA POLA ---
+  const parseGender = (input) => {
+    if (!input) return '';
+    const val = String(input).toLowerCase().trim();
+
+    if (['m', 'muški', 'muski', 'musko', 'muško', 'male'].includes(val))
+      return 'MUŠKI';
+    if (
+      ['z', 'ž', 'ženski', 'zenski', 'zensko', 'žensko', 'female'].includes(val)
+    )
+      return 'ŽENSKI';
+
+    return ''; // Za Unisex ili nepoznato
   };
 
   const handleFileImport = async (e) => {
@@ -55,6 +71,7 @@ const ExcelManager = ({ products, brands, categories, onImport }) => {
       }
 
       const formattedData = rawData.map((row) => {
+        // 1. Specifikacije
         const specs = {};
         Object.keys(row).forEach((key) => {
           if (key.toLowerCase().startsWith('spec')) {
@@ -65,9 +82,14 @@ const ExcelManager = ({ products, brands, categories, onImport }) => {
           }
         });
 
+        // 2. Cena
         const rawPrice = getVal(row, 'Cena', 'price', 'iznos');
         let parsedPrice =
           parseFloat(String(rawPrice || '0').replace(/[^0-9.]/g, '')) || 0;
+
+        // 3. Pol (Koristimo novu funkciju)
+        const rawGender = getVal(row, 'Pol', 'gender', 'sex', 'rod');
+        const cleanGender = parseGender(rawGender);
 
         return {
           id: getVal(row, 'ID', 'id', 'sifra') || null,
@@ -75,7 +97,7 @@ const ExcelManager = ({ products, brands, categories, onImport }) => {
           brand: getVal(row, 'Brend', 'brand', 'marka') || 'Ostalo',
           department: getVal(row, 'Odeljenje', 'department') || 'satovi',
           category: getVal(row, 'Kategorija', 'category') || 'Opšte',
-          gender: getVal(row, 'Pol', 'gender', 'sex') || '',
+          gender: cleanGender, // <--- OVDE JE POPRAVKA
           price: parsedPrice,
           image: getVal(row, 'Slika', 'image', 'url') || '',
           description: getVal(row, 'Opis', 'description') || '',
@@ -84,6 +106,7 @@ const ExcelManager = ({ products, brands, categories, onImport }) => {
       });
 
       await onImport(formattedData);
+
       setStatus({
         type: 'success',
         msg: `Uspešno učitano ${formattedData.length} proizvoda.`,
