@@ -10,6 +10,7 @@ import {
   orderBy,
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 class CollectionService {
   constructor(collectionName) {
@@ -92,6 +93,25 @@ export const ordersService = {
     const docRef = doc(db, 'orders', docId);
     return await updateDoc(docRef, { isRead: true });
   },
+};
+
+// --- NOVO: SERVIS ZA SLIKE PREKO URL-A ---
+export const uploadRemoteImage = async (url, productName) => {
+  const functions = getFunctions();
+  const saveImageFn = httpsCallable(functions, 'saveImageFromUrl');
+
+  try {
+    const result = await saveImageFn({
+      url: url,
+      productName: productName,
+    });
+    // Vraćamo sigurni, tokenizovani link
+    return result.data.url;
+  } catch (error) {
+    console.error('Cloud function error (saveImageFromUrl):', error);
+    // Vraćamo originalni URL ako Cloud funkcija ne uspe (hotlinking fallback)
+    return url;
+  }
 };
 
 export const brandService = new CollectionService('brands');
