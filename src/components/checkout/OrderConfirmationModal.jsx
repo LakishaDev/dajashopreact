@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, MapPin, ShoppingBag } from 'lucide-react';
+// DODALI SMO 'Ticket' ikonicu u import
+import { CheckCircle2, MapPin, ShoppingBag, Ticket } from 'lucide-react';
 import { useLenis } from 'lenis/react';
 
 const MAP_API_KEY = 'AIzaSyCwDMD-56pwnAqgEDqNCT8uMxFy_mPbAe0';
@@ -13,20 +14,14 @@ function OrderConfirmationModal({ order, money, onClose }) {
   const initialFocusRef = useRef(null);
   const orderId = order.id;
   const [showMap, setShowMap] = useState(false);
-
-  // Uzimamo instancu Lenis-a
   const lenis = useLenis();
 
-  // --- BLOKIRANJE POZADINSKOG SKROLA ---
   useEffect(() => {
     if (lenis) lenis.stop();
-
     const originalOverflow = document.body.style.overflow;
     const originalOverscroll = document.body.style.overscrollBehavior;
-
     document.body.style.overflow = 'hidden';
     document.body.style.overscrollBehavior = 'none';
-
     return () => {
       if (lenis) lenis.start();
       document.body.style.overflow = originalOverflow;
@@ -88,11 +83,26 @@ function OrderConfirmationModal({ order, money, onClose }) {
               </div>
             ))}
           </div>
+
           <div className="summary-section">
             <div className="summary-row">
               <span>Međuzbir:</span>
               <span>{money(order.subtotal)}</span>
             </div>
+
+            {/* --- NOVO: PRIKAZ POPUSTA AKO POSTOJI --- */}
+            {order.discountAmount > 0 && (
+              <div className="summary-row" style={{ color: '#ef4444' }}>
+                <span
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <Ticket size={14} /> Popust ({order.promoCode}):
+                </span>
+                <span>-{money(order.discountAmount)}</span>
+              </div>
+            )}
+            {/* ---------------------------------------- */}
+
             <div className="summary-row">
               <span>{shippingLabel}:</span>
               <span className="text-success">
@@ -101,22 +111,21 @@ function OrderConfirmationModal({ order, money, onClose }) {
                   : money(order.shippingCost)}
               </span>
             </div>
+
             <div className="hr"></div>
+
             <div className="summary-row total">
               <span>Ukupno za plaćanje:</span>
               <span className="total-price">{money(order.finalTotal)}</span>
             </div>
           </div>
 
-          {/* --- DELIVERY INFO SEKCIJA --- */}
           <div className="delivery-info">
             <h4>{isPickup ? 'Adresa preuzimanja:' : 'Adresa dostave:'}</h4>
 
             {isPickup ? (
-              /* --- OPCIJA 1: LIČNO PREUZIMANJE --- */
               <>
                 <p>Niš, TPC Gorča lokal C31</p>
-                {/* Telefon stavljamo ovde da bude odmah ispod adrese radnje */}
                 <p>
                   Vaš kontakt telefon: {order.customer.phone || 'Nije unet'}
                 </p>
@@ -162,7 +171,6 @@ function OrderConfirmationModal({ order, money, onClose }) {
                 </AnimatePresence>
               </>
             ) : (
-              /* --- OPCIJA 2: KURIRSKA SLUŽBA --- */
               <>
                 <p className="font-bold">
                   {order.customer.name} {order.customer.surname}
@@ -171,7 +179,6 @@ function OrderConfirmationModal({ order, money, onClose }) {
                   {order.customer.address}, {order.customer.city}{' '}
                   {order.customer.postalCode}
                 </p>
-                {/* Telefon EKSPLICITNO ovde za kurira */}
                 <p>Telefon: {order.customer.phone || 'Nije unet'}</p>
               </>
             )}
