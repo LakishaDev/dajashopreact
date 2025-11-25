@@ -9,11 +9,11 @@ import './Contact.css';
  */
 
 // KORIŠĆENJE ISTOG PRINICIPA KAO U ShippingSection.jsx
-const MAP_API_KEY = 'AIzaSyCwDMD-56pwnAqgEDqNCT8uMxFy_mPbAe0'; // Ključ iz snippet-a
+
 const SHOP_ADDRESS_QUERY = 'Daja Shop, Podzemni prolaz lokal C31, Niš, Srbija';
-const MAP_EMBED_URL = `https://www.google.com/maps/embed/v1/place?key=$${MAP_API_KEY}&q=${encodeURIComponent(
-  SHOP_ADDRESS_QUERY
-)}`;
+const MAP_EMBED_URL = `https://www.google.com/maps/embed/v1/place?key=${
+  import.meta.env.VITE_GOOGLE_MAPS_KEY
+}&q=${encodeURIComponent(SHOP_ADDRESS_QUERY)}`;
 // NAPOMENA: Za produkciju, MAP_API_KEY se obično čita iz import.meta.env.VITE_GOOGLE_MAPS_API_KEY
 
 export default function Contact() {
@@ -56,15 +56,6 @@ export default function Contact() {
               </address>
               <p>
                 {/* Link za Google Maps navigaciju (koristi dinamičku adresu) */}
-                <a
-                  href={`https://maps.app.goo.gl/Fk9zG5Tqg3Zk9w5z6${encodeURIComponent(
-                    SHOP_ADDRESS_QUERY
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Prikaži na mapi
-                </a>
               </p>
             </div>
           </div>
@@ -125,15 +116,13 @@ export default function Contact() {
           <div className="map-embed-container">
             <iframe
               className="map-iframe"
-              title="Lokacija Daja Shop Podzemni prolaz lokal C31, Niš"
-              src={MAP_EMBED_URL}
+              title="Daja Shop Lokacija"
               width="100%"
-              height="100%" // Postavlja se na 100% visine kontejnera
-              frameBorder="0"
-              style={{ border: 0 }}
-              allowFullScreen=""
+              height="100%"
               loading="lazy"
+              allowFullScreen
               referrerPolicy="no-referrer-when-downgrade"
+              src={MAP_EMBED_URL}
             ></iframe>
           </div>
           <p

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Truck, MapPin, CheckCircle2 } from 'lucide-react';
 
 // Prosleđujemo URL mape kao prop ili konstantu ako je potrebno
-const SHOP_ADDRESS_QUERY = 'Daja Shop, TPC Gorca lokal C31, Nis, Srbija';
+const SHOP_ADDRESS_QUERY = 'Daja Shop, Podzemni prolaz lokal C31, Nis, Srbija';
 const MAP_EMBED_URL = `https://www.google.com/maps/embed/v1/place?key=${
   import.meta.env.VITE_GOOGLE_MAPS_KEY
 }&q=${encodeURIComponent(SHOP_ADDRESS_QUERY)}`;
@@ -116,7 +116,7 @@ export default function ShippingSection({
                   Daja Shop Niš
                 </p>
                 <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>
-                  TPC Gorča lokal C31, Obrenovićeva bb, Medijana
+                  Podzemni prolaz lokal C31, Obrenovićeva bb, Niš
                 </p>
               </div>
             </div>

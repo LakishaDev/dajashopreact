@@ -5,13 +5,13 @@
    ========================================= */
 
 :root {
-  --primary: var(--color-primary, #C8A94E);
+  --primary: var(--color-primary, #c8a94e);
   --on-primary: var(--color-on-primary, #0b0b0c);
   --bg: var(--color-bg, #0b0b0c);
-  --surface: var(--color-surface, rgba(255,255,255,0.06));
-  --text: var(--color-text, #ECECEC);
-  --muted: var(--color-muted, #9CA3AF);
-  --ring: var(--color-ring, rgba(200,169,78,0.45));
+  --surface: var(--color-surface, rgba(255, 255, 255, 0.06));
+  --text: var(--color-text, #ececec);
+  --muted: var(--color-muted, #9ca3af);
+  --ring: var(--color-ring, rgba(200, 169, 78, 0.45));
 }
 
 /* Glavni kontejner */
@@ -43,9 +43,16 @@
   color: var(--text);
   margin: 0;
 }
-.cart__title svg { opacity: 0.9; color: var(--primary); }
+.cart__title svg {
+  opacity: 0.9;
+  color: var(--primary);
+}
 
-.header-actions { display: flex; align-items: center; gap: 10px; }
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
 .cart__badge {
   font-size: 13px;
@@ -53,23 +60,25 @@
   border-radius: 999px;
   background: var(--primary);
   color: var(--on-primary, #111);
-  box-shadow: 0 1px 0 rgba(0,0,0,.25);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
   font-weight: 700;
 }
 
 /* Glass Card Utility */
 .card {
   border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 .glass {
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.06),
+    rgba(255, 255, 255, 0.02)
+  );
   backdrop-filter: saturate(140%) blur(14px);
   -webkit-backdrop-filter: saturate(140%) blur(14px);
-  box-shadow:
-    0 10px 30px rgba(0,0,0,0.35),
-    0 0 0 1px rgba(255,255,255,0.05) inset;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
 }
 
 /* Empty State */
@@ -78,21 +87,37 @@
   padding: clamp(32px, 5vw, 64px);
 }
 .empty__iconWrap {
-  width: 64px; height: 64px; margin-inline: auto; border-radius: 16px;
-  display: grid; place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-inline: auto;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
   background: color-mix(in oklab, var(--primary), #000 68%);
   border: 1px solid color-mix(in oklab, var(--primary), #000 40%);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.05) inset;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
 }
-.empty__icon { width: 28px; height: 28px; color: var(--primary); }
-.empty h2 { color: var(--text); margin: 16px 0 6px; letter-spacing: -.01em; }
-.muted { color: var(--muted); margin: 0 0 18px; }
+.empty__icon {
+  width: 28px;
+  height: 28px;
+  color: var(--primary);
+}
+.empty h2 {
+  color: var(--text);
+  margin: 16px 0 6px;
+  letter-spacing: -0.01em;
+}
+.muted {
+  color: var(--muted);
+  margin: 0 0 18px;
+}
 
 /* Layout Grid (Desktop) */
 .cart-content-grid {
-    display: grid;
-    gap: 32px;
-    grid-template-columns: 1fr;
+  display: grid;
+  gap: 32px;
+  grid-template-columns: 1fr;
 }
 @media (min-width: 1024px) {
   .cart-content-grid {
@@ -101,15 +126,20 @@
   }
   .cart__summary-panel {
     padding: 24px;
-  display: grid;
-  gap: 12px; /* Smanjeno sa 16px na 12px da zbije elemente */
-  align-content: start;
+    display: grid;
+    gap: 12px; /* Smanjeno sa 16px na 12px da zbije elemente */
+    align-content: start;
   }
 }
 
 /* Items List */
-.items-list-panel { padding: 16px; }
-.cart__rows { display: grid; gap: 12px; }
+.items-list-panel {
+  padding: 16px;
+}
+.cart__rows {
+  display: grid;
+  gap: 12px;
+}
 
 /* --- DESKTOP ROW LAYOUT --- */
 .cart__row {
@@ -119,23 +149,29 @@
   gap: 16px;
   padding: 12px;
   border-radius: 14px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06);
-  transition: transform .2s ease, border-color .2s ease, background .2s ease;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
 .cart__row:hover {
   transform: translateY(-1px);
   border-color: color-mix(in oklab, var(--primary), #fff 20%);
-  background: rgba(255,255,255,0.03);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .cart__thumb {
-  width: 84px; height: 84px; object-fit: cover; border-radius: 12px;
-  background: #0f0f11;
-  border: 1px solid rgba(255,255,255,0.06);
+  width: 84px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.cart__meta { align-self: start; min-width: 0; }
+.cart__meta {
+  align-self: start;
+  min-width: 0;
+}
 .cart__name {
   color: var(--text);
   font-weight: 600;
@@ -146,28 +182,42 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.cart__brand { color: var(--muted); font-size: 13px; }
+.cart__brand {
+  color: var(--muted);
+  font-size: 13px;
+}
 
 /* Qty Controls */
 .cart__qtyWrap {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 4px; border-radius: 999px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.06);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 .qty__btn {
-  width: 28px; height: 28px; border-radius: 999px; display: grid; place-items: center;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.02);
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
   cursor: pointer;
   color: var(--text);
-  transition: all .2s ease;
+  transition: all 0.2s ease;
 }
-.qty__btn:hover { background: rgba(255,255,255,0.1); }
+.qty__btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
 
 .cart__qty {
-  width: 42px; text-align: center;
-  border: none; outline: none;
+  width: 42px;
+  text-align: center;
+  border: none;
+  outline: none;
   color: var(--text);
   background: transparent;
   font-weight: 600;
@@ -175,7 +225,10 @@
 }
 /* No Spinners */
 input.no-spin::-webkit-outer-spin-button,
-input.no-spin::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input.no-spin::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 input.no-spin {
   -webkit-appearance: textfield;
   -moz-appearance: textfield;
@@ -186,27 +239,39 @@ input.no-spin {
   justify-self: end;
   font-weight: 700;
   color: var(--text);
-  letter-spacing: .01em;
+  letter-spacing: 0.01em;
 }
 
 .cart__remove {
-  width: 36px; height: 36px; border-radius: 10px;
-  display: grid; place-items: center;
-  border: 0; background: transparent;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
   color: var(--muted);
   cursor: pointer;
-  transition: all .2s ease;
+  transition: all 0.2s ease;
 }
-.cart__remove:hover { color: #ff6666; transform: scale(1.1); }
+.cart__remove:hover {
+  color: #ff6666;
+  transform: scale(1.1);
+}
 
 /* Clear All */
 .cart__clear-row {
-  margin-top: 16px; padding-top: 16px;
+  margin-top: 16px;
+  padding-top: 16px;
   border-top: 1px dashed rgba(255, 255, 255, 0.08);
-  display: flex; justify-content: center;
+  display: flex;
+  justify-content: center;
 }
 .btn-clear-all {
-  color: var(--muted); border-color: transparent; gap: 8px; padding: 10px 20px;
+  color: var(--muted);
+  border-color: transparent;
+  gap: 8px;
+  padding: 10px 20px;
 }
 .btn-clear-all:hover {
   background: rgba(255, 80, 80, 0.1);
@@ -216,32 +281,78 @@ input.no-spin {
 /* Divider */
 .hr {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.12),
+    transparent
+  );
   margin: 16px 0;
 }
 
 /* Summary Panel */
 .cart__summary-panel {
-  padding: 24px; display: grid; gap: 16px; align-content: start;
+  padding: 24px;
+  display: grid;
+  gap: 16px;
+  align-content: start;
 }
-.summary-title { font-size: 1.4rem; font-weight: 700; margin: 0 0 4px; }
-.summary-details { display: grid; gap: 10px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.summary-row { display: flex; justify-content: space-between; font-size: 1rem; }
-.summary-row.shipping .text-primary { color: #40a840; font-weight: 700; }
+.summary-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+.summary-details {
+  display: grid;
+  gap: 10px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1rem;
+}
+.summary-row.shipping .text-primary {
+  color: #40a840;
+  font-weight: 700;
+}
 
-.cart__total { display: flex; justify-content: space-between; align-items: baseline; font-weight: 800; }
-.cart__total span:first-child { font-size: 1.1rem; }
-.cart__totalPrice { color: var(--primary); font-size: 2rem; letter-spacing: -0.02em; }
+.cart__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-weight: 800;
+}
+.cart__total span:first-child {
+  font-size: 1.1rem;
+}
+.cart__totalPrice {
+  color: var(--primary);
+  font-size: 2rem;
+  letter-spacing: -0.02em;
+}
 
 .checkout-btn {
-    width: 100%; display: flex; justify-content: center; align-items: center;
-    gap: 8px; padding: 14px 18px; border-radius: 14px;
-    color: var(--on-primary, #111); font-weight: 800;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  color: var(--on-primary, #111);
+  font-weight: 800;
 }
 .cart__note {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  font-size: 0.85rem; color:#40a840;
-  border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #40a840;
+  border-top: 1px dashed rgba(255, 255, 255, 0.05);
+  padding-top: 16px;
 }
 
 /* Promo Box */
@@ -262,8 +373,8 @@ input.no-spin {
   flex: 1;
   display: flex;
   align-items: center;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 0 12px;
   height: 100%; /* Popunjava celu visinu promo-boxa */
@@ -307,14 +418,19 @@ input.no-spin {
   cursor: pointer;
   transition: filter 0.2s ease;
 }
-.promo-box .promo-btn:hover { filter: brightness(1.1); }
-.promo-box .promo-btn:disabled { opacity: 0.6; cursor: not-allowed; filter: none; }
+.promo-box .promo-btn:hover {
+  filter: brightness(1.1);
+}
+.promo-box .promo-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  filter: none;
+}
 
 /* --- APPLIED STATE (Kada je kod unet) --- */
 
 /* Ključno: Ne menjamo visinu, ostaje ista kao standardni promo-box */
- /* Nema height: auto, nasleđuje 48px (desktop) ili 44px (mobile) */
-
+/* Nema height: auto, nasleđuje 48px (desktop) ili 44px (mobile) */
 
 .applied-wrapper {
   width: 100%; /* Zauzima celu širinu jer nema dugmeta sa strane */
@@ -332,7 +448,10 @@ input.no-spin {
   text-overflow: ellipsis;
   margin-right: 8px;
 }
-.applied-text strong { color: #4ade80; font-weight: 700; }
+.applied-text strong {
+  color: #4ade80;
+  font-weight: 700;
+}
 
 .btn-remove-code {
   height: 32px;
@@ -365,13 +484,24 @@ input.no-spin {
   transition: background 0.2s;
 }
 .btn-remove-code:hover {
-  background: rgba(0,0,0,0.1);
+  background: rgba(0, 0, 0, 0.1);
   color: #ef4444;
 }
 /* Global Buttons */
-.btn { border-radius: 12px; font-weight: 700; }
-.btn-primary { background: var(--primary); color: var(--on-primary, #111); border: 1px solid var(--primary); }
-.btn-ghost { background: rgba(255,255,255,0.08); color: var(--text); border: 1px solid rgba(255,255,255,0.12); }
+.btn {
+  border-radius: 12px;
+  font-weight: 700;
+}
+.btn-primary {
+  background: var(--primary);
+  color: var(--on-primary, #111);
+  border: 1px solid var(--primary);
+}
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
 
 /* src/pages/Cart.css - Mobile Compact Part */
 
@@ -379,12 +509,11 @@ input.no-spin {
    MOBILE OPTIMIZATION (COMPACT / ZBIJENO)
    ========================================================= */
 @media (max-width: 768px) {
-  
   /* 1. FIX KONTEJNERA (da ne beži) */
   .container.cart {
     width: 100% !important;
     max-width: 100% !important;
-    margin-top: 16px;        /* Malo manji razmak od hedera */
+    margin-top: 16px; /* Malo manji razmak od hedera */
     padding-inline: 0;
   }
 
@@ -392,42 +521,44 @@ input.no-spin {
     margin-bottom: 12px;
     padding-bottom: 0;
     border: none;
-    padding-inline: 8px;     /* Malo uvlačenje naslova */
+    padding-inline: 8px; /* Malo uvlačenje naslova */
   }
 
-  .cart__title h1 { font-size: 1.5rem; } /* Malo manji naslov */
+  .cart__title h1 {
+    font-size: 1.5rem;
+  } /* Malo manji naslov */
 
   /* 2. ZBIJENIJA LISTA */
   .cart__rows {
-    padding: 0 8px;          /* Minimalni bočni padding */
-    gap: 8px;                /* Manji razmak između proizvoda (bilo 12/16) */
+    padding: 0 8px; /* Minimalni bočni padding */
+    gap: 8px; /* Manji razmak između proizvoda (bilo 12/16) */
   }
-  
+
   /* --- KARTICA PROIZVODA (Compact) --- */
   .cart__row {
     display: grid;
     /* Smanjena slika na 72px */
-    grid-template-columns: 86px 1fr; 
+    grid-template-columns: 86px 1fr;
     grid-template-rows: auto auto auto;
     grid-template-areas:
       "img title"
       "img price"
       "img qty";
-    column-gap: 12px;        /* Manji razmak slika-tekst */
-    row-gap: 2px;            /* Skoro bez razmaka vertikalno */
-    
-    padding: 10px;           /* Znatno manji unutrašnji padding */
+    column-gap: 12px; /* Manji razmak slika-tekst */
+    row-gap: 2px; /* Skoro bez razmaka vertikalno */
+
+    padding: 10px; /* Znatno manji unutrašnji padding */
     position: relative;
     align-items: start;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.05);
-    border-radius: 12px;     /* Manji radijus */
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px; /* Manji radijus */
   }
 
   /* Slika */
   .cart__thumb {
     grid-area: img;
-    width: 72px; 
+    width: 72px;
     height: 115px;
     border-radius: 8px;
     align-self: start;
@@ -438,16 +569,20 @@ input.no-spin {
   /* Naslov i Brend */
   .cart__meta {
     grid-area: title;
-    padding-right: 24px;     /* Mesto za X dugme */
+    padding-right: 24px; /* Mesto za X dugme */
     margin-bottom: 0;
   }
-  .cart__name { 
-    font-size: 0.9rem;       /* Malo manji font */
-    line-height: 1.2; 
+  .cart__name {
+    font-size: 0.9rem; /* Malo manji font */
+    line-height: 1.2;
     margin-bottom: 2px;
     white-space: normal;
   }
-  .cart__brand { font-size: 0.7rem; opacity: 0.7; margin-bottom: 0; }
+  .cart__brand {
+    font-size: 0.7rem;
+    opacity: 0.7;
+    margin-bottom: 0;
+  }
 
   /* Cena */
   .cart__price {
@@ -464,19 +599,19 @@ input.no-spin {
   .cart__qtyWrap {
     grid-area: qty;
     justify-self: start;
-    
+
     display: flex;
     align-items: center;
-    height: 28px;            /* Niži kontroler (bilo 32/36) */
-    
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
+    height: 28px; /* Niži kontroler (bilo 32/36) */
+
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 6px;
     padding: 1px;
   }
-  
-  .qty__btn { 
-    width: 28px; 
+
+  .qty__btn {
+    width: 28px;
     height: 100%;
     background: transparent;
     border-radius: 4px;
@@ -484,11 +619,14 @@ input.no-spin {
     align-items: center;
     justify-content: center;
   }
-  .qty__btn svg { width: 14px; height: 14px; } /* Manje ikonice */
-  
-  .cart__qty { 
-    width: 28px; 
-    font-size: 0.85rem; 
+  .qty__btn svg {
+    width: 14px;
+    height: 14px;
+  } /* Manje ikonice */
+
+  .cart__qty {
+    width: 28px;
+    font-size: 0.85rem;
     font-weight: 600;
     height: 100%;
     border: none;
@@ -500,14 +638,19 @@ input.no-spin {
     position: absolute;
     top: 6px;
     right: 6px;
-    width: 24px; 
+    width: 24px;
     height: 24px;
     color: var(--muted);
     background: transparent;
     border: none;
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-  .cart__remove svg { width: 16px; height: 16px; }
+  .cart__remove svg {
+    width: 16px;
+    height: 16px;
+  }
 
   /* Dugme Isprazni */
   .cart__clear-row {
@@ -532,39 +675,51 @@ input.no-spin {
     margin-top: 8px;
     margin-inline: -16px; /* Raširi do ivica */
     width: calc(100% + 32px);
-    
+
     border-radius: 20px 20px 0 0;
     padding: 20px 16px 32px;
     gap: 12px;
-    
+
     background: var(--surface);
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.25);
-    border-top: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
-  
+
   /* Besplatna dostava bar */
   .cart__summary-panel > div:first-child {
     margin-bottom: 12px !important;
     padding: 10px !important;
   }
 
-  .summary-title { font-size: 1.1rem; margin-bottom: 0; }
-  .summary-details { gap: 6px; padding-bottom: 12px; }
-  .summary-row { font-size: 0.9rem; }
-  
+  .summary-title {
+    font-size: 1.1rem;
+    margin-bottom: 0;
+  }
+  .summary-details {
+    gap: 6px;
+    padding-bottom: 12px;
+  }
+  .summary-row {
+    font-size: 0.9rem;
+  }
+
   .cart__total {
     margin-top: 4px;
     padding-top: 10px;
     margin-bottom: 8px;
   }
-  .cart__total span:first-child { font-size: 1rem; }
-  .cart__totalPrice { font-size: 1.5rem; }
-  
+  .cart__total span:first-child {
+    font-size: 1rem;
+  }
+  .cart__totalPrice {
+    font-size: 1.5rem;
+  }
+
   .cart__actions {
     flex-direction: column-reverse;
     gap: 10px;
   }
-  
+
   .checkout-btn {
     width: 100%;
     justify-content: center;
@@ -574,12 +729,15 @@ input.no-spin {
     color: var(--on-primary);
     border-radius: 12px;
   }
-.promo-box {
+  .promo-box {
     flex-direction: row;
     height: 44px; /* <--- Ovo je ključno za mobilni */
     margin-bottom: 4px;
   }
-  .promo-box .promo-btn { padding: 0 14px; font-size: 0.8rem; }
+  .promo-box .promo-btn {
+    padding: 0 14px;
+    font-size: 0.8rem;
+  }
 }
 /* src/pages/Cart.css */
 
@@ -590,5 +748,5 @@ input.no-spin {
   padding: 12px;
   border-radius: 12px;
   /* OVO JE GAP KOJI TRAŽIŠ - Povećaj ili smanji po želji */
-  margin-bottom: 24px; 
+  margin-bottom: 24px;
 }
