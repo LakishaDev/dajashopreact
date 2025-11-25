@@ -1,5 +1,7 @@
 // src/pages/Admin/components/AdminProductModal.jsx
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+
+import { useState, useEffect, useRef, useMemo } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import {
   X,
@@ -12,11 +14,14 @@ import {
   UploadCloud,
   Check,
   Maximize2, // Dodata ikonica za zoom hover
+  Link as LinkIcon, // <--- DODAJ OVO (LinkIcon)
+  Loader2, // <--- DODAJ OVO (opciono za spinner)
 } from 'lucide-react';
 import {
   brandService,
   categoryService,
   specKeyService,
+  uploadRemoteImage, // <--- DODAJ OVO
 } from '../../../services/admin';
 import { saveProduct, uploadImages } from '../../../services/products';
 import FlashModal from '../../../components/modals/FlashModal.jsx';
@@ -37,8 +42,8 @@ const generateSlug = (text) => {
     .replace(/ć/g, 'c')
     .replace(/š/g, 's')
     .replace(/\s+/g, '-')
-    .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-');
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-');
 };
 
 // --- 1. Custom Select ---
@@ -146,37 +151,40 @@ function CustomSelect({
 }
 
 // --- 2. Image Manager (SA CLICK EVENTOM) ---
-function ImageManager({ images, onChange, onImageClick, productSlug, productName }) {
+// --- 2. Image Manager (SA URL UPLOADOM) ---
+function ImageManager({
+  images,
+  onChange,
+  onImageClick,
+  productSlug,
+  productName,
+}) {
   const fileInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
 
+  // --- NOVI STATE ZA URL ---
+  const [urlInput, setUrlInput] = useState('');
+  const [urlLoading, setUrlLoading] = useState(false);
+
+  // --- POSTOJEĆI UPLOAD (LOKALNI FAJLOVI) ---
   const handleUpload = async (e) => {
     const files = e.target.files;
     if (!files?.length) return;
 
-    // --- 1. DEFINISANJE IMENA FOLDERA ---
-    // Prvo probamo postojeći slug, ako nema, generišemo ga iz imena
     let storageFolderName = productSlug;
-
     if (!storageFolderName && productName) {
       storageFolderName = generateSlug(productName);
     }
 
-    // --- 2. VALIDACIJA ---
-    // Ako nema ni imena ni sluga, ne dozvoljavamo upload da ne pravimo smeće na serveru
     if (!storageFolderName) {
-      alert(
-        "Molim vas unesite 'Naziv' proizvoda ili 'URL Slug' pre ubacivanja slika, kako bi se kreirao odgovarajući folder na serveru."
-      );
-      e.target.value = null; // Resetuj input
+      alert("Molim vas unesite 'Naziv' ili 'Slug' pre ubacivanja slika.");
+      e.target.value = null;
       return;
     }
 
     setUploading(true);
     try {
-      // --- 3. UPLOAD ---
-      // Šaljemo storageFolderName umesto tempId
       const uploaded = await uploadImages(
         storageFolderName,
         files,
@@ -189,7 +197,54 @@ function ImageManager({ images, onChange, onImageClick, productSlug, productName
     } finally {
       setUploading(false);
       setProgress(0);
-      if (fileInputRef.current) fileInputRef.current.value = null; // Reset inputa
+      if (fileInputRef.current) fileInputRef.current.value = null;
+    }
+  };
+
+  // --- NOVO: URL UPLOAD HANDLER ---
+  const handleUrlUpload = async () => {
+    if (!urlInput.trim()) return;
+
+    // 1. Validacija foldera (isto kao kod običnog uploada)
+    let storageFolderName = productSlug;
+    if (!storageFolderName && productName) {
+      storageFolderName = generateSlug(productName);
+    }
+
+    if (!storageFolderName) {
+      alert("Molim vas unesite 'Naziv' pre preuzimanja slike sa linka.");
+      return;
+    }
+
+    setUrlLoading(true);
+    try {
+      // Pozivamo tvoj servis koji gađa Cloud Function
+      const res = await uploadRemoteImage(urlInput, storageFolderName);
+
+      if (res.success) {
+        // Backend vraća 'results' niz sa svim obrađenim slikama
+        // Filtriramo samo uspešne i formatiramo ih za frontend
+        const newImages = (res.results || [])
+          .filter((r) => r.success)
+          .map((r) => ({
+            url: r.newUrl,
+            path: r.storagePath, // Čuvamo path da bi mogli da brišemo kasnije ako treba
+          }));
+
+        if (newImages.length > 0) {
+          onChange([...images, ...newImages]);
+          setUrlInput(''); // Reset polja
+        } else {
+          alert('Server nije uspeo da preuzme sliku. Proverite link.');
+        }
+      } else {
+        alert('Došlo je do greške pri preuzimanju slike.');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Greška na serveru prilikom preuzimanja.');
+    } finally {
+      setUrlLoading(false);
     }
   };
 
@@ -200,17 +255,18 @@ function ImageManager({ images, onChange, onImageClick, productSlug, productName
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">
           Galerija
         </span>
+        {/* Dugme za lokalni upload */}
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
           className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors"
         >
-          <UploadCloud size={14} /> Dodaj slike
+          <UploadCloud size={14} /> Dodaj sa računara
         </button>
         <input
           ref={fileInputRef}
@@ -222,23 +278,86 @@ function ImageManager({ images, onChange, onImageClick, productSlug, productName
         />
       </div>
 
+      {/* --- NOVO: URL UPLOAD SEKCIJA --- */}
+      <div className="flex gap-2 items-center">
+        <div className="relative flex-1">
+          <LinkIcon
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
+          />
+          <input
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleUrlUpload()}
+            placeholder="Nalepi direktan link slike (http...)"
+            className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-9 pr-3 py-2.5 text-xs text-neutral-800 focus:ring-2 focus:ring-neutral-200 outline-none transition-all placeholder:text-neutral-400"
+            disabled={urlLoading}
+          />
+        </div>
+        <button
+          onClick={handleUrlUpload}
+          disabled={urlLoading || !urlInput}
+          className="bg-neutral-900 text-white p-2.5 rounded-xl disabled:opacity-50 hover:bg-black transition-colors shadow-sm"
+          title="Preuzmi sliku"
+        >
+          {urlLoading ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : (
+            <Plus size={16} />
+          )}
+        </button>
+      </div>
+
+      {/* --- PROGRES BAROVI --- */}
       <AnimatePresence>
+        {/* Lokalni upload progress */}
         {uploading && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
           >
-            <UploadProgressBar progress={progress} label="Otpremanje..." />
+            <UploadProgressBar
+              progress={progress}
+              label="Otpremanje sa računara..."
+            />
+          </motion.div>
+        )}
+
+        {/* URL upload "fake" progress (jer cloud function ne vraća stream procenata) */}
+        {urlLoading && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-2"
+          >
+            {/* Koristimo tvoj UploadProgressBar, ali pošto je server-side proces, 
+                 stavljamo animirani loading text ili statični progress */}
+            <div className="w-full rounded-2xl border border-blue-100 bg-blue-50/50 p-2">
+              <div className="flex justify-between text-xs mb-1 text-blue-700 font-medium">
+                <span>Preuzimanje sa servera...</span>
+                <Loader2 size={12} className="animate-spin" />
+              </div>
+              <div className="h-1.5 rounded-full bg-blue-100 overflow-hidden">
+                <motion.div
+                  className="h-full bg-blue-500"
+                  initial={{ x: '-100%' }}
+                  animate={{ x: '100%' }}
+                  transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                />
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
+      {/* --- LISTA SLIKA (Reorder) --- */}
       <Reorder.Group
         axis="y"
         values={images}
         onReorder={onChange}
-        className="space-y-2"
+        className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-1"
       >
         {images.map((img, idx) => (
           <Reorder.Item
@@ -256,26 +375,27 @@ function ImageManager({ images, onChange, onImageClick, productSlug, productName
                 <GripHorizontal size={18} />
               </div>
 
-              {/* Image Thumbnail - Click to open Gallery */}
+              {/* Thumbnail */}
               <div
                 className="h-12 w-12 rounded-lg overflow-hidden border border-neutral-100 bg-neutral-50 shrink-0 cursor-zoom-in relative"
-                onClick={() => onImageClick(idx)} // Otvara modal
+                onClick={() => onImageClick(idx)}
               >
                 <img
                   src={img.url || '/placeholder.png'}
                   alt=""
                   className="h-full w-full object-cover hover:scale-110 transition-transform duration-300"
                 />
-                {/* Mala ikonica lupice preko slike na hover */}
-                <div className="absolute inset-0 bg-black/0 hover:bg-black/20 flex items-center justify-center transition-colors">
-                  {/* Ovde možeš dodati iconu ako želiš, ali cursor-zoom-in je dovoljan */}
-                </div>
               </div>
 
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-neutral-500 truncate">
-                  {img.path ? img.path.split('/').pop() : 'Eksterna slika'}
+                <p className="text-xs text-neutral-500 truncate font-mono">
+                  {img.path ? (
+                    img.path.split('/').pop()
+                  ) : (
+                    <span className="text-emerald-600">Preuzeto sa linka</span>
+                  )}
                 </p>
+                {/* Prikaz originalnog URL-a kao tooltip ili mali tekst ako želiš */}
               </div>
               <button
                 type="button"
@@ -289,13 +409,13 @@ function ImageManager({ images, onChange, onImageClick, productSlug, productName
         ))}
       </Reorder.Group>
 
-      {images.length === 0 && !uploading && (
+      {images.length === 0 && !uploading && !urlLoading && (
         <div
           onClick={() => fileInputRef.current?.click()}
           className="border-2 border-dashed border-neutral-200 rounded-xl p-6 flex flex-col items-center justify-center text-neutral-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50/50 transition-all cursor-pointer gap-2"
         >
           <ImageIcon size={24} />
-          <span className="text-sm font-medium">Klikni da dodaš slike</span>
+          <span className="text-sm font-medium">Nema slika</span>
         </div>
       )}
     </div>
@@ -303,6 +423,37 @@ function ImageManager({ images, onChange, onImageClick, productSlug, productName
 }
 
 // --- 3. Main Modal Component ---
+/**
+ * Admin Product Modal
+ * Omogućava kreiranje i izmenu proizvoda u admin panelu.
+ * Uključuje upravljanje slikama, specifikacijama i osnovnim informacijama o proizvodu.
+ * Koristi Framer Motion za animacije i Lenis za sprečavanje skrolovanja unutar modala.
+ * @module AdminProductModal
+ * @author DarkoKc
+ * @version 1.0.0
+ * @license MIT
+ * @requires react
+ * @requires framer-motion
+ * @requires lucide-react
+ * @requires ../../../services/admin
+ * @requires ../../../services/products
+ * @requires ../../../components/modals/FlashModal
+ * @requires ../../../components/UploadProgressBar
+ * @requires ../../../components/modals/ImageGalleryModal
+ * @see {@link ../../../services/admin}
+ * @see {@link ../../../services/products}
+ * @see {@link ../../../components/modals/FlashModal}
+ * @see {@link ../../../components/UploadProgressBar}
+ * @see {@link ../../../components/modals/ImageGalleryModal}
+ * @example
+ * <AdminProductModal product={product} onClose={handleClose} onSuccess={handleSuccess} />
+ * @description
+ * Ovaj modal omogućava administratorima da kreiraju ili izmenjuju proizvode.
+ * Podržava dodavanje slika, specifikacija, i osnovnih informacija kao što su naziv, cena, brend i kategorija.
+ * Koristi prilagođene komponente za selektovanje i upravljanje slikama.
+ * Implementira validaciju i prikazuje povratne informacije putem FlashModal komponente.
+ * Takođe uključuje funkcionalnost za pregled slika u punom ekranu putem ImageGalleryModal komponente.
+ */
 export default function AdminProductModal({ product, onClose, onSuccess }) {
   const [brands, setBrands] = useState([]);
   const [cats, setCats] = useState([]);
