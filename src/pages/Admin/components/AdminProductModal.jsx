@@ -21,6 +21,24 @@ import { saveProduct, uploadImages } from '../../../services/products';
 import FlashModal from '../../../components/modals/FlashModal.jsx';
 import UploadProgressBar from '../../../components/UploadProgressBar.jsx';
 
+// --- HELPER: CLEAN SLUG GENERATOR (SEO FRIENDLY) ---
+// Pravi isti slug kao i kod Importa (bez brojeva)
+const generateSlug = (text) => {
+  if (!text) return '';
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/đ/g, 'dj')
+    .replace(/ž/g, 'z')
+    .replace(/č/g, 'c')
+    .replace(/ć/g, 'c')
+    .replace(/š/g, 's')
+    .replace(/\s+/g, '-') // Razmaci u crtice
+    .replace(/[^\w\-]+/g, '') // Sklanja sve osim slova i brojeva
+    .replace(/\-\-+/g, '-'); // Sklanja duple crtice
+};
+
 // --- 1. Custom Animated Dropdown Component ---
 function CustomSelect({
   label,
@@ -264,9 +282,10 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     images: [],
     description: '',
     gender: '',
-    department: 'satovi', // Default
+    department: 'satovi',
     specs: {},
     model3DUrl: '',
+    slug: '', // Dodato da bismo mogli ručno da ga editujemo ako treba
   });
 
   const [tempSpecKey, setTempSpecKey] = useState('');
@@ -294,6 +313,7 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
         specs: product.specs || {},
         model3DUrl: product.model3DUrl || '',
         department: product.department || 'satovi',
+        slug: product.slug || '',
       });
     }
 
@@ -323,15 +343,13 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     });
   };
 
-  // --- SPECIFIKACIJE (SA JEDINICAMA) ---
+  // --- SPECIFIKACIJE ---
   const addSpec = () => {
     if (!tempSpecKey || !tempSpecVal) return;
 
-    // Nađi definiciju specifikacije da vidimo ima li jedinicu
     const def = specKeys.find((k) => k.name === tempSpecKey);
     let finalVal = tempSpecVal;
 
-    // Ako postoji jedinica, a korisnik je nije već upisao, dodaj je
     if (def?.unit && !tempSpecVal.endsWith(def.unit)) {
       finalVal = `${tempSpecVal} ${def.unit}`;
     }
@@ -354,15 +372,14 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     if (!form.name || !form.price) return alert('Naziv i cena su obavezni.');
     setLoading(true);
     try {
+      // Ovde se sada koristi "clean" slug bez datuma
+      const finalSlug = form.slug || generateSlug(form.name);
+
       const payload = {
         ...form,
         price: Number(form.price),
         image: form.images[0]?.url || '',
-        slug:
-          form.slug ||
-          form.name.toLowerCase().replace(/ /g, '-') +
-            '-' +
-            Date.now().toString().slice(-4),
+        slug: finalSlug, // <-- OVO JE PROMENJENO (nema više Date.now())
       };
       if (!product) delete payload.id;
       else payload.id = product.id;
@@ -382,9 +399,8 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     }
   };
 
-  // --- 1. FILTRIRANJE BRENDOVA PO ODELJENJU ---
+  // Filteri
   const filteredBrands = useMemo(() => {
-    // Prikazuj samo brendove koji pripadaju izabranom odeljenju (ili nemaju odeljenje = satovi)
     return brands.filter((b) => (b.department || 'satovi') === form.department);
   }, [brands, form.department]);
 
@@ -394,13 +410,10 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     id: b.id,
   }));
 
-  // --- 2. FILTRIRANJE KATEGORIJA PO ODELJENJU I BRENDU ---
   const filteredCats = useMemo(() => {
-    // Prvo po odeljenju
     let c = cats.filter(
       (cat) => (cat.department || 'satovi') === form.department
     );
-    // Onda po brendu (ako je izabran)
     if (form.brand) {
       c = c.filter((cat) => cat.brand === form.brand);
     }
@@ -413,7 +426,6 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     id: c.id,
   }));
 
-  // --- 3. FILTRIRANJE SPECIFIKACIJA PO ODELJENJU ---
   const filteredSpecs = useMemo(() => {
     return specKeys.filter(
       (s) => (s.department || 'satovi') === form.department
@@ -427,7 +439,6 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     unit: k.unit,
   }));
 
-  // Ostale opcije
   const departmentOptions = [
     { value: 'satovi', label: 'Satovi' },
     { value: 'daljinski', label: 'Daljinski' },
@@ -441,7 +452,6 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     { value: 'ŽENSKI', label: 'Ženski' },
   ];
 
-  // Aktivna jedinica za prikaz u inputu
   const activeUnit =
     specOptions.find((o) => o.value === tempSpecKey)?.unit || '';
 
@@ -483,9 +493,9 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
           data-lenis-prevent
         >
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* LEFT COLUMN (Main Info) */}
+            {/* LEFT COLUMN */}
             <div className="lg:col-span-8 space-y-6">
-              {/* Naziv i Cena */}
+              {/* Naziv, Slug i Cena */}
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <label className="block">
@@ -500,6 +510,26 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                     />
                   </label>
                 </div>
+
+                {/* Prikaz Sluga (Opciono polje ako želiš ručno da menjaš) */}
+                <div className="md:col-span-2">
+                  <label className="block">
+                    <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1 block">
+                      URL Slug (Opciono)
+                    </span>
+                    <input
+                      value={form.slug || generateSlug(form.name)}
+                      onChange={(e) => handleChange('slug', e.target.value)}
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2 text-sm text-neutral-600 font-mono outline-none focus:ring-2 focus:ring-neutral-200"
+                      placeholder="auto-generisano"
+                    />
+                    <span className="text-[10px] text-neutral-400 ml-1">
+                      Ovo je link proizvoda. Ako je prazno, generiše se iz
+                      naziva.
+                    </span>
+                  </label>
+                </div>
+
                 <div className="md:col-span-1">
                   <label className="block">
                     <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1 block">
@@ -533,7 +563,6 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
 
               {/* Dropdowns Grid */}
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* ODELJENJE (Glavni filter) */}
                 <CustomSelect
                   label="Odeljenje"
                   value={form.department}
@@ -541,7 +570,6 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                   onChange={(v) => handleChange('department', v)}
                 />
 
-                {/* BREND (Filtrirano po Odeljenju) */}
                 <CustomSelect
                   label="Brend"
                   value={form.brand}
@@ -555,7 +583,6 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                   disabled={brandOptions.length === 0}
                 />
 
-                {/* KATEGORIJA (Filtrirano po Odeljenju i Brendu) */}
                 <CustomSelect
                   label="Kategorija"
                   value={form.category}
@@ -623,7 +650,6 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                       className="w-full bg-white border border-neutral-200 rounded-xl pl-4 pr-10 py-3 text-sm outline-none focus:border-neutral-400"
                       placeholder="npr. 200"
                     />
-                    {/* JEDINICA (Auto-prikaz) */}
                     {activeUnit && (
                       <span className="absolute right-3 top-[32px] text-neutral-400 text-xs font-bold pointer-events-none">
                         {activeUnit}
@@ -683,13 +709,11 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                   onChange={(imgs) => handleChange('images', imgs)}
                 />
 
-                {/* Preview grid tip */}
                 <div className="mt-4 p-3 bg-blue-50 text-blue-700 text-xs rounded-lg border border-blue-100">
                   <p className="flex gap-2 items-start">
                     <span className="text-lg">💡</span>
                     <span>
-                      Možeš da menjaš redosled slika prevlačenjem. Prva slika u
-                      nizu će biti glavna slika proizvoda.
+                      Prva slika u nizu će biti glavna slika proizvoda.
                     </span>
                   </p>
                 </div>

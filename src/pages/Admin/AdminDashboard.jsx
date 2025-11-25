@@ -30,46 +30,52 @@ import {
   specKeyService,
 } from '../../services/admin';
 import { money } from '../../utils/currency';
+import { useLenis } from 'lenis/react';
 
-// Opciono: Import za upload slika (ako nemate, kod će je preskočiti)
+// Opciono: Import za upload slika (ako nemate ovu funkciju u services/admin.js, kod će je ignorisati)
 import { uploadRemoteImage } from '../../services/admin';
 
-// --- 1. SANITIZE FUNKCIJA (Čišćenje podataka) ---
+// --- 1. SANITIZE FUNKCIJA (Čišćenje podataka pre upisa) ---
 const sanitizeItem = (item) => {
   const clean = { ...item };
+  // Brišemo undefined polja jer ih Firestore ne voli
   Object.keys(clean).forEach((key) => {
-    if (clean[key] === undefined) {
-      delete clean[key];
-    }
+    if (clean[key] === undefined) delete clean[key];
   });
-  if (!clean.id || clean.id === '') {
-    delete clean.id;
-  }
+  // Ako je ID prazan string, brišemo ga da bi Firebase generisao novi ID
+  if (!clean.id || clean.id === '') delete clean.id;
   return clean;
 };
 
-// --- 2. GENERATOR SLUGA (STANDARDNI) ---
-// Radi isto što i tvoj AdminProductModal: mala slova + crtice umesto razmaka
+// --- 2. CLEAN SLUG GENERATOR (SEO FRIENDLY) ---
+// Pravi URL-ove tipa: "casio-g-shock-ga-100" (bez nasumičnih brojeva)
 const generateSlug = (text) => {
   if (!text) return '';
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-') // Razmaci u crtice
-    .replace(/[^\w\-]+/g, '') // Sklanja specijalne karaktere (osim -)
-    .replace(/\-\-+/g, '-'); // Sklanja duple crtice
+  return (
+    text
+      .toString()
+      .toLowerCase()
+      .trim()
+      // Zamena naših slova (opciono, ali preporučljivo za URL)
+      .replace(/đ/g, 'dj')
+      .replace(/ž/g, 'z')
+      .replace(/č/g, 'c')
+      .replace(/ć/g, 'c')
+      .replace(/š/g, 's')
+      .replace(/\s+/g, '-') // Razmaci u crtice
+      .replace(/[^\w\-]+/g, '') // Sklanja sve specijalne karaktere
+      .replace(/\-\-+/g, '-')
+  ); // Sklanja duple crtice
 };
 
 export default function AdminDashboard() {
   const { user } = useAuth();
   const nav = useNavigate();
   const { items: products } = useProducts();
+  const lenis = useLenis();
 
   const [activeTab, setActiveTab] = useState('products');
   const [searchTerm, setSearchTerm] = useState('');
-
-  // --- SEARCH FILTER STATE ---
   const [searchFilters, setSearchFilters] = useState([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterRef = useRef(null);
@@ -98,12 +104,10 @@ export default function AdminDashboard() {
     );
   };
 
-  // --- MODAL STATE ---
   const [modalOpen, setModalOpen] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
 
-  // --- SHARED DATA ---
   const departmentOptions = [
     { id: 'satovi', label: 'Satovi' },
     { id: 'daljinski', label: 'Daljinski' },
@@ -159,14 +163,13 @@ export default function AdminDashboard() {
       !window.confirm(
         `Pronađeno ${importedData.length} proizvoda. Pokreni upis?`
       )
-    ) {
+    )
       return;
-    }
 
     let successCount = 0;
     let lastError = null;
 
-    // Keširanje
+    // Keširanje postojećih podataka (za proveru duplikata)
     const existingBrandsNames = new Set(
       brands.map((b) => b.name.toLowerCase().trim())
     );
@@ -177,13 +180,14 @@ export default function AdminDashboard() {
       specs.map((s) => s.name.toLowerCase().trim())
     );
 
+    // Setovi za ono što smo upravo kreirali (da ne dupliramo unutar istog importa)
     const newlyCreatedBrands = new Set();
     const newlyCreatedCats = new Set();
     const newlyCreatedSpecs = new Set();
 
     for (const item of importedData) {
       try {
-        // 0. SLIKE (Opciono Upload)
+        // 0. Slike (Opciono Upload ako postoji funkcija)
         if (
           item.image &&
           item.image.startsWith('http') &&
@@ -220,7 +224,7 @@ export default function AdminDashboard() {
           }
         }
 
-        // 1. BREND
+        // 1. Brend - Automatsko kreiranje
         const bName = item.brand ? String(item.brand).trim() : '';
         const bNameLower = bName.toLowerCase();
         if (
@@ -234,7 +238,7 @@ export default function AdminDashboard() {
           newlyCreatedBrands.add(bNameLower);
         }
 
-        // 2. KATEGORIJA
+        // 2. Kategorija - Automatsko kreiranje
         const cName = item.category ? String(item.category).trim() : '';
         const cNameLower = cName.toLowerCase();
         if (
@@ -249,12 +253,12 @@ export default function AdminDashboard() {
           newlyCreatedCats.add(cNameLower);
         }
 
-        // 3. SPECIFIKACIJE
+        // 3. Specifikacije - Automatsko kreiranje
         if (item.specs && typeof item.specs === 'object') {
           for (const rawSpecName of Object.keys(item.specs)) {
             const specName = String(rawSpecName).trim();
             const lowerSpecName = specName.toLowerCase();
-
+            // Provera: da li postoji u bazi ILI je već dodata u ovoj petlji
             if (
               !existingSpecsNames.has(lowerSpecName) &&
               !newlyCreatedSpecs.has(lowerSpecName)
@@ -268,16 +272,15 @@ export default function AdminDashboard() {
           }
         }
 
-        // 4. PRIPREMA PROIZVODA (SLUG + ČIŠĆENJE)
+        // 4. Priprema proizvoda
         const cleanItem = sanitizeItem(item);
 
-        // --- DODAVANJE SLUGA (ISTO KAO PRODUCT PAGE) ---
-        // Generišemo slug samo ako ga nema
+        // Generišemo SEO friendly slug ako ne postoji
         if (!cleanItem.slug && cleanItem.name) {
           cleanItem.slug = generateSlug(cleanItem.name);
         }
-        // ----------------------------------------------
 
+        // Čuvanje u bazu
         await saveProduct(cleanItem);
         successCount++;
       } catch (err) {
@@ -297,7 +300,7 @@ export default function AdminDashboard() {
 
   if (!user) return null;
 
-  // --- RENDER LOGIKA ---
+  // --- RENDER LOGIKA (Filteri i Tabela) ---
   const filteredProducts = products.filter((p) => {
     const term = searchTerm.toLowerCase();
     if (!term) return true;
@@ -316,19 +319,17 @@ export default function AdminDashboard() {
     );
   });
 
-  // Memoizacija za filtere
+  // Memoizacija filtera
   const visibleBrands = useMemo(() => {
     if (brandFilters.length === 0) return brands;
     return brands.filter((b) =>
       brandFilters.includes(b.department || 'satovi')
     );
   }, [brands, brandFilters]);
-
   const availableBrandsForFilter = useMemo(() => {
     if (catFilters.length === 0) return brands;
     return brands.filter((b) => catFilters.includes(b.department || 'satovi'));
   }, [brands, catFilters]);
-
   const visibleCategories = useMemo(() => {
     return categories.filter((c) => {
       const deptMatch =
@@ -338,7 +339,6 @@ export default function AdminDashboard() {
       return deptMatch && brandMatch;
     });
   }, [categories, catFilters, catBrandFilter]);
-
   const availableBrandsForCat = useMemo(() => {
     if (catFilters.length === 1)
       return brands.filter((b) => (b.department || 'satovi') === catFilters[0]);
@@ -346,13 +346,12 @@ export default function AdminDashboard() {
       return brands.filter((b) => (b.department || 'satovi') === newCatDept);
     return brands;
   }, [brands, catFilters, newCatDept]);
-
   const visibleSpecs = useMemo(() => {
     if (specFilters.length === 0) return specs;
     return specs.filter((s) => specFilters.includes(s.department || 'satovi'));
   }, [specs, specFilters]);
 
-  // CRUD Akcije
+  // Akcije (Skraćeno)
   const toggleBrandFilter = (deptId) =>
     setBrandFilters((prev) =>
       prev.includes(deptId)
@@ -385,7 +384,6 @@ export default function AdminDashboard() {
   const handleDeleteBrand = async (id) => {
     if (window.confirm('Obriši?')) await brandService.remove(id);
   };
-
   const toggleCatFilter = (deptId) => {
     setCatFilters((prev) =>
       prev.includes(deptId)
@@ -399,7 +397,7 @@ export default function AdminDashboard() {
     e.preventDefault();
     if (!newCatName.trim()) return;
     const brandToUse = catBrandFilter || newCatBrand;
-    if (!brandToUse) return alert('Moraš izabrati brend.');
+    if (!brandToUse) return alert('Brend?');
     const brandObj = brands.find((b) => b.name === brandToUse);
     const dept =
       brandObj?.department ||
@@ -427,7 +425,6 @@ export default function AdminDashboard() {
   const handleDeleteCategory = async (id) => {
     if (window.confirm('Obriši?')) await categoryService.remove(id);
   };
-
   const toggleSpecFilter = (deptId) =>
     setSpecFilters((prev) =>
       prev.includes(deptId)
@@ -461,7 +458,6 @@ export default function AdminDashboard() {
   const handleDeleteSpec = async (id) => {
     if (window.confirm('Obriši?')) await specKeyService.remove(id);
   };
-
   const openNew = () => {
     setEditProduct(null);
     setModalOpen(true);
@@ -520,7 +516,14 @@ export default function AdminDashboard() {
             animate={{ opacity: 1 }}
             className="space-y-6"
           >
-            <ExcelManager products={products} onImport={handleBulkImport} />
+            {/* PROSLEĐUJEMO PODATKE ZA ŠIFARNIK */}
+            <ExcelManager
+              products={products}
+              brands={brands}
+              categories={categories}
+              onImport={handleBulkImport}
+            />
+
             <div className="flex flex-wrap gap-4 justify-between items-center bg-white p-4 rounded-2xl border border-neutral-200 shadow-sm">
               <div className="flex flex-1 max-w-2xl gap-2">
                 <div className="relative flex-1">
@@ -616,8 +619,9 @@ export default function AdminDashboard() {
                         <td className="p-4 font-semibold text-neutral-900">
                           <div className="flex flex-col">
                             <span>{p.name}</span>
-                            <span className="text-[10px] text-gray-400">
-                              /{p.slug || 'nema-sluga'}
+                            {/* Prikazujemo slug da budemo sigurni */}
+                            <span className="text-[10px] text-gray-400 font-mono">
+                              /{p.slug}
                             </span>
                           </div>
                         </td>
@@ -660,7 +664,7 @@ export default function AdminDashboard() {
           </motion.div>
         )}
 
-        {/* --- BRANDS TAB --- */}
+        {/* Ostali tabovi */}
         {activeTab === 'brands' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -801,7 +805,6 @@ export default function AdminDashboard() {
           </motion.div>
         )}
 
-        {/* --- CATEGORIES TAB --- */}
         {activeTab === 'categories' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -998,7 +1001,6 @@ export default function AdminDashboard() {
           </motion.div>
         )}
 
-        {/* --- SPECS TAB --- */}
         {activeTab === 'specs' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
