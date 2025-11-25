@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { isAdminEmail } from '../../services/firebase';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Package,
@@ -30,49 +31,18 @@ import {
   specKeyService,
 } from '../../services/admin';
 import { money } from '../../utils/currency';
-import { useLenis } from 'lenis/react';
 
 // Opciono: Import za upload slika (ako nemate ovu funkciju u services/admin.js, kod će je ignorisati)
 import { uploadRemoteImage } from '../../services/admin';
+import TabButton from './components/TabButton.jsx';
+import { generateSlug } from '../Admin/utils/generators.js';
 
-// --- 1. SANITIZE FUNKCIJA (Čišćenje podataka pre upisa) ---
-const sanitizeItem = (item) => {
-  const clean = { ...item };
-  // Brišemo undefined polja jer ih Firestore ne voli
-  Object.keys(clean).forEach((key) => {
-    if (clean[key] === undefined) delete clean[key];
-  });
-  // Ako je ID prazan string, brišemo ga da bi Firebase generisao novi ID
-  if (!clean.id || clean.id === '') delete clean.id;
-  return clean;
-};
-
-// --- 2. CLEAN SLUG GENERATOR (SEO FRIENDLY) ---
-// Pravi URL-ove tipa: "casio-g-shock-ga-100" (bez nasumičnih brojeva)
-const generateSlug = (text) => {
-  if (!text) return '';
-  return (
-    text
-      .toString()
-      .toLowerCase()
-      .trim()
-      // Zamena naših slova (opciono, ali preporučljivo za URL)
-      .replace(/đ/g, 'dj')
-      .replace(/ž/g, 'z')
-      .replace(/č/g, 'c')
-      .replace(/ć/g, 'c')
-      .replace(/š/g, 's')
-      .replace(/\s+/g, '-') // Razmaci u crtice
-      .replace(/[^\w\-]+/g, '') // Sklanja sve specijalne karaktere
-      .replace(/\-\-+/g, '-')
-  ); // Sklanja duple crtice
-};
+import { sanitizeItem } from '../Admin/utils/sanitizers.js';
 
 export default function AdminDashboard() {
   const { user } = useAuth();
   const nav = useNavigate();
   const { items: products } = useProducts();
-  const lenis = useLenis();
 
   const [activeTab, setActiveTab] = useState('products');
   const [searchTerm, setSearchTerm] = useState('');
@@ -298,28 +268,6 @@ export default function AdminDashboard() {
     }
   };
 
-  if (!user) return null;
-
-  // --- RENDER LOGIKA (Filteri i Tabela) ---
-  const filteredProducts = products.filter((p) => {
-    const term = searchTerm.toLowerCase();
-    if (!term) return true;
-    if (searchFilters.length > 0) {
-      return searchFilters.some((field) => {
-        let val = p[field];
-        if (field === 'department') val = val || 'satovi';
-        return String(val || '')
-          .toLowerCase()
-          .includes(term);
-      });
-    }
-    return (
-      p.name.toLowerCase().includes(term) ||
-      p.brand.toLowerCase().includes(term)
-    );
-  });
-
-  // Memoizacija filtera
   const visibleBrands = useMemo(() => {
     if (brandFilters.length === 0) return brands;
     return brands.filter((b) =>
@@ -351,6 +299,27 @@ export default function AdminDashboard() {
     return specs.filter((s) => specFilters.includes(s.department || 'satovi'));
   }, [specs, specFilters]);
 
+  if (!user) return null;
+
+  // --- RENDER LOGIKA (Filteri i Tabela) ---
+  const filteredProducts = products.filter((p) => {
+    const term = searchTerm.toLowerCase();
+    if (!term) return true;
+    if (searchFilters.length > 0) {
+      return searchFilters.some((field) => {
+        let val = p[field];
+        if (field === 'department') val = val || 'satovi';
+        return String(val || '')
+          .toLowerCase()
+          .includes(term);
+      });
+    }
+    return (
+      p.name.toLowerCase().includes(term) ||
+      p.brand.toLowerCase().includes(term)
+    );
+  });
+
   // Akcije (Skraćeno)
   const toggleBrandFilter = (deptId) =>
     setBrandFilters((prev) =>
@@ -369,7 +338,7 @@ export default function AdminDashboard() {
       });
       setNewBrandName('');
     } catch (err) {
-      alert('Greška.');
+      alert('Greška.' + err.message);
     }
   };
   const handleUpdateBrand = async () => {
@@ -378,7 +347,7 @@ export default function AdminDashboard() {
       await brandService.update(editingBrandId, editingBrandName);
       setEditingBrandId(null);
     } catch (err) {
-      alert('Greška.');
+      alert('Greška.' + err.message);
     }
   };
   const handleDeleteBrand = async (id) => {
@@ -410,7 +379,7 @@ export default function AdminDashboard() {
       });
       setNewCatName('');
     } catch (err) {
-      alert('Greška.');
+      alert('Greška.' + err.message);
     }
   };
   const handleUpdateCategory = async () => {
@@ -419,7 +388,7 @@ export default function AdminDashboard() {
       await categoryService.update(editingCatId, editingCatName);
       setEditingCatId(null);
     } catch (err) {
-      alert('Greška.');
+      alert('Greška.' + err.message);
     }
   };
   const handleDeleteCategory = async (id) => {
@@ -443,7 +412,7 @@ export default function AdminDashboard() {
       setNewSpecName('');
       setNewSpecUnit('');
     } catch (err) {
-      alert('Greška.');
+      alert('Greška.' + err.message);
     }
   };
   const handleUpdateSpec = async () => {
@@ -452,7 +421,7 @@ export default function AdminDashboard() {
       await specKeyService.update(editingSpecId, editingSpecName);
       setEditingSpecId(null);
     } catch (err) {
-      alert('Greška.');
+      alert('Greška.' + err.message);
     }
   };
   const handleDeleteSpec = async (id) => {
@@ -922,7 +891,7 @@ export default function AdminDashboard() {
                   disabled={
                     !newCatName.trim() || (!newCatBrand && !catBrandFilter)
                   }
-                  className="btn btn--primary rounded-xl px-3 py-2 mb-[1px]"
+                  className="btn btn--primary rounded-xl px-3 py-2 mb-px"
                 >
                   <Plus size={18} />
                 </button>
@@ -1062,7 +1031,7 @@ export default function AdminDashboard() {
                     </select>
                   </div>
                 )}
-                <div className="flex-[2] min-w-[120px]">
+                <div className="flex-2 min-w-[120px]">
                   <label className="text-[10px] uppercase font-bold text-neutral-400 ml-1">
                     Naziv
                   </label>
@@ -1087,7 +1056,7 @@ export default function AdminDashboard() {
                 <button
                   type="submit"
                   disabled={!newSpecName.trim()}
-                  className="btn btn--primary rounded-xl px-3 py-2 mb-[1px]"
+                  className="btn btn--primary rounded-xl px-3 py-2 mb-1px"
                 >
                   <Plus size={18} />
                 </button>
@@ -1188,20 +1157,5 @@ export default function AdminDashboard() {
         isDanger={true}
       />
     </div>
-  );
-}
-
-function TabButton({ active, onClick, icon: Icon, label }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all whitespace-nowrap ${
-        active
-          ? 'bg-neutral-900 text-white shadow-lg shadow-neutral-300 scale-105'
-          : 'bg-white text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 border border-neutral-200'
-      }`}
-    >
-      <Icon size={18} /> {label}
-    </button>
   );
 }

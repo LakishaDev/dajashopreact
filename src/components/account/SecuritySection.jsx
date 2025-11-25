@@ -53,6 +53,7 @@ export default function SecuritySection({ user }) {
 
   // --- PASSKEY HOOK ---
   const { registerPasskey, loading: pkLoading, error: pkError } = usePasskey();
+  const { linkPasskey } = useAuth();
   const [isPasskeyEnabled, setIsPasskeyEnabled] = useState(false); // Idealno povući sa servera
 
   // State za Lozinku
@@ -83,7 +84,7 @@ export default function SecuritySection({ user }) {
   // --- HANDLER ZA PASSKEY ---
   const handleAddPasskey = async () => {
     try {
-      await registerPasskey();
+      await linkPasskey(user.email);
       setIsPasskeyEnabled(true);
       flash('Uspeh', 'Passkey uspešno dodat!', 'success');
     } catch (error) {
