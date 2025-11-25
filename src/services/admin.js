@@ -9,7 +9,7 @@ import {
   query,
   orderBy,
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { app, db } from './firebase';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 class CollectionService {
@@ -97,7 +97,10 @@ export const ordersService = {
 
 // --- NOVO: SERVIS ZA SLIKE PREKO URL-A ---
 export const uploadRemoteImage = async (url, productName) => {
-  const functions = getFunctions();
+  // Ovi logovi će se pojaviti u browser konzoli (F12)
+  console.log('Pozivam Cloud Funkciju sa:', { url, productName });
+
+  const functions = getFunctions(app, 'europe-west3');
   const saveImageFn = httpsCallable(functions, 'saveImageFromUrl');
 
   try {
@@ -106,11 +109,11 @@ export const uploadRemoteImage = async (url, productName) => {
       productName: productName,
     });
     // Vraćamo sigurni, tokenizovani link
-    return result.data.url;
+    return result.data;
   } catch (error) {
-    console.error('Cloud function error (saveImageFromUrl):', error);
-    // Vraćamo originalni URL ako Cloud funkcija ne uspe (hotlinking fallback)
-    return url;
+    console.error('Cloud function error:', error);
+    // Vraćamo fallback objekat da frontend ne pukne
+    return { url: url, results: [] };
   }
 };
 

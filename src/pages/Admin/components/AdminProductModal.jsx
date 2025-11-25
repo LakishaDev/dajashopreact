@@ -146,7 +146,7 @@ function CustomSelect({
 }
 
 // --- 2. Image Manager (SA CLICK EVENTOM) ---
-function ImageManager({ images, onChange, onImageClick }) {
+function ImageManager({ images, onChange, onImageClick, productSlug, productName }) {
   const fileInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -154,11 +154,33 @@ function ImageManager({ images, onChange, onImageClick }) {
   const handleUpload = async (e) => {
     const files = e.target.files;
     if (!files?.length) return;
+
+    // --- 1. DEFINISANJE IMENA FOLDERA ---
+    // Prvo probamo postojeći slug, ako nema, generišemo ga iz imena
+    let storageFolderName = productSlug;
+
+    if (!storageFolderName && productName) {
+      storageFolderName = generateSlug(productName);
+    }
+
+    // --- 2. VALIDACIJA ---
+    // Ako nema ni imena ni sluga, ne dozvoljavamo upload da ne pravimo smeće na serveru
+    if (!storageFolderName) {
+      alert(
+        "Molim vas unesite 'Naziv' proizvoda ili 'URL Slug' pre ubacivanja slika, kako bi se kreirao odgovarajući folder na serveru."
+      );
+      e.target.value = null; // Resetuj input
+      return;
+    }
+
     setUploading(true);
     try {
-      const tempId = 'temp_' + Date.now();
-      const uploaded = await uploadImages(tempId, files, ({ progress }) =>
-        setProgress(progress)
+      // --- 3. UPLOAD ---
+      // Šaljemo storageFolderName umesto tempId
+      const uploaded = await uploadImages(
+        storageFolderName,
+        files,
+        ({ progress }) => setProgress(progress)
       );
       onChange([...images, ...uploaded]);
     } catch (err) {
@@ -167,6 +189,7 @@ function ImageManager({ images, onChange, onImageClick }) {
     } finally {
       setUploading(false);
       setProgress(0);
+      if (fileInputRef.current) fileInputRef.current.value = null; // Reset inputa
     }
   };
 
@@ -704,6 +727,8 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                   images={form.images}
                   onChange={(imgs) => handleChange('images', imgs)}
                   onImageClick={(index) => setGalleryIndex(index)} // OTVARA GALERIJU
+                  productSlug={form.slug} // <--- Dodato
+                  productName={form.name} // <--- Dodato
                 />
                 <div className="mt-4 p-3 bg-blue-50 text-blue-700 text-xs rounded-lg border border-blue-100">
                   <p className="flex gap-2 items-start">
