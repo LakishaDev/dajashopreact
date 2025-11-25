@@ -10,15 +10,15 @@
 import { setGlobalOptions } from "firebase-functions";
 
 import { saveImageFromUrl } from "./imageUtils";
-import { sendNewOrderToAdmins } from "./adminUtils";
-import { sendOrderConfirmation, sendOrderStatusUpdate } from "./orderUtils";
+// import { sendNewOrderToAdmins } from "./adminUtils";
+// import { sendOrderConfirmation, sendOrderStatusUpdate } from "./orderUtils";
 
 // Izvozimo svaku funkciju ponaosob
 export {
   saveImageFromUrl,
-  sendNewOrderToAdmins,
-  sendOrderConfirmation,
-  sendOrderStatusUpdate,
+  // sendNewOrderToAdmins,
+  // sendOrderConfirmation,
+  // sendOrderStatusUpdate,
 };
 
 // Start writing functions
