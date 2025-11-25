@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../hooks/useCart.js';
 import { useUndo } from '../hooks/useUndo.js';
 import { usePromo } from '../hooks/usePromo.js';
+import { useAuth } from '../hooks/useAuth.js'; // NOVO: Importujemo Auth
 import { money } from '../utils/currency.js';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
@@ -57,7 +58,15 @@ function QtyInput({ value, id, dispatch }) {
   );
 }
 
-function PromoCodeSection({ onApply, activeCode, onRemove, error, success }) {
+// NOVO: Dodat prop 'loading'
+function PromoCodeSection({
+  onApply,
+  activeCode,
+  onRemove,
+  error,
+  success,
+  loading,
+}) {
   const [code, setCode] = useState('');
 
   const handleSubmit = (e) => {
@@ -101,14 +110,15 @@ function PromoCodeSection({ onApply, activeCode, onRemove, error, success }) {
             placeholder="Promo kod"
             value={code}
             onChange={(e) => setCode(e.target.value)}
+            disabled={loading} // Onemogućeno dok se učitava
           />
         </div>
         <button
           type="submit"
           className="btn btn-primary promo-btn"
-          disabled={code.length < 3}
+          disabled={code.length < 3 || loading}
         >
-          Potvrdi
+          {loading ? 'Provera...' : 'Potvrdi'}
         </button>
       </form>
       {error && (
@@ -144,10 +154,18 @@ function PromoCodeSection({ onApply, activeCode, onRemove, error, success }) {
 export default function Cart() {
   const { items, total, dispatch } = useCart();
   const { showUndo } = useUndo();
+  const { user } = useAuth(); // NOVO: Uzimamo ulogovanog korisnika
   const [showClearModal, setShowClearModal] = useState(false);
 
-  const { appliedPromo, validateAndApply, removePromo, error, successMsg } =
-    usePromo();
+  // NOVO: Uzimamo i 'loading' status iz hook-a
+  const {
+    appliedPromo,
+    validateAndApply,
+    removePromo,
+    error,
+    successMsg,
+    loading,
+  } = usePromo();
 
   const FREE_SHIPPING_LIMIT = 8000;
   const SHIPPING_COST = 380;
@@ -168,7 +186,8 @@ export default function Cart() {
   const clampQty = (n) => Math.max(1, Math.min(99, n));
 
   const handleApplyPromo = (code) => {
-    validateAndApply(code, total, items);
+    // NOVO: Prosleđujemo 'user' kao četvrti argument za proveru u bazi
+    validateAndApply(code, total, items, user);
   };
 
   const performRemove = (item) => {
@@ -186,23 +205,15 @@ export default function Cart() {
     }
   };
 
-  // --- OVO JE DEO KOJI JE IZMENJEN DA BI SE POJAVIO UNDO ---
   const performClear = () => {
-    // 1. Čuvamo trenutne stavke pre brisanja
     const itemsToRestore = [...items];
 
-    // 2. Brišemo korpu i zatvaramo modal
     dispatch({ type: 'CLEAR' });
     setShowClearModal(false);
     removePromo();
 
-    // 3. Pozivamo Undo Toast
-    // Pošto UndoToast očekuje objekat "item" sa imenom, pravimo lažni objekat
-    // koji se zove "Sve proizvode". Kada korisnik klikne "Vrati",
-    // izvršava se callback koji vraća sve sačuvane stavke nazad.
     showUndo({ name: 'Sve proizvode' }, () => {
       itemsToRestore.forEach((item) => {
-        // Važno je proslediti i qty da bi se vratila tačna količina
         dispatch({ type: 'ADD', item: item, qty: item.qty });
       });
     });
@@ -409,6 +420,7 @@ export default function Cart() {
               onRemove={removePromo}
               error={error}
               success={successMsg}
+              loading={loading} // NOVO: Prosleđujemo loading stanje
             />
 
             <div className="summary-details">
