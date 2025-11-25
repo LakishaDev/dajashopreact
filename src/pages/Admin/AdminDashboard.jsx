@@ -153,10 +153,6 @@ export default function AdminDashboard() {
     if (!user || !isAdminEmail(user.email)) nav('/');
   }, [user, nav]);
 
-  useEffect(() => {
-    if (lenis) lenis.scrollTo(0, { duration: 0.8 });
-  }, [lenis]);
-
   // --- GLAVNA FUNKCIJA ZA MASOVNI UVOZ ---
   const handleBulkImport = async (importedData) => {
     if (
@@ -189,16 +185,38 @@ export default function AdminDashboard() {
       try {
         // 0. SLIKE (Opciono Upload)
         if (
-          typeof uploadRemoteImage === 'function' &&
           item.image &&
           item.image.startsWith('http') &&
           !item.image.includes('storage.googleapis.com')
         ) {
-          try {
-            const secureUrl = await uploadRemoteImage(item.image);
-            item.image = secureUrl;
-          } catch (e) {
-            console.warn('Slika nije prebačena, ostaje link.');
+          const productNameForFolder =
+            item.name || item.id || 'nepoznat-proizvod';
+          console.log(`Arhiviram slike za: ${productNameForFolder}`);
+
+          const uploadResponse = await uploadRemoteImage(
+            item.image,
+            productNameForFolder
+          );
+
+          // Ako imamo rezultate, pakujemo ih u format koji baza očekuje
+          if (uploadResponse.results && Array.isArray(uploadResponse.results)) {
+            // Pravimo niz objekata { path, url }
+            const galleryObjects = uploadResponse.results
+              .filter((r) => r.success)
+              .map((r) => ({
+                path: r.storagePath, // Ovo je putanja (npr. products/casio/img.jpg)
+                url: r.newUrl, // Ovo je link za prikaz
+              }));
+
+            if (galleryObjects.length > 0) {
+              // 1. Glavna slika (obično string URL za lak prikaz u tabelama)
+              item.image = galleryObjects[0].url;
+
+              // 2. Galerija (niz objekata sa path i url)
+              item.images = galleryObjects;
+
+              console.log('Generisana struktura slika:', item.images);
+            }
           }
         }
 
