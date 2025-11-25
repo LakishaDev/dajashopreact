@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 // IZMENA: Koristimo lucide-react umesto react-icons
 import { X, Check } from 'lucide-react';

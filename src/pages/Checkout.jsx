@@ -4,6 +4,7 @@ import { useCart } from '../hooks/useCart.js';
 import { useFormValidator } from '../hooks/useFormValidator.js';
 import { useAuth } from '../hooks/useAuth.js';
 import { useFlash } from '../hooks/useFlash.js';
+import { usePromo } from '../hooks/usePromo.js'; // 1. IMPORTUJEMO PROMO
 import { money } from '../utils/currency.js';
 import { AnimatePresence } from 'framer-motion';
 
@@ -26,7 +27,6 @@ import ShippingSection from '../components/checkout/ShippingSection';
 import PaymentSection from '../components/checkout/PaymentSection';
 import OrderSummary from '../components/checkout/OrderSummary';
 
-// Helper za generisanje ID-a (DAJA-7cifara)
 const generateOrderId = () => {
   const random7Digits = Math.floor(1000000 + Math.random() * 9000000);
   return `DAJA-${random7Digits}`;
@@ -37,11 +37,14 @@ export default function Checkout() {
   const { user, register } = useAuth();
   const { flash } = useFlash();
 
+  // 2. KORISTIMO HOOK (On će automatski povući kod iz localStorage)
+  const { appliedPromo, validateAndApply, removePromo } = usePromo();
+
   const [payMethod, setPayMethod] = useState('cod');
   const [shippingMethod, setShippingMethod] = useState('courier');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [orderData, setOrderData] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false); // Novo stanje za loading
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const [submitCount, setSubmitCount] = useState(0);
   const [showRegPopover, setShowRegPopover] = useState(false);
@@ -67,12 +70,33 @@ export default function Checkout() {
     postalCode: '',
   });
 
+  // 3. REKALKULACIJA SA POPUSTOM
+  // Važno: Moramo osigurati da je iznos popusta tačan za trenutne artikle
+  // (Hook vraća 'amount', ali za svaki slučaj možemo ponovo validirati na mount)
+
+  useEffect(() => {
+    // Kada se učita Checkout, ako imamo kod, proverimo ga ponovo "tiho"
+    // da bismo bili sigurni da je validan za trenutni total i usera
+    if (appliedPromo && appliedPromo.code) {
+      validateAndApply(appliedPromo.code, total, items, user, true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Samo na mount
+
+  // Računanje cena
+  const discountAmount = appliedPromo ? appliedPromo.amount : 0;
+  const subtotalAfterDiscount = total - discountAmount;
+
   const FREE_SHIPPING_LIMIT = 8000;
   const COURIER_COST = 380;
-  const isFreeShipping = total >= FREE_SHIPPING_LIMIT;
+  // Besplatna dostava se gleda na iznos POSLE popusta (obično je tako u prodaji)
+  const isFreeShipping = subtotalAfterDiscount >= FREE_SHIPPING_LIMIT;
+
   const finalShipping =
     shippingMethod === 'pickup' ? 0 : isFreeShipping ? 0 : COURIER_COST;
-  const finalTotal = total + finalShipping;
+
+  const finalTotal = subtotalAfterDiscount + finalShipping;
+
   const requiredForCourier = shippingMethod === 'courier';
 
   // --- AUTOFILL EFEKAT ---
@@ -130,7 +154,6 @@ export default function Checkout() {
   }, [shippingMethod, createAccount, showRegPopover, errors]);
 
   const handleConfirmReg = async () => {
-    // ... (logika registracije ostaje ista)
     if (!formData.name.trim() || !formData.surname.trim()) {
       flash('Greška', 'Unesite ime i prezime.', 'error');
       return;
@@ -166,7 +189,6 @@ export default function Checkout() {
     setPassword('');
   };
 
-  // --- GLAVNA FUNKCIJA ZA SLANJE PORUDŽBINE ---
   const handlePlaceOrder = async () => {
     const fieldsToSkip =
       shippingMethod === 'pickup' ? ['address', 'city', 'postalCode'] : [];
@@ -174,7 +196,6 @@ export default function Checkout() {
     if (validateAll(fieldsToSkip)) {
       setIsProcessing(true);
 
-      // 1. Opciona registracija
       if (createAccount && !user && password) {
         try {
           await register({
@@ -187,29 +208,36 @@ export default function Checkout() {
         }
       }
 
-      // 2. Kreiranje objekta porudžbine
       const orderId = generateOrderId();
       const newOrder = {
-        id: orderId, // String ID (DAJA-XXXXXXX)
+        id: orderId,
         customer: {
           ...formData,
-          uid: user ? user.uid : 'guest', // Povezujemo sa korisnikom ako je ulogovan
+          uid: user ? user.uid : 'guest',
         },
         items: items,
-        subtotal: total,
+        subtotal: total, // Originalni total
+
+        // 4. DODAJEMO PODATKE O POPUSTU U OBJEKAT PORUDŽBINE
+        promoCode: appliedPromo ? appliedPromo.code : null,
+        discountAmount: discountAmount,
+        subtotalAfterDiscount: subtotalAfterDiscount,
+
         shippingCost: finalShipping,
         shippingMethod: shippingMethod,
         paymentMethod: payMethod,
         finalTotal: finalTotal,
-        status: 'Na čekanju', // Inicijalni status
+        status: 'Na čekanju',
         isRead: false,
         date: new Date().toLocaleDateString('sr-RS'),
-        createdAt: serverTimestamp(), // Za sortiranje u bazi
+        createdAt: serverTimestamp(),
       };
 
       try {
-        // 3. Upis u Firestore
         await addDoc(collection(db, 'orders'), newOrder);
+
+        // 5. BRIŠEMO PROMO KOD I KORPU POSLE USPEŠNE KUPOVINE
+        removePromo();
 
         setOrderData(newOrder);
         setShowSuccessModal(true);
@@ -283,7 +311,10 @@ export default function Checkout() {
             finalTotal={finalTotal}
             handlePlaceOrder={handlePlaceOrder}
             money={money}
-            isLoading={isProcessing} // Možeš dodati spinner u dugme
+            isLoading={isProcessing}
+            // 6. PROSLEĐUJEMO PODATKE O POPUSTU U SUMMARY
+            appliedPromo={appliedPromo}
+            discountAmount={discountAmount}
           />
         </div>
       </form>

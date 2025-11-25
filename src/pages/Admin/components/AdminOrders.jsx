@@ -270,7 +270,7 @@ export default function AdminOrders() {
                                   >
                                     {/* SLIKA PROIZVODA (LINK) */}
                                     <Link
-                                      to={`/product/${item.id}`}
+                                      to={`/product/${item.slug}`}
                                       target="_blank"
                                       className="w-24 h-24 flex-shrink-0 bg-neutral-100 rounded-lg overflow-hidden border border-neutral-200 block group relative"
                                     >
@@ -286,7 +286,7 @@ export default function AdminOrders() {
                                       <div>
                                         <div className="flex justify-between items-start gap-2">
                                           <Link
-                                            to={`/product/${item.id}`}
+                                            to={`/product/${item.slug}`}
                                             target="_blank"
                                             className="font-bold text-neutral-900 text-sm sm:text-base line-clamp-2 hover:text-blue-600 transition-colors"
                                           >

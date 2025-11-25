@@ -21,6 +21,7 @@ import {
   Truck,
   X,
 } from 'lucide-react';
+import { PROMO_CODES } from '../data/promoCodes.js';
 
 function QtyInput({ value, id, dispatch }) {
   const [localVal, setLocalVal] = useState(value);
@@ -156,6 +157,7 @@ export default function Cart() {
   const { showUndo } = useUndo();
   const { user } = useAuth(); // NOVO: Uzimamo ulogovanog korisnika
   const [showClearModal, setShowClearModal] = useState(false);
+  const [autoAppliedTried, setAutoAppliedTried] = useState(false); // Da ne pokušava beskonačno
 
   // NOVO: Uzimamo i 'loading' status iz hook-a
   const {
@@ -166,6 +168,26 @@ export default function Cart() {
     successMsg,
     loading,
   } = usePromo();
+
+  // --- AUTOMATSKO PRIMENJIVANJE KODA ---
+  useEffect(() => {
+    if (appliedPromo) return;
+    if (autoAppliedTried) return;
+
+    const autoCode = PROMO_CODES.find((p) => p.autoApply === true);
+
+    if (autoCode && items.length > 0) {
+      if (total >= autoCode.minOrderValue) {
+        if (autoCode.rules?.requiresLogin && !user) return;
+
+        // IZMENA: Dodajemo 'true' na kraj kao peti argument (isAuto)
+        validateAndApply(autoCode.code, total, items, user, true);
+
+        setAutoAppliedTried(true);
+      }
+    }
+  }, [total, items, user, appliedPromo, validateAndApply, autoAppliedTried]);
+  // --------------------------------------
 
   const FREE_SHIPPING_LIMIT = 8000;
   const SHIPPING_COST = 380;
@@ -187,7 +209,7 @@ export default function Cart() {
 
   const handleApplyPromo = (code) => {
     // NOVO: Prosleđujemo 'user' kao četvrti argument za proveru u bazi
-    validateAndApply(code, total, items, user);
+    validateAndApply(code, total, items, user, false);
   };
 
   const performRemove = (item) => {
@@ -211,6 +233,7 @@ export default function Cart() {
     dispatch({ type: 'CLEAR' });
     setShowClearModal(false);
     removePromo();
+    setAutoAppliedTried(false);
 
     showUndo({ name: 'Sve proizvode' }, () => {
       itemsToRestore.forEach((item) => {

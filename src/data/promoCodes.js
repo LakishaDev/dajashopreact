@@ -28,6 +28,7 @@ export const PROMO_CODES = [
     validBrands: [],
     expiresAt: '2030-01-01',
     // NOVO: Definišemo pravila validacije
+    autoApply: true,
     rules: {
       requiresLogin: true, // Mora biti ulogovan
       requiresNewsletter: true, // Mora biti u newsletter bazi
