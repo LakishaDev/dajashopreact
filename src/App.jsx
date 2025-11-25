@@ -1,23 +1,32 @@
-import AppRoutes from "./router.jsx";
-import Header from "./components/Header.jsx";
-import Footer from "./components/Footer.jsx";
-import AuthModal from "./components/AuthModal.jsx";
+import AppRoutes from './router.jsx';
+import Header from './components/Header.jsx';
+import Footer from './components/Footer.jsx';
+import AuthModal from './components/AuthModal.jsx';
+import { useLocation } from 'react-router-dom';
 
-import { ReactLenis } from "lenis/react";
-import { useEffect, useRef } from "react";
+import { ReactLenis } from 'lenis/react';
+import { useEffect, useRef } from 'react';
 
 export default function App() {
   const lenisRef = useRef();
+  const { pathname } = useLocation(); // Hvatamo trenutnu putanju
 
+  // Animacija frejma za Lenis
   useEffect(() => {
     function update(time) {
       lenisRef.current?.lenis?.raf(time);
     }
-
     const rafId = requestAnimationFrame(update);
-
     return () => cancelAnimationFrame(rafId);
   }, []);
+
+  // Resetovanje skrola na vrh pri promeni stranice
+  useEffect(() => {
+    if (lenisRef.current?.lenis) {
+      // 'immediate: true' znači da nema animacije vraćanja gore, samo se stvori gore (brže je)
+      lenisRef.current.lenis.scrollTo(0, { duration: 1.2 }); // Možeš podesiti trajanje animacije po potrebi
+    }
+  }, [pathname]);
 
   return (
     <div className="app-root">
@@ -31,13 +40,14 @@ export default function App() {
           touchMultiplier: 0.5, // povećava brzinu skrolovanja na touch uređajima
         }}
         ref={lenisRef}
-      />
-      <Header />
-      <main className="container" style={{ padding: "20px 0 48px" }}>
-        <AuthModal />
-        <AppRoutes />
-      </main>
-      <Footer />
+      >
+        <Header />
+        <main className="container" style={{ padding: '20px 0 48px' }}>
+          <AuthModal />
+          <AppRoutes />
+        </main>
+        <Footer />
+      </ReactLenis>
     </div>
   );
 }

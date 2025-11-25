@@ -1,6 +1,5 @@
 import React from 'react';
 import { Mail, Phone, MapPin, Clock } from 'lucide-react';
-import ScrollToTopOnMount from '../components/ScrollToTopOnMount.jsx';
 import './Contact.css';
 
 /**
@@ -26,8 +25,6 @@ export default function Contact() {
 
   return (
     <div className="contact-page page-container">
-      <ScrollToTopOnMount />
-
       {/* HERO SECTION - Minimalistički naslov */}
       <section className="contact-hero">
         <h1>Kontaktirajte nas</h1>

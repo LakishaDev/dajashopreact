@@ -2,13 +2,11 @@ import React, { useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { isAdminEmail } from '../../services/firebase';
 import { useNavigate } from 'react-router-dom';
-import { useLenis } from 'lenis/react';
 import AdminOrders from './components/AdminOrders'; // Tvoja postojeća komponenta
 
 export default function OrdersPage() {
   const { user } = useAuth();
   const nav = useNavigate();
-  const lenis = useLenis();
 
   // Auth Check - Vraćamo na početnu ako nije admin
   useEffect(() => {
@@ -16,11 +14,6 @@ export default function OrdersPage() {
       nav('/');
     }
   }, [user, nav]);
-
-  // Scroll to top
-  useEffect(() => {
-    if (lenis) lenis.scrollTo(0, { duration: 0.8 });
-  }, [lenis]);
 
   if (!user || !isAdminEmail(user.email)) return null;
 

@@ -5,7 +5,6 @@ import { Link } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import { faqContent } from '../data/faqContent.js';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
-import ScrollToTopOnMount from '../components/ScrollToTopOnMount.jsx';
 import './FAQ.css';
 
 // Komponenta za pojedinačni akordeon
@@ -40,7 +39,6 @@ const AccordionItem = ({ item }) => {
 export default function FAQ() {
   return (
     <main className="faq-page container">
-      <ScrollToTopOnMount />
       <Breadcrumbs />
 
       {/* PROFESIONALAN NASLOV I PODNASLOV */}
