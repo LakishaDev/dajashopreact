@@ -5,36 +5,42 @@ import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import { money } from '../utils/currency.js';
 import { useCart } from '../hooks/useCart.js';
 import { useFlash } from '../hooks/useFlash.js';
-// 1. Importujemo Wishlist
 import { useWishlist } from '../context/WishlistProvider.jsx';
 import useProduct from '../hooks/useProduct.js';
 import Watch3DViewer from '../components/Watch3DViewer.jsx';
-// 2. Importujemo Heart
-import { Box, Image as ImageIcon, Heart } from 'lucide-react';
+import { useLenis } from 'lenis/react';
+// Dodata Maximize2 ikonica
+import { Box, Image as ImageIcon, Heart, Maximize2 } from 'lucide-react';
+// Uvozimo tvoj modal
+import ImageGalleryModal from '../components/modals/ImageGalleryModal.jsx';
 
 export default function Product() {
   const { slug } = useParams();
+  const lenis = useLenis();
 
   const { product: p, loading, error } = useProduct(slug);
   const { dispatch } = useCart();
   const { flash } = useFlash();
-  // 3. Koristimo hook
   const { toggleWishlist, isInWishlist } = useWishlist();
 
-  // 4. Provera da li je lajkovano
   const isLiked = p ? isInWishlist(p.id) : false;
 
   const [activeIndex, setActiveIndex] = useState(0);
 
+  // --- STATE ZA GALERIJU ---
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+
   useEffect(() => {
     setActiveIndex(0);
-  }, [slug]);
+    lenis?.scrollTo(0, { duration: 1.5 });
+  }, [lenis, slug]);
 
+  // Priprema liste medija (3D + Slike)
   const mediaList = useMemo(() => {
     if (!p) return [];
-
     const list = [];
 
+    // 1. 3D Model (ako postoji)
     if (p.model3DUrl) {
       list.push({
         type: '3d',
@@ -43,6 +49,7 @@ export default function Product() {
       });
     }
 
+    // 2. Slike
     const images =
       p.images && p.images.length > 0
         ? p.images
@@ -61,6 +68,14 @@ export default function Product() {
     return list;
   }, [p]);
 
+  // --- PRIPREMA SLIKA ZA MODAL ---
+  // Modal očekuje format [{url: ...}, {url: ...}], i samo slike (bez 3D)
+  const galleryImages = useMemo(
+    () =>
+      mediaList.filter((m) => m.type === 'image').map((m) => ({ url: m.src })),
+    [mediaList]
+  );
+
   if (loading)
     return <div className="container product-loading">Učitavanje...</div>;
   if (error || !p)
@@ -69,6 +84,12 @@ export default function Product() {
     );
 
   const activeItem = mediaList[activeIndex] || mediaList[0];
+
+  // Izračunaj koji je indeks trenutne slike u okviru galleryImages niza
+  // (Ovo je bitno jer ako je 3D model prvi, indeksi se ne poklapaju)
+  const currentGalleryIndex = galleryImages.findIndex(
+    (img) => img.url === activeItem.src
+  );
 
   const handleAdd = () => {
     dispatch({
@@ -85,7 +106,6 @@ export default function Product() {
     flash('Dodato u korpu', `${p.name} je spreman za isporuku.`, 'cart');
   };
 
-  // 5. Handler za wishlist
   const handleWishlist = () => {
     if (!p) return;
     toggleWishlist({
@@ -100,19 +120,37 @@ export default function Product() {
 
   return (
     <div className="product product-layout">
+      {/* --- GALERIJA MODAL (Prikazuje se kad je isGalleryOpen true) --- */}
+      {isGalleryOpen && (
+        <ImageGalleryModal
+          images={galleryImages}
+          initialIndex={Math.max(0, currentGalleryIndex)} // Ako je 3D aktivan, otvori prvu sliku
+          onClose={() => setIsGalleryOpen(false)}
+        />
+      )}
+
       <div className="product__gallery">
-        <div className="product__main-view card">
+        <div className="product__main-view card relative group">
           {activeItem?.type === '3d' ? (
             <div className="view-3d-wrapper" data-lenis-prevent>
               <Watch3DViewer modelUrl={activeItem.src} />
             </div>
           ) : (
-            <div className="view-image-wrapper">
+            // --- GLAVNA SLIKA (KLIK ZA ZOOM) ---
+            <div
+              className="view-image-wrapper cursor-zoom-in relative overflow-hidden"
+              onClick={() => setIsGalleryOpen(true)}
+            >
               <img
                 src={activeItem?.src}
                 alt={p.name}
-                className="product__img-full"
+                className="product__img-full transition-transform duration-700 hover:scale-105"
               />
+
+              {/* Ikonica za zoom (pojavljuje se na hover) */}
+              <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm text-white p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none transform translate-y-2 group-hover:translate-y-0">
+                <Maximize2 size={20} />
+              </div>
             </div>
           )}
         </div>
@@ -171,7 +209,6 @@ export default function Product() {
           </div>
         </div>
 
-        {/* 6. IZMENJENI DUGMIĆI */}
         <div className="product__actions flex gap-3">
           <button className="product__cta flex-1" onClick={handleAdd}>
             Dodaj u korpu

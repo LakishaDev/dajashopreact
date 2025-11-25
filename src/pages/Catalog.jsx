@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import './Catalog.css';
 import { useSearchParams, Link, useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Loader2, AlertTriangle, ArrowLeft, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Loader2, AlertTriangle, ArrowLeft, X, Plus } from 'lucide-react';
 
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import ProductGrid from '../components/ProductGrid.jsx';
@@ -11,6 +11,12 @@ import Pagination from '../components/Pagination.jsx';
 import FilterDrawer from '../components/FilterDrawer.jsx';
 
 import useProducts from '../hooks/useProducts.js';
+
+// --- KLJUČNI IMPORTI ZA ADMINA ---
+import { useAuth } from '../hooks/useAuth';
+import { isAdminEmail } from '../services/firebase';
+// Uvozimo tvoj NOVI, SIVI, MOĆNI MODAL (Putanja mora biti tačna!)
+import AdminProductModal from './Admin/components/AdminProductModal.jsx';
 
 const PER_PAGE = 12;
 
@@ -24,6 +30,14 @@ const TITLES = {
 export default function Catalog({ department = 'satovi' }) {
   const [sp, setSp] = useSearchParams();
 
+  // --- ADMIN DETEKCIJA ---
+  const { user } = useAuth();
+  // Proveravamo da li je ulogovani korisnik admin
+  const isAdmin = user && isAdminEmail(user.email);
+
+  // Stanje za otvaranje Admin Modala
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const {
     items: allItems,
     loading,
@@ -32,7 +46,7 @@ export default function Catalog({ department = 'satovi' }) {
     order: sp.get('sort') || 'name',
   });
 
-  // --- LOGIKA ZA PRIKAZ AKTIVNIH FILTERA ---
+  // --- FILTRIRANJE ---
   const activeFilters = useMemo(() => {
     const active = [];
     const brands = sp.getAll('brand');
@@ -43,7 +57,6 @@ export default function Catalog({ department = 'satovi' }) {
     const q = sp.get('q');
 
     if (q) active.push({ key: 'q', val: q, label: `Traži: "${q}"` });
-
     brands.forEach((b) => active.push({ key: 'brand', val: b, label: b }));
     genders.forEach((g) => active.push({ key: 'gender', val: g, label: g }));
     categories.forEach((c) =>
@@ -222,6 +235,18 @@ export default function Catalog({ department = 'satovi' }) {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
+      {/* --- ADMIN MODAL (ONAJ PRAVI, SIVI) --- */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <AdminProductModal
+            // Šaljemo mu informaciju u kom smo odeljenju (satovi, naočare...)
+            product={{ department }}
+            onClose={() => setIsModalOpen(false)}
+            onSuccess={() => setIsModalOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
       <div className="catalog-mobile-trigger lg:hidden mb-4">
         <FilterDrawer products={departmentItems} />
       </div>
@@ -233,20 +258,32 @@ export default function Catalog({ department = 'satovi' }) {
 
         <main className="catalog-main min-w-0">
           <div className="mb-6">
-            <Breadcrumbs
-              trail={[
-                { label: 'Početna', href: '/' },
-                {
-                  label: TITLES[department] || department,
-                  href: department === 'satovi' ? '/catalog' : `/${department}`,
-                },
-              ]}
-            />
+            {/* HEADER SA BREADCRUMBS I DUGMETOM ZA ADMINA */}
+            <div className="flex justify-between items-center mb-4 gap-4 flex-wrap">
+              <Breadcrumbs
+                trail={[
+                  { label: 'Početna', href: '/' },
+                  {
+                    label: TITLES[department] || department,
+                    href:
+                      department === 'satovi' ? '/catalog' : `/${department}`,
+                  },
+                ]}
+              />
 
-            {/* --- NOVI HEADER (Fixed Count Right) --- */}
+              {/* --- DUGME DODAJ PROIZVOD (VIDLJIVO SAMO ADMINU) --- */}
+              {isAdmin && (
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="bg-neutral-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-black shadow-lg transform hover:scale-105 transition-all active:scale-95"
+                >
+                  <Plus size={18} /> Dodaj Proizvod
+                </button>
+              )}
+            </div>
+
+            {/* FILTER BAR (Brojač i čipovi) */}
             <div className="catalog__toprow mt-4 pb-4 border-b border-(--color-border) relative min-h-[40px]">
-              {/* LEVA STRANA: Naslov + Čipovi */}
-              {/* Padding-right (pr-[110px]) osigurava da tekst ne pređe preko brojača */}
               <div className="flex flex-wrap items-center gap-2 pr-[110px]">
                 <h1 className="text-2xl font-bold text-text mr-2 whitespace-nowrap">
                   Rezultat za:
@@ -258,7 +295,6 @@ export default function Catalog({ department = 'satovi' }) {
                   </span>
                 )}
 
-                {/* Čipovi */}
                 {activeFilters.map((f, idx) => (
                   <button
                     key={`${f.key}-${f.val}-${idx}`}
@@ -281,7 +317,6 @@ export default function Catalog({ department = 'satovi' }) {
                 )}
               </div>
 
-              {/* DESNA STRANA: Broj komada (Apsolutno pozicioniran) */}
               <div className="absolute right-0 top-1 catalog__count text-sm font-semibold text-muted bg-surface px-3 py-1 rounded-full border border-(--color-border) whitespace-nowrap">
                 {totalCount} kom.
               </div>
