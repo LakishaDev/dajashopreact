@@ -1,4 +1,3 @@
-// src/pages/Admin/AdminDashboard.jsx
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { isAdminEmail } from '../../services/firebase';
@@ -15,21 +14,52 @@ import {
   X,
   Check,
   Trash2,
-  Filter, // Vraćena ikonica
-  ChevronDown, // Vraćena ikonica
+  Filter,
+  ChevronDown,
 } from 'lucide-react';
 import useProducts from '../../hooks/useProducts';
-import { deleteProduct } from '../../services/products';
+import { deleteProduct, saveProduct } from '../../services/products';
 
 // Components
 import AdminProductModal from './components/AdminProductModal.jsx';
 import ConfirmModal from '../../components/modals/ConfirmModal.jsx';
+import ExcelManager from './components/ExcelManager';
 import {
   brandService,
   categoryService,
   specKeyService,
 } from '../../services/admin';
 import { money } from '../../utils/currency';
+
+// Opciono: Import za upload slika (ako nemate, kod će je preskočiti)
+import { uploadRemoteImage } from '../../services/admin';
+
+// --- 1. SANITIZE FUNKCIJA (Čišćenje podataka) ---
+const sanitizeItem = (item) => {
+  const clean = { ...item };
+  Object.keys(clean).forEach((key) => {
+    if (clean[key] === undefined) {
+      delete clean[key];
+    }
+  });
+  if (!clean.id || clean.id === '') {
+    delete clean.id;
+  }
+  return clean;
+};
+
+// --- 2. GENERATOR SLUGA (STANDARDNI) ---
+// Radi isto što i tvoj AdminProductModal: mala slova + crtice umesto razmaka
+const generateSlug = (text) => {
+  if (!text) return '';
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-') // Razmaci u crtice
+    .replace(/[^\w\-]+/g, '') // Sklanja specijalne karaktere (osim -)
+    .replace(/\-\-+/g, '-'); // Sklanja duple crtice
+};
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -39,7 +69,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('products');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // --- SEARCH FILTER STATE (VRAĆENO) ---
+  // --- SEARCH FILTER STATE ---
   const [searchFilters, setSearchFilters] = useState([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterRef = useRef(null);
@@ -52,7 +82,6 @@ export default function AdminDashboard() {
     { id: 'price', label: 'Cena' },
   ];
 
-  // Zatvaranje dropdown-a na klik sa strane
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (filterRef.current && !filterRef.current.contains(event.target)) {
@@ -82,7 +111,7 @@ export default function AdminDashboard() {
     { id: 'naocare', label: 'Naočare' },
   ];
 
-  // --- BRANDS STATE ---
+  // --- ADMIN STATE ---
   const [brands, setBrands] = useState([]);
   const [brandFilters, setBrandFilters] = useState([]);
   const [newBrandName, setNewBrandName] = useState('');
@@ -90,7 +119,6 @@ export default function AdminDashboard() {
   const [editingBrandId, setEditingBrandId] = useState(null);
   const [editingBrandName, setEditingBrandName] = useState('');
 
-  // --- CATEGORIES STATE ---
   const [categories, setCategories] = useState([]);
   const [catFilters, setCatFilters] = useState([]);
   const [newCatName, setNewCatName] = useState('');
@@ -98,9 +126,8 @@ export default function AdminDashboard() {
   const [newCatBrand, setNewCatBrand] = useState('');
   const [editingCatId, setEditingCatId] = useState(null);
   const [editingCatName, setEditingCatName] = useState('');
-  const [catBrandFilter, setCatBrandFilter] = useState(''); // Filter za brend u kategorijama
+  const [catBrandFilter, setCatBrandFilter] = useState('');
 
-  // --- SPECS STATE ---
   const [specs, setSpecs] = useState([]);
   const [specFilters, setSpecFilters] = useState([]);
   const [newSpecName, setNewSpecName] = useState('');
@@ -126,33 +153,152 @@ export default function AdminDashboard() {
     if (!user || !isAdminEmail(user.email)) nav('/');
   }, [user, nav]);
 
+  useEffect(() => {
+    if (lenis) lenis.scrollTo(0, { duration: 0.8 });
+  }, [lenis]);
+
+  // --- GLAVNA FUNKCIJA ZA MASOVNI UVOZ ---
+  const handleBulkImport = async (importedData) => {
+    if (
+      !window.confirm(
+        `Pronađeno ${importedData.length} proizvoda. Pokreni upis?`
+      )
+    ) {
+      return;
+    }
+
+    let successCount = 0;
+    let lastError = null;
+
+    // Keširanje
+    const existingBrandsNames = new Set(
+      brands.map((b) => b.name.toLowerCase().trim())
+    );
+    const existingCatsNames = new Set(
+      categories.map((c) => c.name.toLowerCase().trim())
+    );
+    const existingSpecsNames = new Set(
+      specs.map((s) => s.name.toLowerCase().trim())
+    );
+
+    const newlyCreatedBrands = new Set();
+    const newlyCreatedCats = new Set();
+    const newlyCreatedSpecs = new Set();
+
+    for (const item of importedData) {
+      try {
+        // 0. SLIKE (Opciono Upload)
+        if (
+          typeof uploadRemoteImage === 'function' &&
+          item.image &&
+          item.image.startsWith('http') &&
+          !item.image.includes('storage.googleapis.com')
+        ) {
+          try {
+            const secureUrl = await uploadRemoteImage(item.image);
+            item.image = secureUrl;
+          } catch (e) {
+            console.warn('Slika nije prebačena, ostaje link.');
+          }
+        }
+
+        // 1. BREND
+        const bName = item.brand ? String(item.brand).trim() : '';
+        const bNameLower = bName.toLowerCase();
+        if (
+          bName &&
+          !existingBrandsNames.has(bNameLower) &&
+          !newlyCreatedBrands.has(bNameLower)
+        ) {
+          await brandService.add(bName, {
+            department: item.department || 'satovi',
+          });
+          newlyCreatedBrands.add(bNameLower);
+        }
+
+        // 2. KATEGORIJA
+        const cName = item.category ? String(item.category).trim() : '';
+        const cNameLower = cName.toLowerCase();
+        if (
+          cName &&
+          !existingCatsNames.has(cNameLower) &&
+          !newlyCreatedCats.has(cNameLower)
+        ) {
+          await categoryService.add(cName, {
+            department: item.department || 'satovi',
+            brand: item.brand || 'Ostalo',
+          });
+          newlyCreatedCats.add(cNameLower);
+        }
+
+        // 3. SPECIFIKACIJE
+        if (item.specs && typeof item.specs === 'object') {
+          for (const rawSpecName of Object.keys(item.specs)) {
+            const specName = String(rawSpecName).trim();
+            const lowerSpecName = specName.toLowerCase();
+
+            if (
+              !existingSpecsNames.has(lowerSpecName) &&
+              !newlyCreatedSpecs.has(lowerSpecName)
+            ) {
+              await specKeyService.add(specName, {
+                department: item.department || 'satovi',
+                unit: '',
+              });
+              newlyCreatedSpecs.add(lowerSpecName);
+            }
+          }
+        }
+
+        // 4. PRIPREMA PROIZVODA (SLUG + ČIŠĆENJE)
+        const cleanItem = sanitizeItem(item);
+
+        // --- DODAVANJE SLUGA (ISTO KAO PRODUCT PAGE) ---
+        // Generišemo slug samo ako ga nema
+        if (!cleanItem.slug && cleanItem.name) {
+          cleanItem.slug = generateSlug(cleanItem.name);
+        }
+        // ----------------------------------------------
+
+        await saveProduct(cleanItem);
+        successCount++;
+      } catch (err) {
+        console.error(`Greška na proizvodu "${item.name}":`, err);
+        lastError = err.message;
+      }
+    }
+
+    if (successCount === 0 && lastError) {
+      alert(`⚠️ GREŠKA PRI UPISU!\n\nDetalj: ${lastError}`);
+    } else {
+      alert(
+        `✅ USPEH!\nUpisano ${successCount} od ${importedData.length} proizvoda.`
+      );
+    }
+  };
+
   if (!user) return null;
 
-  // --- 1. FILTRIRANJE PROIZVODA (VRAĆENO) ---
+  // --- RENDER LOGIKA ---
   const filteredProducts = products.filter((p) => {
     const term = searchTerm.toLowerCase();
     if (!term) return true;
-
-    // Ako su uključeni specifični filteri
     if (searchFilters.length > 0) {
       return searchFilters.some((field) => {
         let val = p[field];
-        // Fix za stare proizvode koji nemaju department
         if (field === 'department') val = val || 'satovi';
         return String(val || '')
           .toLowerCase()
           .includes(term);
       });
     }
-
-    // Default pretraga (Naziv ili Brend)
     return (
       p.name.toLowerCase().includes(term) ||
       p.brand.toLowerCase().includes(term)
     );
   });
 
-  // --- 2. FILTRIRANJE BRENDOVA ---
+  // Memoizacija za filtere
   const visibleBrands = useMemo(() => {
     if (brandFilters.length === 0) return brands;
     return brands.filter((b) =>
@@ -160,7 +306,6 @@ export default function AdminDashboard() {
     );
   }, [brands, brandFilters]);
 
-  // --- 3. FILTRIRANJE KATEGORIJA ---
   const availableBrandsForFilter = useMemo(() => {
     if (catFilters.length === 0) return brands;
     return brands.filter((b) => catFilters.includes(b.department || 'satovi'));
@@ -184,13 +329,12 @@ export default function AdminDashboard() {
     return brands;
   }, [brands, catFilters, newCatDept]);
 
-  // --- 4. FILTRIRANJE SPECIFIKACIJA ---
   const visibleSpecs = useMemo(() => {
     if (specFilters.length === 0) return specs;
     return specs.filter((s) => specFilters.includes(s.department || 'satovi'));
   }, [specs, specFilters]);
 
-  // --- BRAND ACTIONS ---
+  // CRUD Akcije
   const toggleBrandFilter = (deptId) =>
     setBrandFilters((prev) =>
       prev.includes(deptId)
@@ -200,13 +344,12 @@ export default function AdminDashboard() {
   const handleAddBrand = async (e) => {
     e.preventDefault();
     if (!newBrandName.trim()) return;
-    const extra = {
-      department:
-        (brandFilters.length === 1 ? brandFilters[0] : newBrandDept) ||
-        'satovi',
-    };
     try {
-      await brandService.add(newBrandName, extra);
+      await brandService.add(newBrandName, {
+        department:
+          (brandFilters.length === 1 ? brandFilters[0] : newBrandDept) ||
+          'satovi',
+      });
       setNewBrandName('');
     } catch (err) {
       alert('Greška.');
@@ -225,7 +368,6 @@ export default function AdminDashboard() {
     if (window.confirm('Obriši?')) await brandService.remove(id);
   };
 
-  // --- CATEGORY ACTIONS ---
   const toggleCatFilter = (deptId) => {
     setCatFilters((prev) =>
       prev.includes(deptId)
@@ -240,16 +382,16 @@ export default function AdminDashboard() {
     if (!newCatName.trim()) return;
     const brandToUse = catBrandFilter || newCatBrand;
     if (!brandToUse) return alert('Moraš izabrati brend.');
-
     const brandObj = brands.find((b) => b.name === brandToUse);
     const dept =
       brandObj?.department ||
       (catFilters.length === 1 ? catFilters[0] : newCatDept) ||
       'satovi';
-
-    const extra = { department: dept, brand: brandToUse };
     try {
-      await categoryService.add(newCatName, extra);
+      await categoryService.add(newCatName, {
+        department: dept,
+        brand: brandToUse,
+      });
       setNewCatName('');
     } catch (err) {
       alert('Greška.');
@@ -268,7 +410,6 @@ export default function AdminDashboard() {
     if (window.confirm('Obriši?')) await categoryService.remove(id);
   };
 
-  // --- SPEC ACTIONS ---
   const toggleSpecFilter = (deptId) =>
     setSpecFilters((prev) =>
       prev.includes(deptId)
@@ -278,13 +419,12 @@ export default function AdminDashboard() {
   const handleAddSpec = async (e) => {
     e.preventDefault();
     if (!newSpecName.trim()) return;
-    const extra = {
-      department:
-        (specFilters.length === 1 ? specFilters[0] : newSpecDept) || 'satovi',
-      unit: newSpecUnit.trim(),
-    };
     try {
-      await specKeyService.add(newSpecName, extra);
+      await specKeyService.add(newSpecName, {
+        department:
+          (specFilters.length === 1 ? specFilters[0] : newSpecDept) || 'satovi',
+        unit: newSpecUnit.trim(),
+      });
       setNewSpecName('');
       setNewSpecUnit('');
     } catch (err) {
@@ -304,7 +444,6 @@ export default function AdminDashboard() {
     if (window.confirm('Obriši?')) await specKeyService.remove(id);
   };
 
-  // Product Actions
   const openNew = () => {
     setEditProduct(null);
     setModalOpen(true);
@@ -357,15 +496,14 @@ export default function AdminDashboard() {
       </div>
 
       <div className="container mt-8">
-        {/* --- PROIZVODI (SADA SA SEARCH FILTEROM) --- */}
         {activeTab === 'products' && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="space-y-6"
           >
+            <ExcelManager products={products} onImport={handleBulkImport} />
             <div className="flex flex-wrap gap-4 justify-between items-center bg-white p-4 rounded-2xl border border-neutral-200 shadow-sm">
-              {/* SEARCH BAR + FILTER */}
               <div className="flex flex-1 max-w-2xl gap-2">
                 <div className="relative flex-1">
                   <Search
@@ -375,45 +513,22 @@ export default function AdminDashboard() {
                   <input
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder={
-                      searchFilters.length > 0
-                        ? `Pretraži po: ${searchFilters
-                            .map(
-                              (f) => filterOptions.find((o) => o.id === f).label
-                            )
-                            .join(', ')}...`
-                        : 'Pretraži proizvode...'
-                    }
+                    placeholder="Pretraži..."
                     className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-2.5 outline-none focus:ring-2 focus:ring-neutral-200 transition-all text-neutral-900"
                   />
                 </div>
-
-                {/* FILTER DROPDOWN */}
                 <div className="relative" ref={filterRef}>
                   <button
                     onClick={() => setIsFilterOpen(!isFilterOpen)}
-                    className={`h-full px-4 rounded-xl border flex items-center gap-2 font-medium transition-all
-                      ${
-                        searchFilters.length > 0
-                          ? 'bg-neutral-900 text-white border-neutral-900 shadow-md'
-                          : 'bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50'
-                      }`}
+                    className={`h-full px-4 rounded-xl border flex items-center gap-2 font-medium transition-all ${
+                      searchFilters.length > 0
+                        ? 'bg-neutral-900 text-white border-neutral-900 shadow-md'
+                        : 'bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50'
+                    }`}
                   >
-                    <Filter size={18} />
+                    <Filter size={18} />{' '}
                     <span className="hidden sm:inline">Filteri</span>
-                    {searchFilters.length > 0 && (
-                      <span className="ml-1 bg-white text-neutral-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
-                        {searchFilters.length}
-                      </span>
-                    )}
-                    <ChevronDown
-                      size={14}
-                      className={`transition-transform ${
-                        isFilterOpen ? 'rotate-180' : ''
-                      }`}
-                    />
                   </button>
-
                   <AnimatePresence>
                     {isFilterOpen && (
                       <motion.div
@@ -422,43 +537,27 @@ export default function AdminDashboard() {
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         className="absolute top-full right-0 mt-2 w-56 bg-white border border-neutral-100 rounded-xl shadow-xl z-50 overflow-hidden p-1"
                       >
-                        <div className="px-3 py-2 text-xs font-bold text-neutral-400 uppercase tracking-wider border-b border-neutral-50 mb-1">
-                          Pretraži po:
-                        </div>
                         {filterOptions.map((opt) => (
                           <button
                             key={opt.id}
                             onClick={() => toggleSearchFilter(opt.id)}
-                            className={`w-full flex items-center justify-between px-3 py-2.5 text-sm rounded-lg transition-colors text-left mb-0.5
-                              ${
-                                searchFilters.includes(opt.id)
-                                  ? 'bg-neutral-50 text-neutral-900 font-semibold'
-                                  : 'text-neutral-600 hover:bg-neutral-50'
-                              }`}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 text-sm rounded-lg transition-colors text-left mb-0.5 ${
+                              searchFilters.includes(opt.id)
+                                ? 'bg-neutral-50 text-neutral-900 font-semibold'
+                                : 'text-neutral-600 hover:bg-neutral-50'
+                            }`}
                           >
-                            <span>{opt.label}</span>
+                            <span>{opt.label}</span>{' '}
                             {searchFilters.includes(opt.id) && (
                               <Check size={16} className="text-emerald-500" />
                             )}
                           </button>
                         ))}
-                        <div className="border-t border-neutral-100 mt-1 pt-1">
-                          <button
-                            onClick={() => {
-                              setSearchFilters([]);
-                              setIsFilterOpen(false);
-                            }}
-                            className="w-full text-left px-3 py-2 text-xs font-bold text-red-500 hover:bg-red-50 rounded-lg transition-colors uppercase tracking-wide"
-                          >
-                            Resetuj filtere
-                          </button>
-                        </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
               </div>
-
               <button
                 onClick={openNew}
                 className="bg-neutral-900 text-white rounded-xl px-5 py-2.5 flex items-center gap-2 hover:bg-black font-bold"
@@ -497,7 +596,12 @@ export default function AdminDashboard() {
                           </div>
                         </td>
                         <td className="p-4 font-semibold text-neutral-900">
-                          {p.name}
+                          <div className="flex flex-col">
+                            <span>{p.name}</span>
+                            <span className="text-[10px] text-gray-400">
+                              /{p.slug || 'nema-sluga'}
+                            </span>
+                          </div>
                         </td>
                         <td className="p-4">
                           <span className="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-blue-50 text-blue-700 uppercase tracking-wider">
@@ -538,7 +642,7 @@ export default function AdminDashboard() {
           </motion.div>
         )}
 
-        {/* --- BRENDOVI --- */}
+        {/* --- BRANDS TAB --- */}
         {activeTab === 'brands' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -591,14 +695,6 @@ export default function AdminDashboard() {
                       </option>
                     ))}
                   </select>
-                )}
-                {brandFilters.length === 1 && (
-                  <div className="flex items-center px-3 bg-blue-50 text-blue-700 text-xs font-bold rounded-xl whitespace-nowrap uppercase tracking-wide border border-blue-100">
-                    {
-                      departmentOptions.find((o) => o.id === brandFilters[0])
-                        ?.label
-                    }
-                  </div>
                 )}
                 <input
                   className="flex-1 bg-white/5 border border-primary-dark rounded-xl px-4 py-2 text-sm focus:border-primary outline-none transition-colors"
@@ -687,7 +783,7 @@ export default function AdminDashboard() {
           </motion.div>
         )}
 
-        {/* --- KATEGORIJE --- */}
+        {/* --- CATEGORIES TAB --- */}
         {activeTab === 'categories' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -770,14 +866,6 @@ export default function AdminDashboard() {
                         </option>
                       ))}
                     </select>
-                  </div>
-                )}
-                {catFilters.length === 1 && (
-                  <div className="flex items-center px-3 py-2 bg-blue-50 text-blue-700 text-xs font-bold rounded-xl whitespace-nowrap uppercase tracking-wide border border-blue-100 mb-[1px]">
-                    {
-                      departmentOptions.find((o) => o.id === catFilters[0])
-                        ?.label
-                    }
                   </div>
                 )}
                 <div className="flex-1 min-w-[120px]">
@@ -892,7 +980,7 @@ export default function AdminDashboard() {
           </motion.div>
         )}
 
-        {/* --- SPECIFIKACIJE --- */}
+        {/* --- SPECS TAB --- */}
         {activeTab === 'specs' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -952,14 +1040,6 @@ export default function AdminDashboard() {
                         </option>
                       ))}
                     </select>
-                  </div>
-                )}
-                {specFilters.length === 1 && (
-                  <div className="flex items-center px-3 py-2 bg-blue-50 text-blue-700 text-xs font-bold rounded-xl whitespace-nowrap uppercase tracking-wide border border-blue-100 mb-[1px]">
-                    {
-                      departmentOptions.find((o) => o.id === specFilters[0])
-                        ?.label
-                    }
                   </div>
                 )}
                 <div className="flex-[2] min-w-[120px]">
@@ -1068,6 +1148,7 @@ export default function AdminDashboard() {
           </motion.div>
         )}
       </div>
+
       <AnimatePresence>
         {modalOpen && (
           <AdminProductModal
