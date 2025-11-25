@@ -30,7 +30,6 @@ import {
   specKeyService,
 } from '../../services/admin';
 import { money } from '../../utils/currency';
-import { useLenis } from 'lenis/react';
 
 // Opciono: Import za upload slika (ako nemate, kod će je preskočiti)
 import { uploadRemoteImage } from '../../services/admin';
@@ -66,7 +65,6 @@ export default function AdminDashboard() {
   const { user } = useAuth();
   const nav = useNavigate();
   const { items: products } = useProducts();
-  const lenis = useLenis();
 
   const [activeTab, setActiveTab] = useState('products');
   const [searchTerm, setSearchTerm] = useState('');

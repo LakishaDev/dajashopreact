@@ -9,13 +9,11 @@ import { useFlash } from '../hooks/useFlash.js';
 import { useWishlist } from '../context/WishlistProvider.jsx';
 import useProduct from '../hooks/useProduct.js';
 import Watch3DViewer from '../components/Watch3DViewer.jsx';
-import { useLenis } from 'lenis/react';
 // 2. Importujemo Heart
 import { Box, Image as ImageIcon, Heart } from 'lucide-react';
 
 export default function Product() {
   const { slug } = useParams();
-  const lenis = useLenis();
 
   const { product: p, loading, error } = useProduct(slug);
   const { dispatch } = useCart();
@@ -30,8 +28,7 @@ export default function Product() {
 
   useEffect(() => {
     setActiveIndex(0);
-    lenis?.scrollTo(0, { duration: 1.5 });
-  }, [lenis, slug]);
+  }, [slug]);
 
   const mediaList = useMemo(() => {
     if (!p) return [];
