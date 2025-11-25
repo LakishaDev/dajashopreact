@@ -30,13 +30,11 @@ import {
   specKeyService,
 } from '../../services/admin';
 import { money } from '../../utils/currency';
-import { useLenis } from 'lenis/react';
 
 export default function AdminDashboard() {
   const { user } = useAuth();
   const nav = useNavigate();
   const { items: products } = useProducts();
-  const lenis = useLenis();
 
   const [activeTab, setActiveTab] = useState('products');
   const [searchTerm, setSearchTerm] = useState('');
@@ -127,10 +125,6 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!user || !isAdminEmail(user.email)) nav('/');
   }, [user, nav]);
-
-  useEffect(() => {
-    if (lenis) lenis.scrollTo(0, { duration: 0.8 });
-  }, [lenis]);
 
   if (!user) return null;
 
