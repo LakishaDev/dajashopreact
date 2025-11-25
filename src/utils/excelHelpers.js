@@ -2,6 +2,7 @@ import * as XLSX from 'xlsx';
 
 const getDateString = () => new Date().toISOString().split('T')[0];
 
+// --- IZVOZ (EXPORT) ---
 export const exportToExcel = (data, fileName = 'proizvodi') => {
   const cleanData = data.map((item) => {
     const row = {
@@ -10,6 +11,7 @@ export const exportToExcel = (data, fileName = 'proizvodi') => {
       Brend: item.brand,
       Odeljenje: item.department || 'satovi',
       Kategorija: item.category,
+      Pol: item.gender || 'Unisex',
       Cena: item.price,
       Slika: item.image || '',
       Opis: item.description || '',
@@ -25,12 +27,14 @@ export const exportToExcel = (data, fileName = 'proizvodi') => {
   });
 
   const worksheet = XLSX.utils.json_to_sheet(cleanData);
+
   const wscols = [
     { wch: 25 },
     { wch: 30 },
     { wch: 15 },
     { wch: 15 },
     { wch: 20 },
+    { wch: 10 },
     { wch: 10 },
     { wch: 30 },
     { wch: 40 },
@@ -42,6 +46,7 @@ export const exportToExcel = (data, fileName = 'proizvodi') => {
   XLSX.writeFile(workbook, `DajaShop_${fileName}_${getDateString()}.xlsx`);
 };
 
+// --- UVOZ (IMPORT) ---
 export const importFromExcel = (file) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -62,16 +67,21 @@ export const importFromExcel = (file) => {
   });
 };
 
-export const downloadTemplate = () => {
+// --- NAPREDNI ŠABLON ---
+export const downloadTemplate = (
+  existingBrands = [],
+  existingCategories = []
+) => {
   const templateData = [
     {
-      ID: '', // OBAVEZNO PRAZNO ZA NOVI PROIZVOD
-      Naziv: 'Primer Sat',
+      ID: '',
+      Naziv: 'Primer: Casio Edifice',
       Brend: 'Casio',
       Odeljenje: 'satovi',
       Kategorija: 'Edifice',
-      Cena: 15000,
-      Slika: 'https://primer.com/slika.jpg',
+      Pol: 'MUŠKI',
+      Cena: 15900,
+      Slika: 'https://link-do-slike.com/sat.jpg',
       Opis: 'Opis proizvoda...',
       'Spec: Mehanizam': 'Kvarcni',
       'Spec: Staklo': 'Safirno',
@@ -86,12 +96,31 @@ export const downloadTemplate = () => {
     { wch: 15 },
     { wch: 15 },
     { wch: 10 },
+    { wch: 10 },
     { wch: 30 },
     { wch: 30 },
-    { wch: 15 },
-    { wch: 15 },
   ];
+
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Šablon za Uvoz');
-  XLSX.writeFile(workbook, `DajaShop_Sablon.xlsx`);
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Unos Proizvoda');
+
+  const refData = [];
+  const maxRows = Math.max(existingBrands.length, existingCategories.length, 4);
+  const depts = ['satovi', 'naocare', 'baterije', 'daljinski'];
+  const genders = ['MUŠKI', 'ŽENSKI', 'UNISEX (ostavi prazno)'];
+
+  for (let i = 0; i < maxRows; i++) {
+    refData.push({
+      'Postojeći Brendovi': existingBrands[i]?.name || '',
+      'Postojeće Kategorije': existingCategories[i]?.name || '',
+      'Dozvoljena Odeljenja': depts[i] || '',
+      'Dozvoljeni Polovi': genders[i] || '',
+    });
+  }
+
+  const refWorksheet = XLSX.utils.json_to_sheet(refData);
+  refWorksheet['!cols'] = [{ wch: 25 }, { wch: 25 }, { wch: 20 }, { wch: 25 }];
+  XLSX.utils.book_append_sheet(workbook, refWorksheet, 'Šifarnik (Pomoć)');
+
+  XLSX.writeFile(workbook, `DajaShop_Sablon_i_Sifarnik.xlsx`);
 };
