@@ -3,7 +3,7 @@ import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
 import AuthModal from './components/AuthModal.jsx';
 import { useLocation } from 'react-router-dom';
-
+import NewsletterModal from './components/modals/NewsletterModal.jsx';
 import { ReactLenis } from 'lenis/react';
 import { useEffect, useRef } from 'react';
 
@@ -44,6 +44,7 @@ export default function App() {
         <Header />
         <main className="container" style={{ padding: '20px 0 48px' }}>
           <AuthModal />
+          <NewsletterModal />
           <AppRoutes />
         </main>
         <Footer />
