@@ -71,7 +71,7 @@ export default function Footer() {
                   aria-label="Telefonski broj"
                 >
                   <Phone size={18} />
-                  <span>064/126-2425</span>
+                  <span>064/126-24-25</span>
                 </a>
               </li>
               <li>

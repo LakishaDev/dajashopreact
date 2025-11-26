@@ -1,22 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import './Catalog.css';
-import { useSearchParams, Link, useParams } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, AlertTriangle, ArrowLeft, X, Plus } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Loader2, AlertTriangle, ArrowLeft, X } from 'lucide-react';
 
+// Komponente
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import ProductGrid from '../components/ProductGrid.jsx';
 import Filters from '../components/Filters.jsx';
 import Pagination from '../components/Pagination.jsx';
 import FilterDrawer from '../components/FilterDrawer.jsx';
 
+// Hookovi
 import useProducts from '../hooks/useProducts.js';
-
-// --- KLJUČNI IMPORTI ZA ADMINA ---
-import { useAuth } from '../hooks/useAuth';
-import { isAdminEmail } from '../services/firebase';
-// Uvozimo tvoj NOVI, SIVI, MOĆNI MODAL (Putanja mora biti tačna!)
-import AdminProductModal from './Admin/components/AdminProductModal.jsx';
 
 const PER_PAGE = 12;
 
@@ -30,14 +26,7 @@ const TITLES = {
 export default function Catalog({ department = 'satovi' }) {
   const [sp, setSp] = useSearchParams();
 
-  // --- ADMIN DETEKCIJA ---
-  const { user } = useAuth();
-  // Proveravamo da li je ulogovani korisnik admin
-  const isAdmin = user && isAdminEmail(user.email);
-
-  // Stanje za otvaranje Admin Modala
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
+  // --- FETCH DATA ---
   const {
     items: allItems,
     loading,
@@ -48,6 +37,7 @@ export default function Catalog({ department = 'satovi' }) {
 
   // --- FILTRIRANJE ---
   const activeFilters = useMemo(() => {
+    // (Ovaj deo ostaje isti kao pre)
     const active = [];
     const brands = sp.getAll('brand');
     const genders = sp.getAll('gender');
@@ -72,7 +62,6 @@ export default function Catalog({ department = 'satovi' }) {
         ).toLocaleString()} RSD`,
       });
     }
-
     Array.from(sp.keys()).forEach((k) => {
       if (k.startsWith('spec_')) {
         const labelKey = k.replace('spec_', '');
@@ -81,11 +70,11 @@ export default function Catalog({ department = 'satovi' }) {
         });
       }
     });
-
     return active;
   }, [sp]);
 
   const removeFilter = (key, val) => {
+    /* ... (isto) ... */
     const next = new URLSearchParams(sp);
     if (key === 'price') {
       next.delete('min');
@@ -99,22 +88,27 @@ export default function Catalog({ department = 'satovi' }) {
     }
     setSp(next, { replace: true });
   };
-
   const clearAllFilters = () => {
+    /* ... (isto) ... */
     const next = new URLSearchParams();
     if (sp.get('sort')) next.set('sort', sp.get('sort'));
     setSp(next, { replace: true });
   };
 
-  // --- LOGIKA KATALOGA ---
+  // --- Filtriranje po odeljenju + VIDLJIVOST ---
   const departmentItems = useMemo(() => {
     if (!allItems) return [];
     return allItems.filter((p) => {
+      // 1. Provera vidljivosti: Ako je isVisible false, preskoči ga
+      if (p.isVisible === false) return false;
+
+      // 2. Provera odeljenja
       const productDept = p.department || 'satovi';
       return productDept === department;
     });
   }, [allItems, department]);
 
+  // Glavna logika filtriranja (Pretraga, Brendovi...)
   const filteredData = useMemo(() => {
     let out = [...departmentItems];
 
@@ -130,7 +124,6 @@ export default function Catalog({ department = 'satovi' }) {
         (p.brand + ' ' + p.name).toLowerCase().includes(q)
       );
     if (brands.length) out = out.filter((p) => brands.includes(p.brand));
-
     if (genders.length) {
       out = out.filter((p) => {
         if (genders.includes(p.gender)) return true;
@@ -138,7 +131,6 @@ export default function Catalog({ department = 'satovi' }) {
         return false;
       });
     }
-
     if (categories.length)
       out = out.filter((p) => categories.includes(p.category));
     if (min !== null) out = out.filter((p) => p.price >= min);
@@ -181,49 +173,53 @@ export default function Catalog({ department = 'satovi' }) {
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           >
-            <Loader2 size={32} className="text-primary" />
-          </motion.div>
+            {' '}
+            <Loader2 size={32} className="text-primary" />{' '}
+          </motion.div>{' '}
           <span className="ml-3 text-lg font-medium">Učitavanje...</span>
         </div>
       );
     }
-
     if (err) {
       return (
         <div className="flex flex-col items-center justify-center h-64 p-6 text-red-500">
-          <AlertTriangle size={32} />
-          <p className="mt-3 font-bold">Greška pri učitavanju</p>
+          {' '}
+          <AlertTriangle size={32} />{' '}
+          <p className="mt-3 font-bold">Greška pri učitavanju</p>{' '}
         </div>
       );
     }
-
     if (totalCount === 0) {
       return (
         <div className="flex flex-col items-center justify-center h-64 p-8 rounded-2xl border border-(--color-border) bg-surface text-center">
+          {' '}
           <p className="text-xl font-semibold text-text">
-            Nema rezultata za izabrane filtere.
-          </p>
+            {' '}
+            Nema rezultata za izabrane filtere.{' '}
+          </p>{' '}
           <button
             onClick={clearAllFilters}
             className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-onPrimary font-bold shadow-lg hover:opacity-90 transition-opacity"
           >
-            <ArrowLeft size={18} /> Resetuj filtere
-          </button>
+            {' '}
+            <ArrowLeft size={18} /> Resetuj filtere{' '}
+          </button>{' '}
         </div>
       );
     }
-
     return (
       <>
-        <ProductGrid items={itemsToShow} />
+        {' '}
+        <ProductGrid items={itemsToShow} />{' '}
         <div className="mt-8">
+          {' '}
           <Pagination
             page={page}
             total={totalCount}
             perPage={PER_PAGE}
             onChange={setPage}
-          />
-        </div>
+          />{' '}
+        </div>{' '}
       </>
     );
   };
@@ -235,30 +231,17 @@ export default function Catalog({ department = 'satovi' }) {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      {/* --- ADMIN MODAL (ONAJ PRAVI, SIVI) --- */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <AdminProductModal
-            // Šaljemo mu informaciju u kom smo odeljenju (satovi, naočare...)
-            product={{ department }}
-            onClose={() => setIsModalOpen(false)}
-            onSuccess={() => setIsModalOpen(false)}
-          />
-        )}
-      </AnimatePresence>
-
       <div className="catalog-mobile-trigger lg:hidden mb-4">
-        <FilterDrawer products={departmentItems} />
+        {' '}
+        <FilterDrawer products={departmentItems} />{' '}
       </div>
-
       <div className="catalog-layout lg:grid lg:grid-cols-[260px_1fr] lg:gap-8 items-start">
         <aside className="sidebar-filters hidden lg:block sticky top-24">
-          <Filters products={departmentItems} />
+          {' '}
+          <Filters products={departmentItems} />{' '}
         </aside>
-
         <main className="catalog-main min-w-0">
           <div className="mb-6">
-            {/* HEADER SA BREADCRUMBS I DUGMETOM ZA ADMINA */}
             <div className="flex justify-between items-center mb-4 gap-4 flex-wrap">
               <Breadcrumbs
                 trail={[
@@ -270,31 +253,19 @@ export default function Catalog({ department = 'satovi' }) {
                   },
                 ]}
               />
-
-              {/* --- DUGME DODAJ PROIZVOD (VIDLJIVO SAMO ADMINU) --- */}
-              {isAdmin && (
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="bg-neutral-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-black shadow-lg transform hover:scale-105 transition-all active:scale-95"
-                >
-                  <Plus size={18} /> Dodaj Proizvod
-                </button>
-              )}
             </div>
-
-            {/* FILTER BAR (Brojač i čipovi) */}
             <div className="catalog__toprow mt-4 pb-4 border-b border-(--color-border) relative min-h-[40px]">
               <div className="flex flex-wrap items-center gap-2 pr-[110px]">
                 <h1 className="text-2xl font-bold text-text mr-2 whitespace-nowrap">
-                  Rezultat za:
+                  {' '}
+                  Rezultat za:{' '}
                 </h1>
-
                 {activeFilters.length === 0 && (
                   <span className="text-muted text-sm font-medium">
-                    Svi proizvodi
+                    {' '}
+                    Svi proizvodi{' '}
                   </span>
                 )}
-
                 {activeFilters.map((f, idx) => (
                   <button
                     key={`${f.key}-${f.val}-${idx}`}
@@ -302,27 +273,26 @@ export default function Catalog({ department = 'satovi' }) {
                     className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-900 text-white text-xs font-bold uppercase tracking-wide hover:bg-neutral-700 transition-colors shadow-sm"
                     title="Ukloni filter"
                   >
-                    {f.label}
-                    <X size={13} className="text-white/70" />
+                    {' '}
+                    {f.label} <X size={13} className="text-white/70" />{' '}
                   </button>
                 ))}
-
                 {activeFilters.length > 0 && (
                   <button
                     onClick={clearAllFilters}
                     className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-red-600 border border-red-100 text-xs font-bold uppercase tracking-wide hover:bg-red-100 transition-colors"
                   >
-                    Obriši sve
+                    {' '}
+                    Obriši sve{' '}
                   </button>
                 )}
               </div>
-
               <div className="absolute right-0 top-1 catalog__count text-sm font-semibold text-muted bg-surface px-3 py-1 rounded-full border border-(--color-border) whitespace-nowrap">
-                {totalCount} kom.
+                {' '}
+                {totalCount} kom.{' '}
               </div>
             </div>
           </div>
-
           <motion.div
             key={department + sp.toString()}
             initial={{ opacity: 0 }}
@@ -330,7 +300,8 @@ export default function Catalog({ department = 'satovi' }) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
           >
-            {renderContent()}
+            {' '}
+            {renderContent()}{' '}
           </motion.div>
         </main>
       </div>

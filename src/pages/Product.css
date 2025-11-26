@@ -244,3 +244,106 @@
     font-size: 0.85rem;
   }
 }
+/* ==============================
+   Variants Section (Dostupne boje)
+   ============================== */
+.product__variants {
+  margin-top: 24px;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 5; /* Da tooltip-ovi budu iznad ostalog sadržaja */
+}
+
+.variants-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.variants-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px; /* Malo veći razmak zbog većih slika */
+}
+
+.variant-card {
+  width: 90px; /* POVEĆANO: Bilo je 60px */
+  height: 90px; /* POVEĆANO */
+  border-radius: 16px; /* Malo zaobljenije ivice za moderniji izgled */
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
+  padding: 6px;
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  /* Ne koristimo overflow: hidden ovde da bi tooltip mogao da izađe van okvira */
+}
+
+/* Hover efekat za samu karticu */
+.variant-card:hover {
+  transform: translateY(-4px); /* Malo veći skok */
+  border-color: var(--color-primary);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  z-index: 10; /* Da kartica i tooltip budu iznad ostalih */
+}
+
+.variant-card.active {
+  border: 2px solid var(--color-primary);
+  pointer-events: none;
+  box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2); /* Opcionalni glow */
+}
+
+.variant-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  border-radius: 10px;
+  background: white; /* Ako su slike png sa providnom pozadinom, ovo pomaže */
+}
+
+/* --- TOOLTIP KOD (Text ispod slike) - BELA TEMA --- */
+.variant-card::after {
+  content: attr(data-title);
+  position: absolute;
+
+  /* Pozicioniranje ISPOD kartice */
+  top: 115%; /* Malo više prostora */
+  left: 50%;
+  transform: translateX(-50%) translateY(5px);
+
+  /* Izgled - BELA TEMA */
+  background: #ffffff; /* Čisto bela pozadina */
+  color: #111111; /* Taman tekst (crna) da bi bio čitljiv */
+  border: 1px solid #e5e7eb; /* Tanak sivi okvir za definiciju */
+
+  font-size: 0.75rem;
+  font-weight: 700; /* Malo deblji font za čitljivost */
+  white-space: nowrap;
+  padding: 8px 12px; /* Malo veći padding za eleganciju */
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Mekana senka */
+
+  /* Animacija */
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 100;
+
+  /* Linija u boji brenda na vrhu za stil */
+  border-top: 3px solid var(--color-primary);
+}
+
+/* Prikazivanje na hover */
+.variant-card:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
