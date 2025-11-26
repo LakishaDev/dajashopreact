@@ -179,6 +179,12 @@
 .radio-price {
   font-weight: 700;
   margin-right: 12px;
+
+  /* --- NOVO: FIX ZA PORAVNANJE --- */
+  text-align: right; /* Tekst se lepi desno (bliže kvačici) */
+  min-width: 120px; /* Rezerviše isti prostor i za cenu i za reč "Besplatna" */
+  margin-left: auto; /* Gura cenu skroz desno od naslova */
+  padding-right: 20px;
 }
 .text-success {
   color: #40a840;

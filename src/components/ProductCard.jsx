@@ -6,13 +6,13 @@ import { useCart } from '../hooks/useCart.js';
 import { useFlash } from '../hooks/useFlash.js';
 import { useWishlist } from '../context/WishlistProvider.jsx';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
-import { Edit3, Heart, Trash2, Star } from 'lucide-react';
+import { Edit3, Heart, Trash2, Star, Eye, EyeOff } from 'lucide-react'; // Dodate ikonice
 import { auth, ADMIN_EMAILS } from '../services/firebase';
-import { deleteProduct, saveProduct } from '../services/products'; // Importujemo servise
+import { deleteProduct, saveProduct } from '../services/products';
 
 // Uvozimo Modal
 import AdminProductModal from '../pages/Admin/components/AdminProductModal.jsx';
-import ConfirmModal from '../components/modals/ConfirmModal.jsx'; // Za potvrdu brisanja
+import ConfirmModal from '../components/modals/ConfirmModal.jsx';
 
 const slideVariants = {
   enter: (direction) => ({ x: direction > 0 ? 1000 : -1000, opacity: 0 }),
@@ -36,7 +36,7 @@ export default function ProductCard({ p }) {
 
   // Stanja za modale
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [deleteId, setDeleteId] = useState(null); // ID proizvoda za brisanje
+  const [deleteId, setDeleteId] = useState(null);
 
   // Slider
   const [[page, direction], setPage] = useState([0, 0]);
@@ -95,7 +95,6 @@ export default function ProductCard({ p }) {
   // --- ADMIN FUNKCIJE ---
   const toggleNovo = async () => {
     try {
-      // Toggle vrednost 'novo' polja
       await saveProduct({ id: p.id, novo: !p.novo });
       flash(
         'Uspeh',
@@ -105,6 +104,23 @@ export default function ProductCard({ p }) {
     } catch (error) {
       console.error(error);
       flash('Greška', 'Nije uspelo menjanje statusa.', 'error');
+    }
+  };
+
+  // NOVA FUNKCIJA: Toggle Vidljivosti
+  const toggleVisibility = async () => {
+    try {
+      // Ako je undefined, podrazumeva se da je vidljiv (true)
+      const currentStatus = p.isVisible !== false;
+      await saveProduct({ id: p.id, isVisible: !currentStatus });
+      flash(
+        'Uspeh',
+        `Proizvod je sada ${!currentStatus ? 'vidljiv' : 'sakriven'}.`,
+        'success'
+      );
+    } catch (error) {
+      console.error(error);
+      flash('Greška', 'Nije uspelo menjanje vidljivosti.', 'error');
     }
   };
 
@@ -125,7 +141,9 @@ export default function ProductCard({ p }) {
   return (
     <>
       <motion.div
-        className="product-card card relative overflow-hidden max-w-full md:max-w-full w-full bg-white dark:bg-zinc-900 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
+        className={`product-card card relative overflow-hidden max-w-full md:max-w-full w-full bg-white dark:bg-zinc-900 rounded-2xl shadow-sm hover:shadow-md transition-shadow ${
+          p.isVisible === false ? 'opacity-75 grayscale-[0.5]' : ''
+        }`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -141,6 +159,21 @@ export default function ProductCard({ p }) {
               bg-white/70 dark:bg-black/50 border border-white/40 shadow-sm text-zinc-800 dark:text-white"
             >
               ✨ NOVO
+            </motion.div>
+          </div>
+        )}
+
+        {/* Indikator da je proizvod SAKRIVEN (vidljiv adminu) */}
+        {p.isVisible === false && (
+          <div className="pointer-events-none absolute right-2 top-2 z-20">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="rounded-full p-2 backdrop-blur-xl 
+              bg-black/60 text-white border border-white/20 shadow-sm"
+              title="Proizvod je sakriven"
+            >
+              <EyeOff size={14} />
             </motion.div>
           </div>
         )}
@@ -266,7 +299,8 @@ export default function ProductCard({ p }) {
 
           {/* --- ADMIN KONTROLE NA KARTICI --- */}
           {isAdmin && (
-            <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-700 grid grid-cols-3 gap-2">
+            // Izmenjeno u grid-cols-4 da stane i dugme za hide
+            <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-700 grid grid-cols-4 gap-2">
               {/* 1. Toggle Novo */}
               <button
                 onClick={toggleNovo}
@@ -280,7 +314,26 @@ export default function ProductCard({ p }) {
                 <Star size={16} fill={p.novo ? 'currentColor' : 'none'} />
               </button>
 
-              {/* 2. Izmeni */}
+              {/* 2. Toggle Vidljivosti (NOVO DUGME) */}
+              <button
+                onClick={toggleVisibility}
+                className={`flex items-center justify-center p-2 rounded-lg transition-colors ${
+                  p.isVisible === false
+                    ? 'bg-zinc-200 text-zinc-500 border border-zinc-300' // Stil kad je sakriven
+                    : 'bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100' // Stil kad je vidljiv
+                }`}
+                title={
+                  p.isVisible === false ? 'Prikaži proizvod' : 'Sakrij proizvod'
+                }
+              >
+                {p.isVisible === false ? (
+                  <EyeOff size={16} />
+                ) : (
+                  <Eye size={16} />
+                )}
+              </button>
+
+              {/* 3. Izmeni */}
               <button
                 onClick={() => setIsEditModalOpen(true)}
                 className="flex items-center justify-center p-2 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors"
@@ -289,7 +342,7 @@ export default function ProductCard({ p }) {
                 <Edit3 size={16} />
               </button>
 
-              {/* 3. Obriši */}
+              {/* 4. Obriši */}
               <button
                 onClick={() => setDeleteId(p.id)}
                 className="flex items-center justify-center p-2 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors"
