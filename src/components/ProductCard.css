@@ -11,6 +11,21 @@
   height: 100%;
   object-fit: cover;
   display: block;
+
+  /* --- FIX ZA 2000px SLIKE U CHROME-U (Aliasing Fix) --- */
+
+  /* 1. Ovo tera Chrome da koristi drugi rendering engine za sliku */
+  filter: blur(0px);
+
+  /* 2. Hardverska akceleracija */
+  transform: translate3d(0, 0, 0);
+
+  /* 3. Standardno renderovanje (izbegavaj optimize-contrast za velike slike) */
+  image-rendering: auto;
+
+  /* 4. Sakriva nazubljene ivice */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 .product-card__body {
   padding: 12px;
