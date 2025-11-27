@@ -73,7 +73,7 @@ export default function NavBar() {
         <div className="navbar__row" ref={rowRef}>
           {/* Link ka Satovima */}
           <Link to="/catalog" className={isActive('/catalog')}>
-            SVI SATOVI
+            SVI MODELI
           </Link>
 
           {/* Brendovi Satova */}
