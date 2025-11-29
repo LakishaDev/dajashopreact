@@ -18,7 +18,7 @@ import useProducts from '../hooks/useProducts.js';
 import { useAuth } from '../hooks/useAuth';
 import { isAdminEmail } from '../services/firebase';
 
-const PER_PAGE = 12;
+const PER_PAGE = 32;
 
 const TITLES = {
   satovi: 'Ručni Satovi',
@@ -240,7 +240,7 @@ export default function Catalog({ department = 'satovi' }) {
 
   return (
     <motion.div
-      className="catalog-page w-full max-w-7xl mx-auto px-4 sm:px-6 py-6"
+      className="catalog-page w-full max-w-[95%] mx-auto px-4 sm:px-6 py-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth.js';
 import { useFlash } from '../../hooks/useFlash.js';
 import { motion, AnimatePresence } from 'framer-motion';
+import './ProfileSection.css';
 import {
   User,
   Plus,

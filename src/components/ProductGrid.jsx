@@ -6,6 +6,7 @@ import { Plus } from 'lucide-react';
 import { auth, ADMIN_EMAILS } from '../services/firebase'; // Proveri putanju do firebase.js
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
+import './ProductGrid.css';
 
 export default function ProductGrid({ items: propItems }) {
   // Podaci
@@ -23,11 +24,6 @@ export default function ProductGrid({ items: propItems }) {
     );
     return () => unsub?.();
   }, []);
-
-  const isAdmin = useMemo(
-    () => !!userEmail && ADMIN_EMAILS.includes(userEmail.toLowerCase()),
-    [userEmail]
-  );
 
   // Loading / Error stanja
   if (loading && !propItems) {
@@ -47,9 +43,7 @@ export default function ProductGrid({ items: propItems }) {
 
   return (
     <>
-      {/* Grid Container: Tailwind grid sistem */}
-      <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(200px,1fr))] items-stretch">
-        {/* Proizvodi */}
+      <div className="product-grid">
         {displayItems.map((p) => (
           <ProductCard key={p.id} p={p} />
         ))}

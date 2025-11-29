@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Heart, Trash2, ShoppingCart } from 'lucide-react';
+import { Heart, Trash2, ShoppingCart, ArrowRight } from 'lucide-react';
 import { money } from '../../utils/currency.js';
 import { useWishlist } from '../../context/WishlistProvider.jsx';
 import { useCart } from '../../hooks/useCart.js';
 import { useFlash } from '../../hooks/useFlash.js';
 import { useUndo } from '../../hooks/useUndo.js';
 import { Link } from 'react-router-dom';
+import './WishlistSection.css';
 import ConfirmModal from '../modals/ConfirmModal.jsx';
 
 function WishlistSection() {
-  // Uzimamo addToWishlist iz context-a
   const { wishlist, removeFromWishlist, addToWishlist } = useWishlist();
   const { dispatch } = useCart();
   const { flash } = useFlash();
@@ -23,27 +23,20 @@ function WishlistSection() {
       type: 'ADD',
       item: item,
     });
-    flash('Prebačeno', 'Proizvod prebačen u korpu.', 'cart');
+    flash('Prebačeno', 'Proizvod je sada u korpi.', 'cart');
     removeFromWishlist(item.id);
   };
 
   const handleConfirmDelete = () => {
     if (deleteId) {
-      // 1. Sačuvaj item
       const itemToRemove = wishlist.find((i) => i.id === deleteId);
-
-      // 2. Obriši
       removeFromWishlist(deleteId);
 
-      // 3. Undo Toast
       if (itemToRemove) {
         showUndo(itemToRemove, () => {
-          // 4. KORISTIMO 'addToWishlist' UMESTO 'toggle'
-          // Ovo garantuje da će se proizvod vratiti, a ne ponovo obrisati
           addToWishlist(itemToRemove);
         });
       }
-
       setDeleteId(null);
     }
   };
@@ -54,69 +47,90 @@ function WishlistSection() {
       animate={{ opacity: 1 }}
       className="section-content"
     >
-      <div className="section-header-row">
-        <h3>Lista želja ({wishlist.length})</h3>
+      <div className="section-header-row mb-6">
+        <h3>
+          Lista želja{' '}
+          <span className="text-muted text-lg font-normal">
+            ({wishlist.length})
+          </span>
+        </h3>
       </div>
 
       {wishlist.length === 0 ? (
-        <div className="empty-state flex flex-col items-center justify-center py-12 text-center">
-          <Heart
-            size={48}
-            className="text-muted mb-4"
-            style={{ opacity: 0.3 }}
-          />
-          <p className="text-muted">Još niste sačuvali nijedan proizvod.</p>
+        <div className="empty-state card glass flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-20 h-20 bg-surface rounded-full flex items-center justify-center mb-4 text-muted">
+            <Heart size={32} />
+          </div>
+          <h4 className="text-xl font-bold mb-2">Vaša lista je prazna</h4>
+          <p className="text-muted mb-6 max-w-md">
+            Sačuvajte svoje omiljene modele ovde da biste ih kasnije lakše
+            pronašli.
+          </p>
           <Link
             to="/catalog"
-            className="mt-4 text-blue-600 font-bold hover:underline"
+            className="px-6 py-3 bg-primary text-onPrimary rounded-xl font-bold hover:opacity-90 transition-opacity"
           >
-            Istraži katalog
+            Istraži ponudu
           </Link>
         </div>
       ) : (
-        <div className="wishlist-grid grid grid-cols-1 gap-4">
+        // KORISTIMO GRID UMESTO LISTE
+        <div className="wishlist-grid">
           {wishlist.map((item) => (
-            <div
-              key={item.id}
-              className="card glass p-4 flex items-center gap-4"
-            >
-              <Link to={`/product/${item.slug}`} className="shrink-0">
+            <div key={item.id} className="wishlist-card group">
+              {/* Dugme za brisanje (lebdi gore desno) */}
+              <button
+                onClick={() => setDeleteId(item.id)}
+                className="wishlist-remove-btn"
+                title="Ukloni iz liste"
+              >
+                <Trash2 size={16} />
+              </button>
+
+              {/* Slika */}
+              <Link
+                to={`/product/${item.slug}`}
+                className="wishlist-img-wrapper"
+              >
                 <img
                   src={item.image}
                   alt={item.name}
-                  className="w-20 h-20 rounded-lg object-cover bg-white border border-neutral-100"
+                  className="wishlist-img"
                 />
+                {/* Overlay na hover */}
+                <div className="wishlist-overlay">
+                  <span className="text-xs font-bold uppercase tracking-wider text-white border border-white/30 px-3 py-1 rounded-full backdrop-blur-md">
+                    Detalji
+                  </span>
+                </div>
               </Link>
-              <div className="flex-1 min-w-0">
-                <Link to={`/product/${item.slug}`} className="hover:underline">
-                  <h4 className="font-bold text-sm md:text-base truncate">
+
+              {/* Podaci */}
+              <div className="wishlist-body">
+                <div className="mb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted block mb-1">
+                    {item.brand}
+                  </span>
+                  <Link
+                    to={`/product/${item.slug}`}
+                    className="block font-bold text-base leading-snug hover:text-primary transition-colors line-clamp-2 min-h-[2.5em]"
+                  >
                     {item.name}
-                  </h4>
-                </Link>
-                <span className="text-xs text-muted uppercase font-bold block mb-1">
-                  {item.brand}
-                </span>
-                <p className="text-neutral-900 font-mono text-sm font-bold">
-                  {money(item.price)}
-                </p>
-              </div>
+                  </Link>
+                </div>
 
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={() => moveToCart(item)}
-                  className="p-2 rounded-lg bg-black text-white hover:bg-neutral-800 transition-colors"
-                  title="Prebaci u korpu"
-                >
-                  <ShoppingCart size={18} />
-                </button>
+                <div className="mt-auto">
+                  <div className="font-mono font-bold text-lg mb-3">
+                    {money(item.price)}
+                  </div>
 
-                <button
-                  onClick={() => setDeleteId(item.id)}
-                  className="p-2 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors"
-                  title="Ukloni"
-                >
-                  <Trash2 size={18} />
-                </button>
+                  <button
+                    onClick={() => moveToCart(item)}
+                    className="w-full py-2.5 rounded-lg bg-neutral-900 text-white font-medium text-sm flex items-center justify-center gap-2 hover:bg-black transition-all hover:shadow-lg active:scale-95"
+                  >
+                    <ShoppingCart size={16} /> Dodaj u korpu
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -127,8 +141,8 @@ function WishlistSection() {
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
         onConfirm={handleConfirmDelete}
-        title="Ukloni iz liste želja?"
-        description="Da li ste sigurni da želite da uklonite ovaj proizvod iz liste želja?"
+        title="Ukloni proizvod"
+        description="Da li želite da uklonite ovaj proizvod iz liste želja?"
         confirmText="Ukloni"
         isDanger={true}
       />

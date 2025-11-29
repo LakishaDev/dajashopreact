@@ -3,6 +3,7 @@ import { useAuth } from '../../hooks/useAuth.js';
 import { motion } from 'framer-motion';
 import { Package, Loader2 } from 'lucide-react';
 import { db } from '../../services/firebase';
+import './OrdersSection.css';
 import {
   collection,
   query,

@@ -1,0 +1,118 @@
+/* src/components/account/ProfileSection.css */
+
+.section-content {
+  display: grid;
+  gap: 24px;
+  width: 100%;
+}
+.section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.section-header-row h3 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+/* Profil Header */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  width: 100%;
+}
+.profile-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  border: 2px solid var(--color-primary);
+  color: var(--color-primary);
+  font-size: 28px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+  position: relative;
+}
+.profile-info {
+  min-width: 0;
+  flex: 1;
+}
+.profile-info h2 {
+  margin: 0 0 4px;
+  font-size: 1.4rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.profile-info .muted {
+  word-break: break-all;
+}
+.profile-info .badge {
+  margin-top: 8px;
+  display: inline-block;
+  background: color-mix(in oklab, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
+  border: 1px solid color-mix(in oklab, var(--color-primary) 30%, transparent);
+  font-weight: 700;
+}
+
+/* Info Grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+.info-card {
+  padding: 20px;
+  position: relative;
+}
+.info-label {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+.info-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  word-break: break-word;
+}
+.edit-mini {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: 0.2s;
+}
+.edit-mini:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text);
+}
+
+@media (max-width: 900px) {
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+    padding: 20px;
+  }
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+}

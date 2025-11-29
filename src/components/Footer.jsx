@@ -1,16 +1,135 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Instagram, MapPin, Phone, Mail } from 'lucide-react';
+import {
+  Facebook,
+  Instagram,
+  MapPin,
+  Phone,
+  Mail,
+  ArrowRight,
+  Loader2,
+  Check,
+} from 'lucide-react';
 import './Footer.css';
+import { useFlash } from '../hooks/useFlash';
+
+const API_URL =
+  'https://europe-west3-daja-shop-site.cloudfunctions.net/sendNewsletterPromo';
 
 export default function Footer() {
   const year = new Date().getFullYear();
+  const { flash } = useFlash();
+
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!email || !email.includes('@')) {
+      flash('Greška', 'Molimo unesite validnu email adresu.', 'error');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const serverMessage =
+          data.message || data.error || 'Došlo je do greške pri prijavi.';
+        throw new Error(serverMessage);
+      }
+
+      setSuccess(true);
+      flash(
+        'Uspeh',
+        'Uspešno ste se prijavili! Kod vam stiže na email.',
+        'success'
+      );
+      setEmail('');
+
+      setTimeout(() => setSuccess(false), 3500);
+    } catch (error) {
+      console.error('Newsletter error:', error);
+      flash('Info', error.message, 'info');
+      setSuccess(false);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <footer className="footer">
+      {/* === NEWSLETTER TRAKA (Preimenovane klase) === */}
+      <div className="footer-newsletter-strip">
+        <div className="container footer-newsletter-content">
+          <div className="footer-newsletter-text">
+            <h3>Budite u toku</h3>
+            <p>
+              Prijavite se za ekskluzivne ponude, novitete i savete o satovima.
+            </p>
+          </div>
+
+          <form className="footer-newsletter-form" onSubmit={handleSubmit}>
+            <div
+              className={`footer-input-wrapper ${
+                success ? 'border-green-500' : ''
+              }`}
+            >
+              <Mail className="footer-input-icon" size={18} />
+              <input
+                type="email"
+                placeholder="Vaša email adresa..."
+                aria-label="Email adresa"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading || success}
+                required
+              />
+              <button
+                type="submit"
+                className="footer-submit-btn"
+                aria-label="Prijavi se"
+                disabled={loading || success}
+                style={
+                  success
+                    ? {
+                        backgroundColor: '#10b981',
+                        color: '#fff',
+                        borderColor: '#10b981',
+                      }
+                    : {}
+                }
+              >
+                {loading ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : success ? (
+                  <>
+                    <Check size={18} />
+                    <span className="btn-text">Poslato</span>
+                  </>
+                ) : (
+                  <>
+                    <ArrowRight size={18} />
+                    <span className="btn-text">Prijavi se</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {/* === GLAVNI FUTER === */}
       <div className="footer__glass">
         <div className="container footer__content">
-          {/* 1. Brand & Intro */}
           <div className="footer__col brand-col">
             <Link to="/" className="footer__brand">
               Daja Shop
@@ -39,18 +158,16 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* 2. Linkovi */}
           <div className="footer__col">
             <h3 className="footer__title">Istraži</h3>
             <nav className="footer__nav">
-              <Link to="/catalog?gender=MUŠKI">Muški satovi</Link>
-              <Link to="/catalog?gender=ŽENSKI">Ženski satovi</Link>
+              <Link to="/catalog">Muški satovi</Link>
+              <Link to="/catalog">Ženski satovi</Link>
               <Link to="/about">O nama</Link>
               <Link to="/contact">Kontakt</Link>
             </nav>
           </div>
 
-          {/* 3. Kontakt Info - MODIFIKOVANO */}
           <div className="footer__col">
             <h3 className="footer__title">Kontakt</h3>
             <ul className="footer__contact">
@@ -71,7 +188,7 @@ export default function Footer() {
                   aria-label="Telefonski broj"
                 >
                   <Phone size={18} />
-                  <span>064/126-24-25</span>
+                  <span>064/126-2425</span>
                 </a>
               </li>
               <li>
@@ -87,7 +204,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* 4. Radno vreme */}
           <div className="footer__col">
             <h3 className="footer__title">Radno vreme</h3>
             <ul className="footer__hours">
@@ -104,7 +220,6 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom bar */}
         <div className="footer__bottom">
           <div className="container footer__bottomWrap">
             <p>&copy; {year} Daja Shop. Sva prava zadržana.</p>

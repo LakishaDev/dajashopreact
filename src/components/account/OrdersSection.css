@@ -1,0 +1,107 @@
+/* src/components/account/OrdersSection.css */
+
+.orders-list {
+  display: grid;
+  gap: 16px;
+}
+.order-item {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  width: 100%;
+}
+.order-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  display: grid;
+  place-items: center;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+.order-details {
+  flex: 1;
+  min-width: 0;
+}
+.order-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.order-top h4 {
+  margin: 0;
+  font-family: monospace;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.status-badge {
+  font-size: 0.7rem;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.status-badge.success {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+.status-badge.pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+.status-badge.shipping {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.2);
+}
+.status-badge.cancelled {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+.order-meta {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.order-right {
+  text-align: right;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.order-total {
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .order-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .order-icon {
+    display: none;
+  }
+  .order-right {
+    width: 100%;
+    justify-content: space-between;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    margin-top: 4px;
+  }
+}

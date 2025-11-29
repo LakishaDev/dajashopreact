@@ -52,7 +52,7 @@ button {
   cursor: pointer;
 }
 .container {
-  width: min(1200px, 92vw);
+  width: min(1600px, 92vw);
   margin: 0 auto;
 }
 .card {

@@ -1,4 +1,6 @@
-:root { --header-h: 76px; } /* prilagodi tvojoj visini headera */
+:root {
+  --header-h: 76px;
+} /* prilagodi tvojoj visini headera */
 
 .catalog-page {
   background: var(--color-bg, #fff);
@@ -10,19 +12,22 @@
   position: sticky;
   top: var(--header-h, 76px);
   z-index: 20;
-  display: none;              /* sakrij na desktopu */
+  display: none; /* sakrij na desktopu */
   background: var(--color-bg, #fff);
   border-bottom: 1px solid var(--color-border, #e5e7eb);
   padding: 8px 12px;
 }
-.catalog-mobile-trigger .fd-trigger { width: 100%; justify-content: center; }
+.catalog-mobile-trigger .fd-trigger {
+  width: 100%;
+  justify-content: center;
+}
 
 /* LAYOUT: sidebar + sadržaj (desktop) */
 .catalog-layout {
   display: grid;
   grid-template-columns: 280px 1fr;
-  gap: 16px;
-  max-width: 1200px;
+  gap: 24px; /* Malo veći razmak */
+  max-width: 1600px; /* <--- REŠENJE: Puštamo punu širinu */
   margin: 0 auto;
   padding: 12px;
   box-sizing: border-box;
@@ -34,7 +39,9 @@
   top: calc(var(--header-h, 76px) + 8px);
 }
 
-.catalog-main { min-width: 0; }
+.catalog-main {
+  min-width: 0;
+}
 
 .catalog__toprow {
   display: flex;
@@ -44,7 +51,9 @@
   margin: 8px 0 12px;
 }
 
-.catalog__count { font-weight: 800; }
+.catalog__count {
+  font-weight: 800;
+}
 
 /* GRID PROIZVODA – stabilan na svim veličinama */
 .catalog-main .catalog-grid,
@@ -57,10 +66,14 @@
 
 /* RESPONSIVE: mobilni koristi FilterDrawer; sidebar se gasi */
 @media (max-width: 1023px) {
-  .catalog-mobile-trigger { display: block; }
+  .catalog-mobile-trigger {
+    display: block;
+  }
   .catalog-layout {
     grid-template-columns: 1fr;
     gap: 12px;
   }
-  .sidebar-filters { display: none; }
+  .sidebar-filters {
+    display: none;
+  }
 }
