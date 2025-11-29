@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './Product.css';
-import { useParams, useNavigate } from 'react-router-dom'; // Dodat useNavigate
+import { useParams, useNavigate } from 'react-router-dom';
 import Breadcrumbs from '../components/Breadcrumbs.jsx';
 import { money } from '../utils/currency.js';
 import { useCart } from '../hooks/useCart.js';
 import { useFlash } from '../hooks/useFlash.js';
 import { useWishlist } from '../context/WishlistProvider.jsx';
 import useProduct from '../hooks/useProduct.js';
-import useProducts from '../hooks/useProducts.js'; // [NOVO] Uvozimo hook za sve proizvode
+import useProducts from '../hooks/useProducts.js';
 import Watch3DViewer from '../components/Watch3DViewer.jsx';
 import { useLenis } from 'lenis/react';
 import {
@@ -16,16 +16,19 @@ import {
   Heart,
   Maximize2,
   Layers,
-} from 'lucide-react'; // Dodata Layers ikonica
+  Truck,
+  ShieldCheck,
+  Package,
+} from 'lucide-react';
 import ImageGalleryModal from '../components/modals/ImageGalleryModal.jsx';
+import ProductFeatures from '../components/product/ProductFeatures.jsx';
 
 export default function Product() {
   const { slug } = useParams();
-  const navigate = useNavigate(); // [NOVO] Hook za navigaciju
+  const navigate = useNavigate();
   const lenis = useLenis();
 
   const { product: p, loading, error } = useProduct(slug);
-  // [NOVO] Dohvatamo sve proizvode da bismo našli varijante
   const { items: allProducts } = useProducts();
 
   const { dispatch } = useCart();
@@ -36,40 +39,32 @@ export default function Product() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 
+  // State za tabove (default: Opis)
+  const [activeTab, setActiveTab] = useState('desc');
+
   useEffect(() => {
     setActiveIndex(0);
+    setActiveTab('desc');
     lenis?.scrollTo(0, { duration: 1.5 });
   }, [lenis, slug]);
 
-  // --- LOGIKA ZA VARIJANTE (RELATED PRODUCTS) ---
+  // --- LOGIKA ZA VARIJANTE ---
   const relatedVariants = useMemo(() => {
     if (!p || !allProducts.length) return [];
-
-    // Logika: Tražimo "koren" imena pre poslednje crtice.
-    // Primer: "DK-1234-Black" -> Base: "DK-1234"
     const parts = p.name.split('-');
-
-    // Ako nema crtice, možda nema varijanti po ovom principu, ili je ime prosto.
-    // Vraćamo prazan niz da ne bismo prikazivali pogrešne stvari.
     if (parts.length < 2) return [];
-
     const baseName = parts.slice(0, -1).join('-');
-
-    // Filtriramo proizvode koji počinju sa istim base imenom
-    // i nisu trenutni proizvod.
     return allProducts.filter((item) => {
       return (
         item.id !== p.id &&
         item.name.startsWith(baseName) &&
-        // Dodatna provera: da li nakon baseName sledi crtica ili kraj stringa,
-        // da izbegnemo "DK-12345" matchuje "DK-1234"
         (item.name.length === baseName.length ||
           item.name[baseName.length] === '-')
       );
     });
   }, [p, allProducts]);
 
-  // Priprema liste medija (3D + Slike) - (Ovo ostaje isto)
+  // Priprema liste medija
   const mediaList = useMemo(() => {
     if (!p) return [];
     const list = [];
@@ -143,8 +138,9 @@ export default function Product() {
         />
       )}
 
-      {/* --- LEVA KOLONA (GALERIJA) OSTAJE ISTA --- */}
+      {/* --- LEVA KOLONA: SLIKE + TABOVI --- */}
       <div className="product__gallery">
+        {/* 1. Glavna slika */}
         <div className="product__main-view card relative group">
           {activeItem?.type === '3d' ? (
             <div className="view-3d-wrapper" data-lenis-prevent>
@@ -167,6 +163,7 @@ export default function Product() {
           )}
         </div>
 
+        {/* 2. Thumbnails */}
         {mediaList.length > 1 && (
           <div className="product__thumbs">
             {mediaList.map((item, index) => {
@@ -190,8 +187,109 @@ export default function Product() {
             })}
           </div>
         )}
+
+        {/* --- 3. [NOVO] TABOVI ISPOD SLIKE --- */}
+        <div className="product-tabs-container">
+          {/* Header */}
+          <div className="tabs-header">
+            <button
+              className={`tab-btn ${activeTab === 'desc' ? 'active' : ''}`}
+              onClick={() => setActiveTab('desc')}
+            >
+              Opis
+            </button>
+            <button
+              className={`tab-btn ${activeTab === 'specs' ? 'active' : ''}`}
+              onClick={() => setActiveTab('specs')}
+            >
+              Specifikacije
+            </button>
+            <button
+              className={`tab-btn ${activeTab === 'delivery' ? 'active' : ''}`}
+              onClick={() => setActiveTab('delivery')}
+            >
+              Isporuka
+            </button>
+          </div>
+
+          {/* Sadržaj */}
+          <div className="tab-content">
+            {/* OPIS - Povezan sa bazom (p.description) */}
+            {activeTab === 'desc' && (
+              <div className="tab-text">
+                {p.description ? (
+                  <p>{p.description}</p>
+                ) : (
+                  <p className="text-neutral-400 italic">
+                    Nema opisa za ovaj proizvod.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* SPECIFIKACIJE - Povezane sa bazom (p.specs) */}
+            {activeTab === 'specs' && (
+              <div className="specs-grid">
+                {p.specs && Object.keys(p.specs).length > 0 ? (
+                  Object.entries(p.specs).map(([k, v]) => (
+                    <div className="product__spec-row" key={k}>
+                      <span className="spec-key">{k}:</span>
+                      <span className="spec-val">{v}</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-neutral-400 italic">Nema specifikacija.</p>
+                )}
+              </div>
+            )}
+
+            {/* ISPORUKA - Statički sadržaj */}
+            {activeTab === 'delivery' && (
+              <div className="delivery-info">
+                <div className="delivery-item">
+                  <div className="delivery-icon">
+                    <Truck size={20} />
+                  </div>
+                  <div>
+                    <h4>Besplatna dostava</h4>
+                    <p>
+                      Za sve porudžbine iznad 5.000 RSD. Isporuka u roku od
+                      24-48h kurirskom službom.
+                    </p>
+                  </div>
+                </div>
+                <div className="delivery-item">
+                  <div className="delivery-icon">
+                    <ShieldCheck size={20} />
+                  </div>
+                  <div>
+                    <h4>2 Godine Garancije</h4>
+                    <p>
+                      Svi satovi dolaze sa zvaničnom garancijom na mehanizam i
+                      bateriju.
+                    </p>
+                  </div>
+                </div>
+                <div className="delivery-item">
+                  <div className="delivery-icon">
+                    <Package size={20} />
+                  </div>
+                  <div>
+                    <h4>Originalno Pakovanje</h4>
+                    <p>
+                      Sat stiže u originalnoj kutiji sa uputstvom i fiskalnim
+                      računom.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        {/* --- KRAJ TABOVA --- */}
       </div>
 
+      {/* --- DESNA KOLONA: INFO + AKCIJE + FEATURES --- */}
       <div className="product__info">
         <Breadcrumbs
           trail={[{ label: 'Katalog', href: '/catalog' }, { label: p.brand }]}
@@ -204,7 +302,7 @@ export default function Product() {
 
         <div className="product__price">{money(p.price)}</div>
 
-        {/* --- [NOVO] SEKCIJA ZA VARIJANTE --- */}
+        {/* Varijante */}
         {relatedVariants.length > 0 && (
           <div className="product__variants">
             <div className="variants-title">
@@ -212,27 +310,19 @@ export default function Product() {
               <span>Dostupne varijante</span>
             </div>
             <div className="variants-grid">
-              {/* Prvo prikazujemo trenutni model kao "active" da korisnik zna šta gleda */}
-              <div
-                className="variant-card active"
-                title="Trenutni model"
-                data-title="Trenutni"
-              >
+              <div className="variant-card active" title="Trenutni model">
                 <img
                   src={p.images?.[0]?.url || p.image}
                   alt={p.name}
                   className="variant-img"
                 />
               </div>
-
-              {/* Zatim ostale varijante */}
               {relatedVariants.map((variant) => (
                 <div
                   key={variant.id}
                   className="variant-card"
                   onClick={() => navigate(`/product/${variant.slug}`)}
                   title={variant.name}
-                  data-title={variant.name.split('-').pop()} // Prikazuje samo sufiks kao tooltip (npr. "3" iz "DK-123-3")
                 >
                   <img
                     src={variant.images?.[0]?.url || variant.image}
@@ -244,21 +334,12 @@ export default function Product() {
             </div>
           </div>
         )}
-        {/* --- KRAJ SEKCIJE ZA VARIJANTE --- */}
 
-        <div className="product__specs card">
-          <h3 className="specs-title">Specifikacije</h3>
-          <div className="specs-grid">
-            {Object.entries(p.specs || {}).map(([k, v]) => (
-              <div className="product__spec-row" key={k}>
-                <span className="spec-key">{k}:</span>
-                <span className="spec-val">{v}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="product__actions flex gap-3">
+        {/* Dugmići za akciju */}
+        <div
+          className="product__actions flex gap-3"
+          style={{ marginTop: '24px', marginBottom: '32px' }}
+        >
           <button className="product__cta flex-1" onClick={handleAdd}>
             Dodaj u korpu
           </button>
@@ -278,6 +359,9 @@ export default function Product() {
             />
           </button>
         </div>
+
+        {/* Tvoje prilagođene kartice sa funkcionalnostima (Technology) */}
+        <ProductFeatures product={p} />
       </div>
     </div>
   );

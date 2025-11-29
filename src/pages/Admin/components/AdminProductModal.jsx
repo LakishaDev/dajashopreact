@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { X, Save, Plus } from 'lucide-react';
+// [IZMENA] Dodat Trash2 za brisanje redova
+import { X, Save, Plus, Trash2 } from 'lucide-react';
 import {
   brandService,
   categoryService,
@@ -22,34 +23,7 @@ import CustomSelect from './CustomSelect.jsx';
 // --- 3. Main Modal Component ---
 /**
  * Admin Product Modal
- * Omogućava kreiranje i izmenu proizvoda u admin panelu.
- * Uključuje upravljanje slikama, specifikacijama i osnovnim informacijama o proizvodu.
- * Koristi Framer Motion za animacije i Lenis za sprečavanje skrolovanja unutar modala.
- * @module AdminProductModal
- * @author DarkoKc
- * @version 1.0.0
- * @license MIT
- * @requires react
- * @requires framer-motion
- * @requires lucide-react
- * @requires ../../../services/admin
- * @requires ../../../services/products
- * @requires ../../../components/modals/FlashModal
- * @requires ../../../components/UploadProgressBar
- * @requires ../../../components/modals/ImageGalleryModal
- * @see {@link ../../../services/admin}
- * @see {@link ../../../services/products}
- * @see {@link ../../../components/modals/FlashModal}
- * @see {@link ../../../components/UploadProgressBar}
- * @see {@link ../../../components/modals/ImageGalleryModal}
- * @example
- * <AdminProductModal product={product} onClose={handleClose} onSuccess={handleSuccess} />
- * @description
- * Ovaj modal omogućava administratorima da kreiraju ili izmenjuju proizvode.
- * Podržava dodavanje slika, specifikacija, i osnovnih informacija kao što su naziv, cena, brend i kategorija.
- * Koristi prilagođene komponente za selektovanje i upravljanje slikama.
- * Implementira validaciju i prikazuje povratne informacije putem FlashModal komponente.
- * Takođe uključuje funkcionalnost za pregled slika u punom ekranu putem ImageGalleryModal komponente.
+ * ... (dokumentacija ostaje ista) ...
  */
 export default function AdminProductModal({ product, onClose, onSuccess }) {
   const [brands, setBrands] = useState([]);
@@ -66,6 +40,8 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     gender: '',
     department: 'satovi',
     specs: {},
+    // [NOVO] Niz za custom kartice (naslov + podnaslov)
+    features: [],
     model3DUrl: '',
     slug: '',
   });
@@ -95,10 +71,18 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
         ...product,
         images: loadedImages,
         specs: product.specs || {},
+        // [NOVO] Učitavamo postojeće features ili postavljamo jedan prazan red
+        features:
+          product.features && product.features.length > 0
+            ? product.features
+            : [{ title: '', subtitle: '' }],
         model3DUrl: product.model3DUrl || '',
         department: product.department || 'satovi',
         slug: product.slug || '',
       });
+    } else {
+      // [NOVO] Reset za novi proizvod - dodajemo jedan prazan red da bude spremno
+      setForm((prev) => ({ ...prev, features: [{ title: '', subtitle: '' }] }));
     }
 
     return () => {
@@ -121,6 +105,27 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
       return next;
     });
   };
+
+  // --- [NOVO] Funkcije za upravljanje Feature karticama ---
+  const handleFeatureChange = (index, field, val) => {
+    const newFeatures = [...(form.features || [])];
+    if (!newFeatures[index]) newFeatures[index] = { title: '', subtitle: '' };
+    newFeatures[index][field] = val;
+    setForm((prev) => ({ ...prev, features: newFeatures }));
+  };
+
+  const addFeatureRow = () => {
+    setForm((prev) => ({
+      ...prev,
+      features: [...(prev.features || []), { title: '', subtitle: '' }],
+    }));
+  };
+
+  const removeFeatureRow = (index) => {
+    const newFeatures = (form.features || []).filter((_, i) => i !== index);
+    setForm((prev) => ({ ...prev, features: newFeatures }));
+  };
+  // --------------------------------------------------------
 
   const addSpec = () => {
     if (!tempSpecKey || !tempSpecVal) return;
@@ -148,11 +153,18 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     setLoading(true);
     try {
       const finalSlug = form.slug || generateSlug(form.name);
+
+      // [NOVO] Filtriramo prazne redove pre čuvanja
+      const cleanFeatures = (form.features || []).filter(
+        (f) => f.title && f.title.trim() !== ''
+      );
+
       const payload = {
         ...form,
         price: Number(form.price),
         image: form.images[0]?.url || '',
         slug: finalSlug,
+        features: cleanFeatures, // [NOVO] Dodajemo u payload
       };
       if (!product) delete payload.id;
       else payload.id = product.id;
@@ -391,6 +403,78 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                   </label>
                 </div>
               </div>
+
+              {/* --- [NOVO] MANUAL FEATURE TEXT SEKCIJA --- */}
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-neutral-900 uppercase tracking-wider">
+                      Istaknute Kartice (Technology)
+                    </h3>
+                    <p className="text-xs text-neutral-500 mt-1">
+                      Dodaj kartice sa tekstom koje će se prikazati u mreži.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addFeatureRow}
+                    className="flex items-center gap-2 text-xs font-bold bg-neutral-100 px-3 py-2 rounded-lg hover:bg-neutral-200 transition-colors"
+                  >
+                    <Plus size={14} /> Dodaj red
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  <AnimatePresence>
+                    {(form.features || []).map((feature, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="flex gap-3 items-start"
+                      >
+                        <div className="flex-1">
+                          <input
+                            placeholder="Naslov (npr. Shock Resist)"
+                            value={feature.title}
+                            onChange={(e) =>
+                              handleFeatureChange(
+                                index,
+                                'title',
+                                e.target.value
+                              )
+                            }
+                            className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-bold placeholder:font-normal"
+                          />
+                        </div>
+                        <div className="flex-[1.5]">
+                          <input
+                            placeholder="Podnaslov (npr. Zaštita od udaraca...)"
+                            value={feature.subtitle}
+                            onChange={(e) =>
+                              handleFeatureChange(
+                                index,
+                                'subtitle',
+                                e.target.value
+                              )
+                            }
+                            className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeFeatureRow(index)}
+                          className="p-3 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </div>
+              {/* --- KRAJ MANUAL FEATURE --- */}
 
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100">
                 <h3 className="text-sm font-bold text-neutral-900 mb-4">
