@@ -1,0 +1,224 @@
+/* src/components/product/ProductReviews.css */
+
+.reviews-container {
+  padding: 10px 0;
+}
+
+/* Statistika */
+.reviews-summary {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-bottom: 24px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.big-rating {
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-text);
+}
+
+.stars-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stars-row {
+  display: flex;
+  gap: 2px;
+  color: #fbbf24;
+}
+
+.total-reviews {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+/* Lista */
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.review-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.review-item:last-child {
+  border-bottom: none;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.reviewer-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+.review-date {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+.review-rating {
+  display: flex;
+  gap: 2px;
+  color: #fbbf24;
+  margin-bottom: 4px;
+}
+
+.review-text {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--color-text);
+}
+
+.no-reviews-text {
+  color: var(--color-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* Forma */
+.review-form {
+  margin-top: 32px;
+  background-color: #f9fafb;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.form-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: block;
+  color: var(--color-text);
+}
+
+.rating-input {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+.star-input {
+  color: #e5e7eb;
+  transition: color 0.2s;
+}
+
+.star-input.filled {
+  color: #fbbf24;
+}
+
+.star-input:hover {
+  transform: scale(1.1);
+}
+
+.comment-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--color-border, #e5e5e5);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  min-height: 100px;
+  resize: vertical;
+  background: #fff;
+  margin-bottom: 16px;
+  color: var(--color-text);
+}
+
+.comment-input:focus {
+  outline: 2px solid var(--color-primary, #000);
+  border-color: transparent;
+}
+
+.submit-btn {
+  background: var(--color-primary, #000);
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- [NOVO] LOGIN PROMPT DIZAJN --- */
+.login-prompt-box {
+  margin-top: 40px;
+  padding: 30px;
+  background-color: #f8f9fa;
+  border-radius: 16px;
+  border: 1px dashed rgba(0, 0, 0, 0.1);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.prompt-icon {
+  width: 48px;
+  height: 48px;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 6px;
+  color: var(--color-text);
+}
+
+.login-prompt-box h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.login-prompt-box p {
+  margin: 0 0 16px 0;
+  font-size: 0.95rem;
+  color: var(--color-muted);
+}
+
+.login-btn-action {
+  background: var(--color-text, #000);
+  color: #fff;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.login-btn-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}

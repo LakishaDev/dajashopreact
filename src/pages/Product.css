@@ -1,467 +1,108 @@
-/* ==============================
-   Product Page Layout
-   ============================== */
+/* src/pages/Product.css */
 
-/* Kontejner koji drži layout */
+/* --- GLAVNI GRID LAYOUT --- */
 .product-layout {
   display: grid;
-  gap: 32px;
+  gap: 40px; /* Razmak između leve i desne kolone */
   padding-top: 20px;
+  padding-bottom: 80px;
+  align-items: start;
 }
 
-/* Desktop Grid: 1.2fr (slika) prema 1fr (tekst) */
-@media (min-width: 900px) {
+/* DESKTOP (Dve kolone) */
+@media (min-width: 1024px) {
   .product-layout {
-    grid-template-columns: 1.2fr 1fr;
-    align-items: start;
+    grid-template-columns: 1.3fr 1fr; /* Leva kolona 1.3x šira */
+  }
+
+  /* Sticky desna kolona - prati te dok skroluješ */
+  .product__info {
+    position: sticky;
+    top: 24px;
+    height: fit-content;
   }
 }
 
-/* Loading / Error states */
+/* MOBILNI (Jedna kolona) */
+@media (max-width: 1023px) {
+  .product-layout {
+    gap: 32px;
+  }
+}
+
+/* Loading i Error poruke */
 .product-loading,
 .product-error {
-  padding: 40px;
+  padding: 100px 20px;
   text-align: center;
   color: var(--color-muted);
   font-size: 1.1rem;
+  font-weight: 500;
 }
 
-/* ==============================
-   Leva Kolona: Galerija
-   ============================== */
-.product__gallery {
+/* Kontejneri (samo za strukturu, bez stila) */
+.product__gallery-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  /* gap: 32px; -> Razmak rešavaju margine u komponentama */
 }
 
-.product__main-view {
-  aspect-ratio: 1 / 1; /* Kvadratni odnos za konzistentnost */
-  position: relative;
-  overflow: hidden;
-  background: var(--color-surface); /* Pozadina iz teme */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Wrapperi za sadržaj */
-.view-3d-wrapper,
-.view-image-wrapper {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.product__img-full {
-  width: 100%;
-  height: 100%;
-  object-fit: contain; /* Da se ceo sat vidi */
-  padding: 20px; /* Malo "vazduha" oko slike */
-  display: block;
-}
-
-/* Thumbnails traka */
-.product__thumbs {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  scrollbar-width: none; /* Firefox */
-}
-.product__thumbs::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
-}
-
-.thumb-btn {
-  flex: 0 0 70px;
-  height: 70px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: var(--color-surface);
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  padding: 0;
-  position: relative;
-}
-
-.thumb-btn:hover {
-  transform: translateY(-2px);
-  border-color: var(--color-muted);
-}
-
-.thumb-btn.is-active {
-  border: 2px solid var(--color-primary);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.thumb-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* Specijalni stil za 3D thumb */
-.thumb-icon {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text);
-  background: color-mix(in oklab, var(--color-primary), transparent 85%);
-}
-.thumb-icon span {
-  font-size: 10px;
-  font-weight: 800;
-  margin-top: 2px;
-}
-
-/* ==============================
-   Desna Kolona: Info
-   ============================== */
 .product__info {
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
+/* ... tvoj postojeći kod ... */
 
-.product__title {
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
+/* --- HELPER KLASE ZA RESPONZIVNOST --- */
 
-.product__brand-label {
-  font-size: 1rem;
-  color: var(--color-muted);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.product__model-name {
-  font-size: clamp(1.5rem, 4vw, 2.2rem);
-  font-weight: 800;
-  color: var(--color-text);
-  line-height: 1.1;
-}
-
-.product__price {
-  font-size: 1.75rem;
-  font-weight: 900;
-  color: var(--color-primary);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Specifikacije */
-.product__specs {
-  padding: 20px;
-  margin-top: 8px;
-}
-
-.specs-title {
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-muted);
-  margin: 0 0 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding-bottom: 8px;
-}
-
-.specs-grid {
-  display: grid;
-  gap: 8px;
-}
-
-.product__spec-row {
-  display: grid;
-  grid-template-columns: 120px 1fr; /* Fiksna širina za labele */
-  font-size: 0.95rem;
-  align-items: baseline;
-}
-
-.spec-key {
-  color: var(--color-muted);
-  font-weight: 500;
-}
-
-.spec-val {
-  color: var(--color-text);
-  font-weight: 600;
-}
-
-/* CTA Dugme */
-.product__actions {
-  margin-top: 12px;
-}
-
-.product__cta {
-  width: 100%;
-  padding: 16px;
-  border-radius: 14px;
-  border: none;
-  background: var(--color-primary);
-  color: var(
-    --color-onPrimary,
-    #000
-  ); /* Fallback na crnu ako onPrimary nije definisan */
-  font-size: 1.1rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  cursor: pointer;
-  transition: transform 0.1s ease, filter 0.2s ease;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-}
-
-.product__cta:hover {
-  filter: brightness(1.1);
-  transform: translateY(-2px);
-}
-
-.product__cta:active {
-  transform: scale(0.98);
-}
-
-/* Mobile Tweaks */
-@media (max-width: 768px) {
-  .product__main-view {
-    aspect-ratio: 4/5; /* Malo viša slika na mobilnom */
-  }
-  .product__spec-row {
-    grid-template-columns: 1fr; /* Stack specifikacija na malim ekranima */
-    gap: 2px;
-  }
-  .spec-key {
-    font-size: 0.85rem;
-  }
-}
-/* ==============================
-   Variants Section (Dostupne boje)
-   ============================== */
-.product__variants {
-  margin-top: 0px;
-  margin-bottom: 15px;
-  position: relative;
-  z-index: 5; /* Da tooltip-ovi budu iznad ostalog sadržaja */
-}
-
-.variants-title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.variants-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px; /* Malo veći razmak zbog većih slika */
-}
-
-.variant-card {
-  width: 90px; /* POVEĆANO: Bilo je 60px */
-  height: 90px; /* POVEĆANO */
-  border-radius: 16px; /* Malo zaobljenije ivice za moderniji izgled */
-  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
-  padding: 6px;
-  background: var(--color-surface);
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  /* Ne koristimo overflow: hidden ovde da bi tooltip mogao da izađe van okvira */
-}
-
-/* Hover efekat za samu karticu */
-.variant-card:hover {
-  transform: translateY(-4px); /* Malo veći skok */
-  border-color: var(--color-primary);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-  z-index: 10; /* Da kartica i tooltip budu iznad ostalih */
-}
-
-.variant-card.active {
-  border: 2px solid var(--color-primary);
-  pointer-events: none;
-  box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2); /* Opcionalni glow */
-}
-
-.variant-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+/* Prikazuje se SAMO na Desktopu (sakriveno na mobilnom) */
+.desktop-only-tabs {
   display: block;
-  border-radius: 10px;
-  background: white; /* Ako su slike png sa providnom pozadinom, ovo pomaže */
 }
 
-/* --- TOOLTIP KOD (Text ispod slike) - BELA TEMA --- */
-.variant-card::after {
-  content: attr(data-title);
-  position: absolute;
-
-  /* Pozicioniranje ISPOD kartice */
-  top: 115%; /* Malo više prostora */
-  left: 50%;
-  transform: translateX(-50%) translateY(5px);
-
-  /* Izgled - BELA TEMA */
-  background: #ffffff; /* Čisto bela pozadina */
-  color: #111111; /* Taman tekst (crna) da bi bio čitljiv */
-  border: 1px solid #e5e7eb; /* Tanak sivi okvir za definiciju */
-
-  font-size: 0.75rem;
-  font-weight: 700; /* Malo deblji font za čitljivost */
-  white-space: nowrap;
-  padding: 8px 12px; /* Malo veći padding za eleganciju */
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Mekana senka */
-
-  /* Animacija */
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.2s ease;
-  pointer-events: none;
-  z-index: 100;
-
-  /* Linija u boji brenda na vrhu za stil */
-  border-top: 3px solid var(--color-primary);
+/* Prikazuje se SAMO na Mobilnom (sakriveno na desktopu) */
+.mobile-only-tabs {
+  display: none;
 }
 
-/* Prikazivanje na hover */
-.variant-card:hover::after {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
-}
-/* --- KONTEJNER ZA TABOVE (Ispod slike) --- */
-.product-tabs-container {
-  margin-top: 40px;
-  background: #ffffff;
-  border-radius: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  overflow: hidden; /* Da sadržaj ne viri */
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02); /* Suptilna senka */
-}
+@media (max-width: 1023px) {
+  .desktop-only-tabs {
+    display: none;
+  }
 
-/* --- HEADER TABOVA --- */
-.tabs-header {
-  display: flex;
-  background: #f8f9fa; /* Blago siva pozadina za dugmiće */
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.tab-btn {
-  flex: 1; /* Dugmići se šire da popune prostor */
-  background: none;
-  border: none;
-  padding: 18px 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--color-muted);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border-right: 1px solid rgba(0, 0, 0, 0.04);
-}
-
-.tab-btn:last-child {
-  border-right: none;
-}
-
-.tab-btn:hover {
-  background: rgba(0, 0, 0, 0.02);
-  color: var(--color-text);
-}
-
-.tab-btn.active {
-  background: #ffffff;
-  color: var(--color-text);
-  box-shadow: inset 0 3px 0 var(--color-primary); /* Linija na vrhu aktivnog taba */
-  font-weight: 700;
-}
-
-/* --- SADRŽAJ TABOVA --- */
-.tab-content {
-  padding: 30px;
-  animation: fadeIn 0.3s ease;
-}
-
-/* --- DIZAJN TABELE SPECIFIKACIJA --- */
-.specs-table {
-  width: 100%;
-  border-collapse: collapse; /* Spaja ivice */
-  font-size: 0.95rem;
-}
-
-.specs-table-row {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.specs-table-row:last-child {
-  border-bottom: none;
-}
-
-/* Zebra efekat - svaki drugi red je malo tamniji */
-.specs-table-row:nth-child(even) {
-  background-color: #fcfcfc;
-}
-
-.spec-cell-key {
-  width: 35%; /* Fiksna širina leve kolone */
-  padding: 14px 20px;
-  font-weight: 600;
-  color: var(--color-text);
-  background-color: rgba(0, 0, 0, 0.015); /* Blago tamnija od desne */
-  border-right: 1px solid rgba(0, 0, 0, 0.04);
-  vertical-align: middle;
-}
-
-.spec-cell-val {
-  padding: 14px 20px;
-  color: #333;
-  font-weight: 500;
-  vertical-align: middle;
-}
-
-/* Mobilni: Stacked prikaz ako je ekran preuzak */
-@media (max-width: 600px) {
-  .spec-cell-key,
-  .spec-cell-val {
+  .mobile-only-tabs {
     display: block;
-    width: 100%;
-    border-right: none;
-    padding: 10px 15px;
-  }
-
-  .spec-cell-key {
-    padding-bottom: 4px;
-    font-size: 0.85rem;
-    color: var(--color-muted);
-    background: transparent;
-  }
-
-  .spec-cell-val {
-    padding-top: 0;
-    font-size: 1rem;
+    margin-top: 30px; /* Malo razmaka od gornjeg sadržaja */
   }
 }
+/* src/pages/Product.css */
 
-/* --- OPIS TEXT --- */
-.tab-description {
-  line-height: 1.8;
-  color: var(--color-text);
-  font-size: 1rem;
+/* ... tvoj postojeći kod ... */
+
+/* --- KONTROLA PRIKAZA ZA TRUST BAR --- */
+
+/* Desktop: Prikazuje se u levoj koloni */
+.desktop-trust {
+  display: block;
+  margin-top: 24px; /* Razmak od galerije */
+  margin-bottom: 12px; /* Razmak do tabova */
+}
+
+/* Mobilni: Sakriveno po defaultu (prikazuje se samo na malim ekranima) */
+.mobile-trust {
+  display: none;
+}
+
+/* KADA JE EKRAN MANJI OD 1024px (Tablet/Mobilni) */
+@media (max-width: 1023px) {
+  /* Sakrij desktop verziju (levu) */
+  .desktop-trust {
+    display: none;
+  }
+
+  /* Prikaži mobilnu verziju (desnu/donju) */
+  .mobile-trust {
+    display: block;
+    margin-top: 20px;
+  }
 }

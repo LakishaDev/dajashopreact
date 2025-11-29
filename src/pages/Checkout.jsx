@@ -99,10 +99,13 @@ export default function Checkout() {
 
   const requiredForCourier = shippingMethod === 'courier';
 
-  // --- AUTOFILL EFEKAT ---
+  // --- [IZMENA] AUTOFILL EFEKAT ---
+  // Sada prati i promenu shippingMethod-a
   useEffect(() => {
     const fetchLastAddress = async () => {
-      if (user && !formData.address && !formData.phone) {
+      // Pokrećemo samo ako je Kurir, ako imamo usera, i ako je adresa prazna
+      // (da ne bismo pregazili nešto što je korisnik upravo kucao)
+      if (shippingMethod === 'courier' && user && !formData.address) {
         try {
           const q = query(
             collection(db, 'users', user.uid, 'addresses'),
@@ -110,6 +113,7 @@ export default function Checkout() {
             limit(1)
           );
           const snapshot = await getDocs(q);
+
           if (!snapshot.empty) {
             const savedAddr = snapshot.docs[0].data();
             const parts = (savedAddr.name || '').trim().split(/\s+/);
@@ -118,15 +122,17 @@ export default function Checkout() {
 
             setFormData((prev) => ({
               ...prev,
-              name: fName,
-              surname: lName,
+              name: prev.name || fName, // Čuvamo ako je već uneto
+              surname: prev.surname || lName,
               email: user.email || prev.email,
-              phone: savedAddr.phone || '',
+              phone: savedAddr.phone || prev.phone || '',
+              // Adresu vraćamo iz baze
               address: savedAddr.address || '',
               city: savedAddr.city || '',
               postalCode: savedAddr.zip || '',
             }));
           } else {
+            // Ako nema sačuvane adrese, samo popuni email
             setFormData((prev) => ({ ...prev, email: user.email || '' }));
           }
         } catch (error) {
@@ -134,8 +140,9 @@ export default function Checkout() {
         }
       }
     };
+
     fetchLastAddress();
-  }, [user, setFormData]);
+  }, [user, shippingMethod, setFormData]); // Dodat shippingMethod u zavisnosti
 
   useEffect(() => {
     if (shippingMethod === 'pickup') {

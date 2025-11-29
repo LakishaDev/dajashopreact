@@ -24,6 +24,7 @@ import {
   Plus,
   Building2,
   Heart,
+  MessageSquare, // Dodata ikonica za napomenu
 } from 'lucide-react';
 import ErrorMessage from './ErrorMessage';
 
@@ -107,6 +108,9 @@ export default function DeliveryForm({
   isRegistering,
   popoverDismissed,
   createAccount,
+  // Props za napomenu
+  orderNote,
+  setOrderNote,
 }) {
   const emailInputRef = useRef(null);
   const countryDropdownRef = useRef(null);
@@ -114,7 +118,6 @@ export default function DeliveryForm({
   const addressInputRef = useRef(null);
   const addressSelectorRef = useRef(null);
 
-  // --- REF ZA PRAĆENJE AUTOMATSKE SELEKCIJE ---
   const hasAutoSelected = useRef(false);
 
   const [mapsReady, setMapsReady] = useState(false);
@@ -124,12 +127,10 @@ export default function DeliveryForm({
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const [mapsScriptLoaded, setMapsScriptLoaded] = useState(false);
 
-  // --- STATE ZA ADRESE ---
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [isAddressSelectorOpen, setIsAddressSelectorOpen] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState('new');
 
-  // --- TELEFON LOGIKA ---
   const { phonePrefix, localPhone } = useMemo(() => {
     const fullNumber = formData.phone || '';
     const sortedCodes = [...COUNTRY_CODES].sort(
@@ -150,7 +151,6 @@ export default function DeliveryForm({
     COUNTRY_CODES.find((c) => c.dial === phonePrefix) ||
     COUNTRY_CODES.find((c) => c.code === 'RS');
 
-  // --- LOGIKA POPUNJAVANJA POLJA (AUTOFILL) ---
   const selectAddress = (addr) => {
     if (!addr) {
       setSelectedAddressId('new');
@@ -164,7 +164,6 @@ export default function DeliveryForm({
       }
     } else {
       setSelectedAddressId(addr.id);
-
       const fullName = addr.name || '';
       const parts = fullName.trim().split(/\s+/);
       const fName = parts[0] || '';
@@ -186,10 +185,8 @@ export default function DeliveryForm({
     setIsAddressSelectorOpen(false);
   };
 
-  // --- FETCH ADRESA ---
   useEffect(() => {
-    hasAutoSelected.current = false; // Reset na promenu usera
-
+    hasAutoSelected.current = false;
     const fetchAddresses = async () => {
       if (!user) return;
       try {
@@ -210,7 +207,6 @@ export default function DeliveryForm({
     fetchAddresses();
   }, [user]);
 
-  // --- AUTOMATSKA SELEKCIJA ---
   useEffect(() => {
     if (savedAddresses.length > 0 && !hasAutoSelected.current) {
       selectAddress(savedAddresses[0]);
@@ -218,11 +214,9 @@ export default function DeliveryForm({
     }
   }, [savedAddresses]);
 
-  // --- HELPER: ODABIR IKONICE ---
   const getAddressIcon = (addr, size = 18) => {
     if (!addr)
       return <Plus size={size} className="text-[var(--color-primary)]" />;
-
     if (addr.icon) {
       switch (addr.icon) {
         case 'home':
@@ -243,12 +237,10 @@ export default function DeliveryForm({
           return <MapPin size={size} className="text-[var(--color-primary)]" />;
       }
     }
-
     if (addr.label === 'Kuća')
       return <Home size={size} className="text-[var(--color-primary)]" />;
     if (addr.label === 'Posao')
       return <Briefcase size={size} className="text-[var(--color-primary)]" />;
-
     return <MapPin size={size} className="text-[var(--color-primary)]" />;
   };
 
@@ -265,14 +257,12 @@ export default function DeliveryForm({
     return getAddressIcon(addr, 18);
   };
 
-  // --- GOOGLE MAPS INIT ---
   useEffect(() => {
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
     if (!apiKey) {
       setMapsReady(false);
       return;
     }
-
     loadGoogleMapsScript(apiKey)
       .then(() => {
         setMapsScriptLoaded(true);
@@ -284,11 +274,9 @@ export default function DeliveryForm({
   const initAutocomplete = (node) => {
     if (!window.google || !window.google.maps || !window.google.maps.places)
       return;
-    if (
-      node.classList.contains('pac-target-input') ||
-      autocompleteInstance.current
-    )
-      return;
+
+    // Ako već ima klasu, znači da je init odrađen
+    if (node.classList.contains('pac-target-input')) return;
 
     try {
       const autocomplete = new window.google.maps.places.Autocomplete(node, {
@@ -338,12 +326,16 @@ export default function DeliveryForm({
   const onAddressInputMount = useCallback(
     (node) => {
       addressInputRef.current = node;
-      if (mapsScriptLoaded && node) initAutocomplete(node);
+      if (node && mapsScriptLoaded) {
+        // [FIX] Resetujemo instancu da dozvolimo ponovnu inicijalizaciju
+        // jer je stari node uništen pri promeni taba
+        autocompleteInstance.current = null;
+        initAutocomplete(node);
+      }
     },
     [mapsScriptLoaded]
   );
 
-  // --- CLICK OUTSIDE ---
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (
@@ -367,7 +359,6 @@ export default function DeliveryForm({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // --- HANDLERS ---
   const handleEmailInput = (e) => {
     handleChange(e);
     const val = e.target.value;
@@ -452,63 +443,19 @@ export default function DeliveryForm({
         showSuccessModal ? 'z-high' : ''
       }`}
     >
-      {/* STILOVI SA TEMATSKIM VARIJABLAMA */}
+      {/* ... STILOVI ... */}
       <style>{`
+        /* ... Tvoji postojeći stilovi za adresu i mape ... */
         .address-selector-wrapper { position: relative; margin-bottom: 24px; z-index: 40; }
-        
-        .address-selector-btn {
-            width: 100%; display: flex; align-items: center; justify-content: space-between;
-            background: var(--color-surface); /* TEMA */
-            border: 1px solid var(--color-border); /* TEMA */
-            padding: 14px 16px; border-radius: 12px;
-            color: var(--color-text); /* TEMA */
-            font-weight: 600;
-            cursor: pointer; transition: all 0.2s;
-        }
-        .address-selector-btn:hover { 
-            background: var(--color-bg-subtle); /* TEMA */
-            border-color: var(--color-primary); /* TEMA */
-        }
-        
-        .address-dropdown-list {
-            position: absolute; top: 100%; left: 0; width: 100%;
-            background: var(--color-surface); /* TEMA - nije više hardcoded #18181b */
-            border: 1px solid var(--color-border); /* TEMA */
-            border-radius: 12px; margin-top: 8px; 
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            overflow: hidden; z-index: 100;
-        }
-        
-        .addr-option {
-            width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 16px;
-            text-align: left; border: none; background: transparent;
-            color: var(--color-muted); /* TEMA */
-            cursor: pointer; 
-            border-bottom: 1px solid var(--color-border); /* TEMA */
-            transition: all 0.2s;
-        }
+        .address-selector-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; background: var(--color-surface); border: 1px solid var(--color-border); padding: 14px 16px; border-radius: 12px; color: var(--color-text); font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .address-selector-btn:hover { background: var(--color-bg-subtle); border-color: var(--color-primary); }
+        .address-dropdown-list { position: absolute; top: 100%; left: 0; width: 100%; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px; margin-top: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); overflow: hidden; z-index: 100; }
+        .addr-option { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 16px; text-align: left; border: none; background: transparent; color: var(--color-muted); cursor: pointer; border-bottom: 1px solid var(--color-border); transition: all 0.2s; }
         .addr-option:last-child { border-bottom: none; }
-        
-        .addr-option:hover { 
-            background: var(--color-bg-subtle); /* TEMA */
-            color: var(--color-text); /* TEMA */
-        }
-        .addr-option.active { 
-            background: var(--color-bg-subtle); 
-            color: var(--color-primary); 
-        }
-
-        /* PAC (Google Maps) Container takođe prilagođen */
-        .pac-container {
-          background-color: var(--color-surface);
-          border: 1px solid var(--color-border);
-          border-radius: 12px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-          font-family: inherit; z-index: 99999 !important; margin-top: 6px;
-        }
-        .pac-item { 
-            border-top: none; padding: 10px 14px; cursor: pointer; 
-            color: var(--color-text); 
-        }
+        .addr-option:hover { background: var(--color-bg-subtle); color: var(--color-text); }
+        .addr-option.active { background: var(--color-bg-subtle); color: var(--color-primary); }
+        .pac-container { background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6); font-family: inherit; z-index: 99999 !important; margin-top: 6px; }
+        .pac-item { border-top: none; padding: 10px 14px; cursor: pointer; color: var(--color-text); }
         .pac-item:hover { background-color: var(--color-bg-subtle); }
         .pac-item-query { color: var(--color-text); font-weight: 700; }
         .pac-item span { color: var(--color-muted); }
@@ -539,7 +486,6 @@ export default function DeliveryForm({
               }`}
             />
           </button>
-
           <AnimatePresence>
             {isAddressSelectorOpen && (
               <motion.div
@@ -781,7 +727,7 @@ export default function DeliveryForm({
           </AnimatePresence>
         </div>
 
-        {/* ADRESA */}
+        {/* ADRESA (Pojavljuje se samo za kurira) */}
         <AnimatePresence>
           {requiredForCourier && (
             <motion.div
@@ -922,6 +868,47 @@ export default function DeliveryForm({
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* --- [NOVO] NAPOMENA (Sakrivena za lično preuzimanje) --- */}
+        <AnimatePresence>
+          {requiredForCourier && (
+            <motion.div
+              className="input-wrapper-col full-width"
+              style={{ gridColumn: '1 / -1', marginTop: '10px' }}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+            >
+              <label className="text-xs font-bold text-[var(--color-muted)] uppercase tracking-wider mb-2 block flex items-center gap-2">
+                <MessageSquare
+                  size={14}
+                  className="text-[var(--color-primary)]"
+                />
+                Napomena za kurira (Opciono)
+              </label>
+              <div
+                className="input-group"
+                style={{ height: 'auto', padding: '0' }}
+              >
+                <textarea
+                  value={orderNote}
+                  onChange={(e) => setOrderNote(e.target.value)}
+                  placeholder="Npr. interfon ne radi, ostavite kod komšije..."
+                  rows={3}
+                  className="w-full p-4 bg-transparent focus:outline-none text-[var(--color-text)] placeholder:text-[var(--color-muted)] resize-none"
+                  style={{
+                    minHeight: '100px',
+                    fontFamily: 'inherit',
+                    lineHeight: '1.5',
+                    border: 'none',
+                    display: 'block',
+                  }}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        {/* --------------------------------------------------------- */}
       </div>
     </section>
   );

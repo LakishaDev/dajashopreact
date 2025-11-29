@@ -2,8 +2,8 @@
 // File: src/components/TrustBar.jsx
 // Tailwind + lucide-react (desktop + dedicated mobile variants)
 // ==============================
-import React from "react";
-import { CheckCircle2, Truck, RotateCcw, Headset } from "lucide-react";
+import React from 'react';
+import { CheckCircle2, Shield, RotateCcw, Headset } from 'lucide-react';
 
 /**
  * Možeš menjati stavke preko props.items ako želiš drugi sadržaj.
@@ -11,16 +11,16 @@ import { CheckCircle2, Truck, RotateCcw, Headset } from "lucide-react";
 const DEFAULT_ITEMS = [
   {
     icon: CheckCircle2,
-    title: "Original proizvodi",
-    desc: "Garancija autentičnosti",
+    title: 'Original proizvodi',
+    desc: 'Garancija autentičnosti',
   },
   {
-    icon: Truck,
-    title: "Isporuka širom Srbije",
-    desc: "Brza dostava 1–3 dana",
+    icon: Shield,
+    title: 'Garancija 24 meseca',
+    desc: 'Na mehanizam i bateriju',
   },
-  { icon: RotateCcw, title: "14 dana povraćaj", desc: "Bez suvišnih pitanja" },
-  { icon: Headset, title: "Podrška", desc: "Tu smo za vas" },
+  { icon: RotateCcw, title: '14 dana povraćaj', desc: 'Bez suvišnih pitanja' },
+  { icon: Headset, title: 'Podrška', desc: 'Tu smo za vas' },
 ];
 
 /**
@@ -33,16 +33,16 @@ const DEFAULT_ITEMS = [
  */
 export default function TrustBar({
   items = DEFAULT_ITEMS,
-  variant = "glass",
-  mobileVariant = "scroll",
+  variant = 'glass',
+  mobileVariant = 'scroll',
   stickyMobile = false,
-  className = "",
+  className = '',
 }) {
-  const panelBase = "relative rounded-2xl ring-1 shadow-glass";
+  const panelBase = 'relative rounded-2xl ring-1 shadow-glass';
   const panelVariants = {
-    glass: "bg-white/70 backdrop-blur-xl ring-white/50",
-    surface: "bg-surface text-text ring-accent/20",
-    minimal: "bg-transparent ring-accent/10",
+    glass: 'bg-white/70 backdrop-blur-xl ring-white/50',
+    surface: 'bg-surface text-text ring-accent/20',
+    minimal: 'bg-transparent ring-accent/10',
   };
 
   const DesktopPanel = (
@@ -79,11 +79,11 @@ export default function TrustBar({
   const MobileScroll = (
     <div
       className={`${panelBase} ${panelVariants[variant]} ${
-        stickyMobile ? "fixed left-3 right-3" : ""
+        stickyMobile ? 'fixed left-3 right-3' : ''
       }`}
       style={
         stickyMobile
-          ? { bottom: "max(12px, env(safe-area-inset-bottom))", zIndex: 60 }
+          ? { bottom: 'max(12px, env(safe-area-inset-bottom))', zIndex: 60 }
           : undefined
       }
     >
@@ -95,10 +95,7 @@ export default function TrustBar({
             className="snap-start min-w-[230px] max-w-[260px] flex items-center gap-3 rounded-xl p-3 bg-[color-mix(in_oklab,var(--color-surface)_92%,transparent)] ring-1 ring-accent/10"
           >
             <span className="grid place-items-center h-9 w-9 rounded-lg bg-[color-mix(in_oklab,var(--color-primary)_14%,transparent)] ring-1 ring-[color-mix(in_oklab,var(--color-primary)_28%,transparent)]">
-              <Icon
-                className="h-5 w-5 text-primary"
-                strokeWidth={2.2}
-              />
+              <Icon className="h-5 w-5 text-primary" strokeWidth={2.2} />
             </span>
             <div className="min-w-0">
               <div className="text-sm font-semibold text-text leading-tight line-clamp-1">
@@ -117,11 +114,11 @@ export default function TrustBar({
   const MobileCards = (
     <div
       className={`${panelBase} ${panelVariants[variant]} ${
-        stickyMobile ? "fixed left-3 right-3" : ""
+        stickyMobile ? 'fixed left-3 right-3' : ''
       }`}
       style={
         stickyMobile
-          ? { bottom: "max(12px, env(safe-area-inset-bottom))", zIndex: 60 }
+          ? { bottom: 'max(12px, env(safe-area-inset-bottom))', zIndex: 60 }
           : undefined
       }
     >
@@ -134,10 +131,7 @@ export default function TrustBar({
           >
             <div className="flex flex-col items-start gap-2">
               <span className="grid place-items-center h-9 w-9 rounded-lg bg-[color-mix(in_oklab,var(--color-primary)_14%,transparent)] ring-1 ring-[color-mix(in_oklab,var(--color-primary)_28%,transparent)]">
-                <Icon
-                  className="h-5 w-5 text-primary"
-                  strokeWidth={2.2}
-                />
+                <Icon className="h-5 w-5 text-primary" strokeWidth={2.2} />
               </span>
               <div className="min-w-0">
                 <div className="text-sm font-semibold text-text leading-tight">
@@ -155,11 +149,11 @@ export default function TrustBar({
   const MobileCompact = (
     <div
       className={`${panelBase} ${panelVariants[variant]} ${
-        stickyMobile ? "fixed left-3 right-3" : ""
+        stickyMobile ? 'fixed left-3 right-3' : ''
       }`}
       style={
         stickyMobile
-          ? { bottom: "max(12px, env(safe-area-inset-bottom))", zIndex: 60 }
+          ? { bottom: 'max(12px, env(safe-area-inset-bottom))', zIndex: 60 }
           : undefined
       }
     >
@@ -170,10 +164,7 @@ export default function TrustBar({
             key={i}
             className="flex items-center gap-2 rounded-lg px-2 py-1.5"
           >
-            <Icon
-              className="h-4 w-4 text-primary"
-              strokeWidth={2.2}
-            />
+            <Icon className="h-4 w-4 text-primary" strokeWidth={2.2} />
             <span className="text-sm text-text">{title}</span>
           </li>
         ))}
@@ -183,11 +174,11 @@ export default function TrustBar({
 
   const renderMobile = () => {
     switch (mobileVariant) {
-      case "cards":
+      case 'cards':
         return MobileCards;
-      case "compact":
+      case 'compact':
         return MobileCompact;
-      case "scroll":
+      case 'scroll':
       default:
         return MobileScroll;
     }

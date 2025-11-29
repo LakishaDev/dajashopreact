@@ -1,0 +1,35 @@
+/* src/components/product/ProductHeader.css */
+
+.product-header {
+  margin-bottom: 24px;
+}
+
+.header-title {
+  margin: 12px 0 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.brand-label {
+  font-size: 0.95rem;
+  color: var(--color-muted, #666);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.model-name {
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-weight: 800;
+  color: var(--color-text, #111);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.price-tag {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--color-muted, #585858);
+  font-variant-numeric: tabular-nums;
+}

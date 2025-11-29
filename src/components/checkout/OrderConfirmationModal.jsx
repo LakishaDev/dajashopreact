@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-// DODALI SMO 'Ticket' ikonicu u import
-import { CheckCircle2, MapPin, ShoppingBag, Ticket } from 'lucide-react';
+// [IZMENA] Dodata MessageSquareQuote ikonica
+import {
+  CheckCircle2,
+  MapPin,
+  ShoppingBag,
+  Ticket,
+  MessageSquareQuote,
+} from 'lucide-react';
 import { useLenis } from 'lenis/react';
 
 const MAP_API_KEY = 'AIzaSyCwDMD-56pwnAqgEDqNCT8uMxFy_mPbAe0';
@@ -10,11 +16,31 @@ const MAP_EMBED_URL = `https://www.google.com/maps/embed/v1/place?key=${MAP_API_
   SHOP_ADDRESS_QUERY
 )}`;
 
+// --- [NOVO] Funkcija za gramatiku (Vokativ) ---
+function toVocative(name) {
+  if (!name) return 'Kupče';
+  const n = name.trim();
+  const lastChar = n.slice(-1).toLowerCase();
+
+  if (lastChar === 'a') return n; // Vesna -> Vesna
+  if (lastChar === 'k') return n.slice(0, -1) + 'če'; // Vuk -> Vuče
+  if (lastChar === 'g') return n.slice(0, -1) + 'že'; // Predrag -> Predraže
+  if (!['a', 'e', 'i', 'o', 'u'].includes(lastChar)) return n + 'e'; // Dejan -> Dejane
+
+  return n;
+}
+
 function OrderConfirmationModal({ order, money, onClose }) {
   const initialFocusRef = useRef(null);
   const orderId = order.id;
   const [showMap, setShowMap] = useState(false);
   const lenis = useLenis();
+
+  // [NOVO] Izračunavamo ime za prikaz
+  const firstName = order.customer.name
+    ? order.customer.name.split(' ')[0]
+    : '';
+  const vocativeName = toVocative(firstName);
 
   useEffect(() => {
     if (lenis) lenis.stop();
@@ -65,7 +91,8 @@ function OrderConfirmationModal({ order, money, onClose }) {
       >
         <div className="order-header">
           <CheckCircle2 size={32} className="text-success-ico" />
-          <h2 id="order-title">Hvala na poverenju, {order.customer.name}!</h2>
+          {/* [IZMENA] Koristimo vocativeName umesto order.customer.name */}
+          <h2 id="order-title">Hvala na poverenju, {vocativeName}!</h2>
           <p className="order-lead">
             Vaša porudžbina <strong>#{orderId}</strong> je uspešno primljena.
             Potvrdu smo poslali na <strong>{order.customer.email}</strong>.
@@ -90,7 +117,6 @@ function OrderConfirmationModal({ order, money, onClose }) {
               <span>{money(order.subtotal)}</span>
             </div>
 
-            {/* --- NOVO: PRIKAZ POPUSTA AKO POSTOJI --- */}
             {order.discountAmount > 0 && (
               <div className="summary-row" style={{ color: '#ef4444' }}>
                 <span
@@ -101,7 +127,6 @@ function OrderConfirmationModal({ order, money, onClose }) {
                 <span>-{money(order.discountAmount)}</span>
               </div>
             )}
-            {/* ---------------------------------------- */}
 
             <div className="summary-row">
               <span>{shippingLabel}:</span>
@@ -183,6 +208,38 @@ function OrderConfirmationModal({ order, money, onClose }) {
               </>
             )}
           </div>
+
+          {/* --- [NOVO] PRIKAZ NAPOMENE --- */}
+          {order.note && order.note.trim() !== '' && (
+            <div
+              className="order-note-display"
+              style={{
+                marginTop: '20px',
+                padding: '12px 16px',
+                backgroundColor: '#fffbeb', // Blago žuta
+                borderLeft: '4px solid #fbbf24',
+                borderRadius: '8px',
+                fontSize: '0.9rem',
+                color: '#92400e',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '4px',
+                  fontWeight: 'bold',
+                  textTransform: 'uppercase',
+                  fontSize: '0.75rem',
+                }}
+              >
+                <MessageSquareQuote size={16} /> Vaša napomena
+              </div>
+              <p style={{ margin: 0, fontStyle: 'italic' }}>"{order.note}"</p>
+            </div>
+          )}
+          {/* ----------------------------- */}
         </div>
 
         <div className="order-actions">
