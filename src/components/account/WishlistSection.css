@@ -1,0 +1,112 @@
+/* src/components/account/WishlistSection.css */
+
+.wishlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
+.wishlist-card {
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.wishlist-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+  border-color: var(--color-primary);
+}
+
+.wishlist-remove-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: all 0.2s;
+}
+
+.wishlist-card:hover .wishlist-remove-btn {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.wishlist-remove-btn:hover {
+  background: #ef4444;
+  border-color: #ef4444;
+}
+
+.wishlist-img-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1/1;
+  overflow: hidden;
+  background: #fff;
+  display: block;
+}
+
+.wishlist-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s ease;
+}
+
+.wishlist-card:hover .wishlist-img {
+  transform: scale(1.08);
+}
+
+.wishlist-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.wishlist-card:hover .wishlist-overlay {
+  opacity: 1;
+}
+
+.wishlist-body {
+  padding: 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 640px) {
+  .wishlist-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .wishlist-remove-btn {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--color-text);
+  }
+  .wishlist-body {
+    padding: 12px;
+  }
+}

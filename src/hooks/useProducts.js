@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo } from "react";
-import { subscribeProducts } from "../services/products";
+import { useEffect, useState, useMemo } from 'react';
+import { subscribeProducts } from '../services/products';
 
 export default function useProducts(params = {}) {
   const [items, setItems] = useState([]);
@@ -7,6 +7,7 @@ export default function useProducts(params = {}) {
   const [err, setErr] = useState(null);
 
   // Stabilizujemo parametre da ne bi izazivali re-render petlju
+  // Mentor napomena: Ovo je odlično rešeno sa JSON.stringify
   const memoizedParams = useMemo(() => params, [JSON.stringify(params)]);
 
   useEffect(() => {
@@ -22,8 +23,10 @@ export default function useProducts(params = {}) {
         setErr(e);
         setLoading(false);
       },
-      // Prosleđujemo sortiranje bazi
-      order: memoizedParams.order || "name",
+      // Prosleđujemo SVE parametre servisu (limit, category, itd.), a ne samo order
+      order: memoizedParams.order || 'name',
+      limit: memoizedParams.limit || 32, // Default limit ako nije naveden
+      ...memoizedParams,
     });
 
     return () => unsub?.();

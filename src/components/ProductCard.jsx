@@ -179,7 +179,7 @@ export default function ProductCard({ p }) {
         )}
 
         {/* Slider */}
-        <div className="relative aspect-4/5 w-full overflow-hidden bg-white">
+        <div className="relative aspect-4/5 w-full overflow-hidden bg-white ">
           <AnimatePresence initial={false} custom={direction}>
             <motion.div
               key={page}

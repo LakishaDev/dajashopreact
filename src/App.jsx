@@ -11,6 +11,11 @@ export default function App() {
   const lenisRef = useRef();
   const { pathname } = useLocation(); // Hvatamo trenutnu putanju
 
+  const isWidePage =
+    pathname.startsWith('/catalog') ||
+    pathname === '/daljinski' ||
+    pathname === '/baterije' ||
+    pathname === '/naocare';
   // Animacija frejma za Lenis
   useEffect(() => {
     function update(time) {
@@ -42,7 +47,10 @@ export default function App() {
         ref={lenisRef}
       >
         <Header />
-        <main className="container" style={{ padding: '20px 0 48px' }}>
+        <main
+          className={isWidePage ? 'w-full' : 'container'}
+          style={{ padding: '20px 0 48px' }}
+        >
           <AuthModal />
           <NewsletterModal />
           <AppRoutes />

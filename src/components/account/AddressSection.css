@@ -1,0 +1,247 @@
+/* src/components/account/AddressSection.css */
+
+/* === GRID ZA KARTICE ADRESA === */
+.addresses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
+.address-card {
+  padding: 24px;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  background: var(--color-surface);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.address-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+  border-color: var(--color-primary);
+}
+
+.addr-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.addr-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btn-icon-danger {
+  background: transparent;
+  border: 0;
+  color: var(--color-muted);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+.btn-icon-danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.addr-body {
+  flex: 1;
+}
+
+.addr-body strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.addr-body p {
+  margin: 4px 0;
+  font-size: 1rem;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+.addr-phone {
+  margin-top: 16px !important;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text) !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* === FORMA ZA NOVU ADRESU === */
+.address-form {
+  padding: 32px;
+  border: 1px solid color-mix(in oklab, var(--color-primary) 50%, transparent);
+  margin-bottom: 40px;
+  background: color-mix(in oklab, var(--color-surface) 50%, transparent);
+  border-radius: 20px;
+  max-width: 900px;
+}
+
+.address-form h4 {
+  margin-top: 0;
+  margin-bottom: 24px;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.form-grid label.full {
+  grid-column: 1 / -1;
+}
+
+.form-grid span {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* --- STANDARDNI INPUT --- */
+.form-grid input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--color-text);
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.form-grid input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 4px
+    color-mix(in oklab, var(--color-primary), transparent 85%);
+}
+
+/* --- POPRAVKA: INPUT SA IKONICOM (SEARCH ADRESA) --- */
+/* Ovo je nedostajalo i zato su bili razdvojeni */
+.input-with-icon {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon-left {
+  position: absolute;
+  left: 16px;
+  color: var(--color-muted);
+  pointer-events: none;
+  z-index: 2;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.input-with-icon:focus-within .input-icon-left {
+  color: var(--color-primary);
+}
+
+/* Input koji je unutar wrappera mora imati padding levo da ne gazi ikonicu */
+.input-with-icon input {
+  padding-left: 48px !important;
+}
+
+/* --- OSTALO --- */
+.radio-group {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.chip:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.chip.active {
+  background: var(--color-primary);
+  color: var(--color-on-primary, #000);
+  border-color: var(--color-primary);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px
+    color-mix(in oklab, var(--color-primary) 40%, transparent);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* === RESPONSIVE (Mobilni) === */
+@media (max-width: 768px) {
+  .addresses-grid {
+    grid-template-columns: 1fr;
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .address-form {
+    padding: 20px;
+  }
+  .chip {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+  }
+}
