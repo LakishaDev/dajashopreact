@@ -1,0 +1,92 @@
+.product__gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.product__main-view {
+  aspect-ratio: 1 / 1; /* Kvadratni odnos za konzistentnost */
+  position: relative;
+  overflow: hidden;
+  background: var(--color-surface); /* Pozadina iz teme */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Wrapperi za sadržaj */
+.view-3d-wrapper,
+.view-image-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product__img-full {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Da se ceo sat vidi */
+  padding: 20px; /* Malo "vazduha" oko slike */
+  display: block;
+}
+
+/* Thumbnails traka */
+.product__thumbs {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none; /* Firefox */
+}
+.product__thumbs::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.thumb-btn {
+  flex: 0 0 70px;
+  height: 70px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--color-surface);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  position: relative;
+}
+
+.thumb-btn:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-muted);
+}
+
+.thumb-btn.is-active {
+  border: 2px solid var(--color-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Specijalni stil za 3D thumb */
+.thumb-icon {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text);
+  background: color-mix(in oklab, var(--color-primary), transparent 85%);
+}
+.thumb-icon span {
+  font-size: 10px;
+  font-weight: 800;
+  margin-top: 2px;
+}

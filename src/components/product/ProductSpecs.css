@@ -1,0 +1,76 @@
+/* src/components/product/ProductSpecs.css */
+
+.product-specs-standalone {
+  margin-bottom: 24px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.specs-heading {
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted, #666);
+  margin: 0 0 20px 0;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Tabela Specifikacija (Isti stil kao u tabovima) */
+.specs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+.specs-table-row {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+.specs-table-row:last-child {
+  border-bottom: none;
+}
+.specs-table-row:nth-child(even) {
+  background-color: #fcfcfc;
+}
+
+.spec-cell-key {
+  width: 35%;
+  padding: 12px 16px;
+  font-weight: 600;
+  color: var(--color-text);
+  background: rgba(0, 0, 0, 0.015);
+  border-right: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.spec-cell-val {
+  padding: 12px 16px;
+  color: #333;
+  font-weight: 500;
+}
+
+/* Mobilni */
+@media (max-width: 600px) {
+  .product-specs-standalone {
+    padding: 16px;
+  }
+  .spec-cell-key,
+  .spec-cell-val {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    border-right: none;
+  }
+  .spec-cell-key {
+    font-size: 0.85rem;
+    color: #888;
+    padding-bottom: 0;
+    background: transparent;
+  }
+  .spec-cell-val {
+    padding-top: 4px;
+    font-size: 1rem;
+  }
+}

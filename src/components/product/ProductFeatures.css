@@ -1,0 +1,137 @@
+/* src/components/product/ProductFeatures.css */
+
+.product-features {
+  margin-bottom: 30px;
+  background-color: #ffffff; /* Bela pozadina */
+  border-radius: 16px; /* Zaobljene ivice */
+
+  /* [KLJUČNO] Eksplicitni padding da sigurno ima prostora */
+  padding: 24px 30px;
+
+  /* Blaga senka i border da se odvoji od pozadine */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+/* Naslov cele sekcije */
+.features-heading {
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted, #666);
+  margin: 0 0 20px 0;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.features-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Pojedinačni red */
+.feature-row {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 0; /* Povećan vertikalni razmak */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s ease;
+}
+
+.feature-row:last-child {
+  border-bottom: none;
+}
+
+/* Hover efekat */
+@media (hover: hover) {
+  .feature-row:hover {
+    background-color: rgba(0, 0, 0, 0.015);
+
+    /* Kompenzacija margina da hover ide do ivice, a tekst ostane gde jeste */
+    margin-left: -20px;
+    margin-right: -20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    border-radius: 8px;
+    border-bottom-color: transparent;
+  }
+}
+
+/* --- NASLOV KARTICE (sa tačkicom) --- */
+.feature-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-text, #111);
+  margin-bottom: 6px;
+  line-height: 1;
+  position: relative;
+
+  /* Flexbox za poravnanje tačkice */
+  display: flex;
+  align-items: baseline;
+}
+
+/* Tačkica (Bullet) */
+.feature-title::before {
+  content: "";
+  flex-shrink: 0; /* Ne dozvoljava da se tačkica smanji */
+  width: 6px;
+  height: 6px;
+  background-color: var(--color-primary, #000); /* Glavna boja */
+  border-radius: 50%;
+  margin-right: 14px; /* Razmak između tačkice i teksta */
+  transform: translateY(-2px); /* Fino podešavanje visine */
+}
+
+/* --- PODNASLOV (OPIS) --- */
+.feature-subtitle {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--color-muted, #555);
+  line-height: 1.6;
+
+  /* Uvlačenje da tekst počne tačno ispod slova naslova */
+  padding-left: 20px;
+  margin-top: 0;
+}
+
+/* --- MOBILNA RESPONZIVNOST --- */
+@media (max-width: 640px) {
+  .product-features {
+    padding: 20px; /* Malo manji padding na telefonu */
+    margin-bottom: 20px;
+    border-radius: 12px;
+  }
+
+  .features-heading {
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+  }
+
+  .feature-row {
+    padding: 14px 0;
+  }
+
+  .feature-title {
+    font-size: 1rem;
+  }
+
+  .feature-title::before {
+    margin-right: 12px;
+  }
+
+  .feature-subtitle {
+    font-size: 0.9rem;
+    padding-left: 18px; /* Prilagođeno uvlačenje za mobilni */
+  }
+
+  /* Isključujemo hover efekte na touch ekranima */
+  .feature-row:hover {
+    background-color: transparent;
+    margin: 0;
+    padding: 14px 0;
+  }
+}
