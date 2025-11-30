@@ -189,7 +189,7 @@ export default function Cart() {
   }, [total, items, user, appliedPromo, validateAndApply, autoAppliedTried]);
   // --------------------------------------
 
-  const FREE_SHIPPING_LIMIT = 8000;
+  const FREE_SHIPPING_LIMIT = 10000;
   const SHIPPING_COST = 380;
 
   const discountAmount = appliedPromo ? appliedPromo.amount : 0;

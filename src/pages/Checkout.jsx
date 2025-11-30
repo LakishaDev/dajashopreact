@@ -4,7 +4,7 @@ import { useCart } from '../hooks/useCart.js';
 import { useFormValidator } from '../hooks/useFormValidator.js';
 import { useAuth } from '../hooks/useAuth.js';
 import { useFlash } from '../hooks/useFlash.js';
-import { usePromo } from '../hooks/usePromo.js'; // 1. IMPORTUJEMO PROMO
+import { usePromo } from '../hooks/usePromo.js';
 import { money } from '../utils/currency.js';
 import { AnimatePresence } from 'framer-motion';
 
@@ -18,6 +18,7 @@ import {
   getDocs,
   addDoc,
   serverTimestamp,
+  where,
 } from 'firebase/firestore';
 
 // Uvoz komponenti
@@ -27,9 +28,42 @@ import ShippingSection from '../components/checkout/ShippingSection';
 import PaymentSection from '../components/checkout/PaymentSection';
 import OrderSummary from '../components/checkout/OrderSummary';
 
-const generateOrderId = () => {
-  const random7Digits = Math.floor(1000000 + Math.random() * 9000000);
-  return `DAJA-${random7Digits}`;
+// [IZMENJENO]: Asinhrona funkcija za generisanje DAJA-xxxxxx ID-a sa proverom jedinstvenosti
+const generateUniqueDisplayId = async () => {
+  const maxRetries = 10;
+  let attempts = 0;
+  let uniqueIdFound = false;
+  let displayId = '';
+
+  while (attempts < maxRetries && !uniqueIdFound) {
+    // Generiše nasumičan broj od 100000 do 999999 (tačno 6 cifara)
+    const randomNumber = Math.floor(100000 + Math.random() * 900000);
+    displayId = `DAJA-${randomNumber}`;
+
+    attempts++;
+
+    // Proveravamo u bazi da li već postoji porudžbina sa istim displayId
+    const ordersRef = collection(db, 'orders');
+    const q = query(ordersRef, where('displayId', '==', displayId), limit(1));
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      uniqueIdFound = true;
+    } else {
+      // Mali timeout da se izbegne prevelik pritisak na Firestore
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+  }
+
+  if (!uniqueIdFound) {
+    // Fallback: Ako smo potrošili sve pokušaje, vraćamo vremensku oznaku
+    console.error(
+      'Nije moguće generisati jedinstven DAJA-ID nakon 10 pokušaja.'
+    );
+    return `FALLBACK-${Date.now()}`;
+  }
+
+  return displayId;
 };
 
 export default function Checkout() {
@@ -99,13 +133,10 @@ export default function Checkout() {
 
   const requiredForCourier = shippingMethod === 'courier';
 
-  // --- [IZMENA] AUTOFILL EFEKAT ---
-  // Sada prati i promenu shippingMethod-a
+  // --- AUTOFILL EFEKAT ---
   useEffect(() => {
     const fetchLastAddress = async () => {
-      // Pokrećemo samo ako je Kurir, ako imamo usera, i ako je adresa prazna
-      // (da ne bismo pregazili nešto što je korisnik upravo kucao)
-      if (shippingMethod === 'courier' && user && !formData.address) {
+      if (user && !formData.address && !formData.phone) {
         try {
           const q = query(
             collection(db, 'users', user.uid, 'addresses'),
@@ -113,7 +144,6 @@ export default function Checkout() {
             limit(1)
           );
           const snapshot = await getDocs(q);
-
           if (!snapshot.empty) {
             const savedAddr = snapshot.docs[0].data();
             const parts = (savedAddr.name || '').trim().split(/\s+/);
@@ -122,17 +152,15 @@ export default function Checkout() {
 
             setFormData((prev) => ({
               ...prev,
-              name: prev.name || fName, // Čuvamo ako je već uneto
-              surname: prev.surname || lName,
+              name: fName,
+              surname: lName,
               email: user.email || prev.email,
-              phone: savedAddr.phone || prev.phone || '',
-              // Adresu vraćamo iz baze
+              phone: savedAddr.phone || '',
               address: savedAddr.address || '',
               city: savedAddr.city || '',
               postalCode: savedAddr.zip || '',
             }));
           } else {
-            // Ako nema sačuvane adrese, samo popuni email
             setFormData((prev) => ({ ...prev, email: user.email || '' }));
           }
         } catch (error) {
@@ -140,9 +168,8 @@ export default function Checkout() {
         }
       }
     };
-
     fetchLastAddress();
-  }, [user, shippingMethod, setFormData]); // Dodat shippingMethod u zavisnosti
+  }, [user, setFormData]);
 
   useEffect(() => {
     if (shippingMethod === 'pickup') {
@@ -215,9 +242,13 @@ export default function Checkout() {
         }
       }
 
-      const orderId = generateOrderId();
+      // [IZMENA 2]: Poziv asinhronog generatora jedinstvenog ID-a
+      const displayId = await generateUniqueDisplayId();
+
+      // Koristimo Firestore-ov auto-generisani ID (docRef.id) i custom displayId za kupca
       const newOrder = {
-        id: orderId,
+        // [IZMENA 3]: Dodajemo displayId, orderId se više ne generiše
+        displayId: displayId,
         customer: {
           ...formData,
           uid: user ? user.uid : 'guest',
@@ -241,12 +272,17 @@ export default function Checkout() {
       };
 
       try {
-        await addDoc(collection(db, 'orders'), newOrder);
+        // addDoc generiše automatski document ID (koji nam je potreban za update statusa)
+        const docRef = await addDoc(collection(db, 'orders'), newOrder);
 
         // 5. BRIŠEMO PROMO KOD I KORPU POSLE USPEŠNE KUPOVINE
         removePromo();
 
-        setOrderData(newOrder);
+        // [KLJUČNA ISPRAVKA]: Ažuriramo orderData za modal sa displayId-em za 'id'
+        // i originalnim docId-em za 'docId' (za internu upotrebu ako zatreba).
+        const finalOrderData = { ...newOrder, id: displayId, docId: docRef.id };
+
+        setOrderData(finalOrderData);
         setShowSuccessModal(true);
         dispatch({ type: 'CLEAR' });
       } catch (error) {

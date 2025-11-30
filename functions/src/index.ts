@@ -18,11 +18,14 @@ import { saveImageFromUrl } from "./imageUtils";
 export {
   saveImageFromUrl,
   // sendNewOrderToAdmins,
-  // sendOrderConfirmation,
-  // sendOrderStatusUpdate,
+  //sendOrderConfirmation,
+  //sendOrderStatusUpdate,
   //sendWelcomeEmail,
   // sendNewsletterPromo,
 };
+
+// **ovo u terminal
+//firebase deploy --only functions
 
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript

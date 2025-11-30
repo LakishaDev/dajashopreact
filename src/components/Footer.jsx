@@ -9,6 +9,7 @@ import {
   ArrowRight,
   Loader2,
   Check,
+  Unlock,
 } from 'lucide-react';
 import './Footer.css';
 import { useFlash } from '../hooks/useFlash';
@@ -75,6 +76,13 @@ export default function Footer() {
             <p>
               Prijavite se za ekskluzivne ponude, novitete i savete o satovima.
             </p>
+            <p>
+              {' '}
+              Kao gest dobrodošlice, za Vas smo pripremili{' '}
+              <strong>10% popusta</strong> koji možete iskoristiti na prvu
+              kupovinu.
+            </p>
+            <p></p>
           </div>
 
           <form className="footer-newsletter-form" onSubmit={handleSubmit}>
