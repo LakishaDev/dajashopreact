@@ -11,18 +11,21 @@ import { setGlobalOptions } from "firebase-functions";
 
 // import { saveImageFromUrl } from "./imageUtils";
 // import { sendNewOrderToAdmins } from "./adminUtils";
-// import { sendOrderConfirmation, sendOrderStatusUpdate } from "./orderUtils";
+//import { sendOrderConfirmation, sendOrderStatusUpdate } from "./orderUtils";
 import { sendNewsletterPromo } from "./newsletters";
 
 // Izvozimo svaku funkciju ponaosob
 export {
   // saveImageFromUrl,
   // sendNewOrderToAdmins,
-  // sendOrderConfirmation,
-  // sendOrderStatusUpdate,
+  //sendOrderConfirmation,
+  //sendOrderStatusUpdate,
   //sendWelcomeEmail,
   sendNewsletterPromo,
 };
+
+// **ovo u terminal
+//firebase deploy --only functions
 
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript

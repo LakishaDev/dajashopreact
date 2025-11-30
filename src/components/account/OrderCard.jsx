@@ -44,8 +44,9 @@ export default function OrderCard({ order }) {
             <Package size={24} />
           </div>
           <div>
+            {/* [ISPRAVKA]: Uklonjen fiksni '#' jer ID sada ima 'DAJA-' prefiks */}
             <h4 className="text-lg font-bold text-[var(--color-text)] m-0">
-              #{order.id}
+              {order.id}
             </h4>
             <div className="flex items-center gap-2 text-sm text-[var(--color-muted)] mt-1">
               <Clock size={14} />

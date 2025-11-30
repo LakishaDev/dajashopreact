@@ -87,6 +87,17 @@ export const sendNewsletterPromo = functions.https.onRequest(
     }
 
     try {
+      const collectionRef = db.collection("newsletter"); // Proveri kako se zove tvoja kolekcija!
+
+      // 1. KORAK: PROVERA DA LI EMAIL VEĆ POSTOJI
+      const snapshot = await collectionRef.where("email", "==", email).get();
+
+      if (!snapshot.empty) {
+        // AKO POSTOJI -> Vrati status 409 (Conflict)
+        // Ovo je ključni deo koji aktivira tvoj React kod za duplikate!
+        res.status(409).send({ message: "Hvala na interesovanju ali već ste prijavljeni." });
+        return;
+      }
       // 1. Upisujemo korisnika u 'newsletter' kolekciju u bazi
       await db.collection("newsletter").doc(email).set({
         email: email,
@@ -105,7 +116,7 @@ export const sendNewsletterPromo = functions.https.onRequest(
           <h1>Dobrodošli!</h1>
           <p>Hvala na prijavi. Vaš kod za 10% popusta na prvu kupovinu je:</p>
           <div style="background: #eee; padding: 20px; font-size: 24px; font-weight: bold; margin: 20px 0;">DOBRODOSLI10</div>
-          <p>Kod važi samo ako ste prijavljeni na nalog sa ovom email adresom (${email}).</p>
+          <p>Kod važi samo ako ste prijavljeni na sajtu sa ovom email adresom (${email}).</p>
         </div>
       `,
       };

@@ -62,10 +62,11 @@ export const ordersService = {
       q,
       (snapshot) => {
         const items = snapshot.docs.map((d) => ({
-          // Prvo uzimamo podatke (gde je id = DAJA-...)
+          // 1. Uzimamo sve podatke porudžbine
           ...d.data(),
-          // Zatim dodajemo PRAVI ID dokumenta kao 'docId' (ArOc...)
-          // Ovo je ključno jer nam treba za update!
+          // 2. [KLJUČNA IZMENA]: Koristimo human-readable ID (DAJA-xxxxxx) za prikaz
+          id: d.data().displayId || d.id,
+          // 3. Stari Firestore ID čuvamo kao 'docId' (za update statusa)
           docId: d.id,
         }));
         onData(items);
