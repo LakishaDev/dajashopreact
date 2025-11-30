@@ -44,6 +44,8 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     features: [],
     model3DUrl: '',
     slug: '',
+    thumbnailUrl: '',
+    mainImageUrl: '',
   });
 
   // State za Image Gallery Modal
@@ -79,10 +81,19 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
         model3DUrl: product.model3DUrl || '',
         department: product.department || 'satovi',
         slug: product.slug || '',
+        // [NOVO] Učitavamo postojeće URL-ove ako ih proizvod već ima
+        thumbnailUrl: product.thumbnailUrl || '',
+        mainImageUrl: product.mainImageUrl || '',
       });
     } else {
       // [NOVO] Reset za novi proizvod - dodajemo jedan prazan red da bude spremno
-      setForm((prev) => ({ ...prev, features: [{ title: '', subtitle: '' }] }));
+      setForm((prev) => ({
+        ...prev,
+        features: [{ title: '', subtitle: '' }],
+        // [NOVO] Učitavamo postojeće URL-ove ako ih proizvod već ima
+        thumbnailUrl: '',
+        mainImageUrl: '',
+      }));
     }
 
     return () => {
@@ -162,7 +173,7 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
       const payload = {
         ...form,
         price: Number(form.price),
-        image: form.images[0]?.url || '',
+        image: form.mainImageUrl || form.images[0]?.url || '',
         slug: finalSlug,
         features: cleanFeatures, // [NOVO] Dodajemo u payload
       };
@@ -182,6 +193,19 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  // [NOVO] Handler za hvatanje podataka nakon uspešnog remote uploada (sa ImageManager-a)
+  const handleRemoteImageSuccess = (res) => {
+    // Cloud funkcija vraća sve URL-ove na top levelu 'res' objekta.
+    // Ažuriramo stanje sa tim URL-ovima
+    setForm((prev) => ({
+      ...prev,
+      thumbnailUrl: res.thumbnailUrl,
+      mainImageUrl: res.mainImageUrl,
+      // Napomena: niz form.images se ažurira kroz 'onChange' prop koji poziva ImageManager.
+    }));
+    setFlash({ open: true, title: 'Slika preuzeta i optimizovana!', ok: true });
   };
 
   // Filteri
@@ -561,6 +585,7 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                   onImageClick={(index) => setGalleryIndex(index)} // OTVARA GALERIJU
                   productSlug={form.slug} // <--- Dodato
                   productName={form.name} // <--- Dodato
+                  onRemoteUploadSuccess={handleRemoteImageSuccess}
                 />
                 <div className="mt-4 p-3 bg-blue-50 text-blue-700 text-xs rounded-lg border border-blue-100">
                   <p className="flex gap-2 items-start">

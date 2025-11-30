@@ -31,6 +31,7 @@ import {
  * @param {Function} props.onImageClick - Funkcija koja se poziva pri kliku na sliku (za prikaz u većem formatu).
  * @param {string} props.productSlug - Slug proizvoda za imenovanje foldera u skladištu.
  * @param {string} props.productName - Naziv proizvoda (koristi se ako slug nije dostupan).
+ * @param {Function} props.onRemoteUploadSuccess - Funkcija koja se poziva nakon uspešnog URL upload-a (za ažuriranje thumbnail i mainImage URL-ova).
  */
 function ImageManager({
   images,
@@ -38,6 +39,7 @@ function ImageManager({
   onImageClick,
   productSlug,
   productName,
+  onRemoteUploadSuccess,
 }) {
   const fileInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
@@ -83,9 +85,12 @@ function ImageManager({
 
   // --- NOVO: URL UPLOAD HANDLER ---
   const handleUrlUpload = async () => {
-    if (!urlInput.trim()) return;
+    const sanitizedUrlInput = urlInput.trim();
+    if (!sanitizedUrlInput) {
+      alert('Molim vas unesite validan URL slike.');
+      return;
+    }
 
-    // 1. Validacija foldera (isto kao kod običnog uploada)
     let storageFolderName = productSlug;
     if (!storageFolderName && productName) {
       storageFolderName = generateSlug(productName);
@@ -98,30 +103,36 @@ function ImageManager({
 
     setUrlLoading(true);
     try {
-      // Pozivamo tvoj servis koji gađa Cloud Function
-      const res = await uploadRemoteImage(urlInput, storageFolderName);
+      // Pozivamo Cloud Function koja sada vraća thumbnailUrl i mainImageUrl kao zasebne atribute
+      const res = await uploadRemoteImage(sanitizedUrlInput, storageFolderName);
 
       if (res.success) {
-        // Backend vraća 'results' niz sa svim obrađenim slikama
-        // Filtriramo samo uspešne i formatiramo ih za frontend
-        const newImages = (res.results || [])
-          .filter((r) => r.success)
+        // BITNA KOREKCIJA: Filtriramo niz rezultata (res.results) da bismo isključili
+        // auto-generisani thumbnail (500x500 sliku), jer on ne treba da bude u reorder listi.
+        const additionalImages = (res.results || [])
+          .filter(
+            (r) => r.success && !r.storagePath.includes('resized_500x500_')
+          )
           .map((r) => ({
-            url: r.newUrl,
-            path: r.storagePath, // Čuvamo path da bi mogli da brišemo kasnije ako treba
+            url: r.newUrl, // Ovo je sada ORIGINALNA slika i sve dodatne slike
+            path: r.storagePath,
           }));
 
-        if (newImages.length > 0) {
-          onChange([...images, ...newImages]);
+        if (additionalImages.length > 0) {
+          // onChange sada šalje listu slika za reorder listu (samo originalne i dodatne)
+          onChange([...images, ...additionalImages]);
           setUrlInput(''); // Reset polja
+
+          // KLJUČNA IZMENA: Šaljemo ceo odgovor nazad roditelju
+          onRemoteUploadSuccess?.(res);
         } else {
-          alert('Server nije uspeo da preuzme sliku. Proverite link.');
+          alert('Server nije uspeo da preuzme validnu sliku. Proverite link.');
         }
       } else {
         alert('Došlo je do greške pri preuzimanju slike.');
       }
     } catch (error) {
-      console.error(error);
+      console.error('Greška na serveru prilikom preuzimanja:', error);
       alert('Greška na serveru prilikom preuzimanja.');
     } finally {
       setUrlLoading(false);
