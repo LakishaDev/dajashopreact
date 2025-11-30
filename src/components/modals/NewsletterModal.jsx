@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
-// IZMENA: Koristimo lucide-react umesto react-icons
 import { X, Check } from 'lucide-react';
 import './NewsletterModal.css';
 
@@ -12,16 +10,17 @@ const API_URL =
 export default function NewsletterModal() {
   const [isVisible, setIsVisible] = useState(false);
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState('idle'); // idle, loading, success, error
+  const [status, setStatus] = useState('idle'); // idle, loading, success, error, duplicate
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
+    // Proverava da li je korisnik već uspešno prijavljen ili je već video modal
     const hasSeenNewsletter = localStorage.getItem('dajashop_newsletter_seen');
 
     if (!hasSeenNewsletter) {
       const timer = setTimeout(() => {
         setIsVisible(true);
-      }, 10000);
+      }, 10000); // Otvara modal nakon 10 sekundi ako nije viđen
 
       return () => clearTimeout(timer);
     }
@@ -29,6 +28,7 @@ export default function NewsletterModal() {
 
   const handleClose = () => {
     setIsVisible(false);
+    // Beleži da je korisnik video modal (i ako nije prijavljen)
     localStorage.setItem('dajashop_newsletter_seen', 'true');
   };
 
@@ -51,22 +51,38 @@ export default function NewsletterModal() {
         body: JSON.stringify({ email }),
       });
 
+      // --- LOGIKA ZA PROVERU DUPLIKATA ---
+      if (response.status === 409) {
+        // Pretpostavka: Backend vraća 409 Conflict status za duple adrese
+        setStatus('duplicate');
+        // Ne zatvaramo modal, već prikazujemo poruku
+        return;
+      }
+
       if (response.ok) {
+        // Standardna uspešna prijava
         setStatus('success');
+        // Trajno beleži da je uspešno prijavljen
         localStorage.setItem('dajashop_newsletter_seen', 'true');
 
         setTimeout(() => {
           setIsVisible(false);
         }, 3500);
       } else {
-        throw new Error('Došlo je do greške.');
+        // Neuspešna prijava (npr. status 500)
+        // Probajte da pročitate poruku greške iz tela odgovora ako je dostupna
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Greška pri slanju prijave.');
       }
     } catch (err) {
       console.error(err);
-      // Fallback za demo (ukloni u produkciji ako želiš striktnost)
-      setStatus('success');
-      localStorage.setItem('dajashop_newsletter_seen', 'true');
-      setTimeout(() => setIsVisible(false), 3500);
+      setStatus('error');
+      setErrorMsg(err.message || 'Došlo je do neočekivane greške na serveru.');
+
+      // Ako ne želite da se modal zatvori pri grešci, uklonite timeout.
+      // Trenutno ostavljamo da se zatvori samo kod uspeha.
+
+      // *** UKLONIO SAM FALLBACK ZA DEMO: Bolje je da se modal ne zatvori lažno. ***
     }
   };
 
@@ -91,34 +107,50 @@ export default function NewsletterModal() {
               className="newsletter-close-btn"
               onClick={handleClose}
               aria-label="Zatvori"
+              disabled={status === 'success'} // Onemogući zatvaranje dok se prikazuje uspeh
             >
-              {/* IZMENA: Lucide ikona */}
               <X size={24} />
             </button>
 
-            {status === 'success' ? (
+            {/* STANJE: USPEŠNA PRIJAVA */}
+            {status === 'success' && (
               <div className="newsletter-success">
                 <div className="success-icon">
-                  {/* IZMENA: Lucide ikona */}
                   <Check size={32} />
                 </div>
                 <h2>Uspešno!</h2>
                 <p>
                   Kod za popust je poslat na vašu email adresu. Proverite inbox
-                  (i spam).
+                  i spam.
                 </p>
-                <div
-                  style={{
-                    marginTop: '10px',
-                    fontWeight: 'bold',
-                    fontSize: '18px',
-                    color: 'var(--color-primary)',
-                  }}
-                >
-                  DOBRODOSLI10
-                </div>
               </div>
-            ) : (
+            )}
+
+            {/* STANJE: DUPLIKAT EMAIL-a */}
+            {status === 'duplicate' && (
+              <div className="newsletter-error duplicate">
+                <div className="success-icon">
+                  <Check size={32} />
+                </div>
+                <h2>Već ste prijavljeni!</h2>
+                <p>
+                  Hvala vam na interesovanju, ali ova adresa je već na našoj
+                  listi. Proverite vaš inbox za kod{' '}
+                </p>
+                <button
+                  onClick={handleClose}
+                  className="newsletter-submit"
+                  style={{ backgroundColor: '#007bff' }}
+                >
+                  Zatvori
+                </button>
+              </div>
+            )}
+
+            {/* STANJE: IDLE / ERROR / LOADING */}
+            {(status === 'idle' ||
+              status === 'loading' ||
+              status === 'error') && (
               <div className="newsletter-content">
                 <h2>10% Popusta</h2>
                 <p>
@@ -135,9 +167,10 @@ export default function NewsletterModal() {
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={status === 'loading'}
                   />
-                  {errorMsg && (
-                    <span style={{ color: '#EF4444', fontSize: '13px' }}>
-                      {errorMsg}
+                  {/* Prikazuje grešku validacije ili grešku sa servera */}
+                  {(errorMsg || status === 'error') && (
+                    <span className="newsletter-message error-message">
+                      {errorMsg || 'Greška pri slanju. Pokušajte ponovo.'}
                     </span>
                   )}
 
@@ -150,14 +183,7 @@ export default function NewsletterModal() {
                   </button>
                 </form>
 
-                <p
-                  style={{
-                    fontSize: '12px',
-                    marginTop: '15px',
-                    marginBottom: 0,
-                    opacity: 0.7,
-                  }}
-                >
+                <p className="newsletter-disclaimer">
                   Ne brinite, ne šaljemo spam. Odjava je moguća u bilo kom
                   trenutku.
                 </p>

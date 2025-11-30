@@ -114,6 +114,10 @@ export default function Product() {
           <div className="mobile-trust">
             <ProductTrust />
           </div>
+          {/* Tabovi (Mobilni) */}
+          <div className="mobile-only-tabs">
+            <ProductTabs product={p} hideSpecs={!hasFeatures} />
+          </div>
 
           {/* --- GLAVNA LOGIKA PRIKAZA --- */}
           {hasFeatures ? (
@@ -124,11 +128,6 @@ export default function Product() {
             <ProductSpecs product={p} />
           )}
           {/* ----------------------------- */}
-
-          {/* Tabovi (Mobilni) */}
-          <div className="mobile-only-tabs">
-            <ProductTabs product={p} hideSpecs={!hasFeatures} />
-          </div>
         </div>
       </div>
 

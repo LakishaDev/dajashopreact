@@ -86,7 +86,7 @@ export default function ProductTabs({ product, hideSpecs = false }) {
               </div>
               <div>
                 <h4>Besplatna Isporuka</h4>
-                <p>Za porudžbine iznad 5.000 RSD.</p>
+                <p>Za porudžbine iznad 10.000 RSD.</p>
               </div>
             </div>
             <div className="delivery-item">

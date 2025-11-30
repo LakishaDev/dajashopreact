@@ -169,22 +169,6 @@ export default function Home() {
           </div>
         </Carousel>
       </section>
-
-      {/* NEWSLETTER (minimal) */}
-      <section className="newsletter container card">
-        <div className="newsletter__wrap">
-          <h3>Primi novitete bez spama</h3>
-          <form
-            className="newsletter__form"
-            onSubmit={(e) => e.preventDefault()}
-          >
-            <input placeholder="tvoja@email.com" aria-label="Email" />
-            <button className="btn btn--primary" type="submit">
-              Prijavi se
-            </button>
-          </form>
-        </div>
-      </section>
     </div>
   );
 }
