@@ -208,7 +208,11 @@ export default function ProductCard({ p }) {
                 draggable={false}
               >
                 <img
-                  src={imgs[imageIndex]?.url ?? p.image}
+                  src={
+                    imageIndex === 0 && p.thumbnailUrl // Proveravamo da li je prva slika I da li thumbnail postoji
+                      ? p.thumbnailUrl // Ako jeste, koristimo optimizovani thumbnail
+                      : imgs[imageIndex]?.url ?? p.image // U suprotnom, vraćamo se na punu rezoluciju iz slajdera
+                  }
                   alt={p.name}
                   draggable={false}
                   className="w-full h-full object-cover pointer-events-none"

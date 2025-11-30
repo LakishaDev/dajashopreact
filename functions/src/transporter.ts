@@ -3,8 +3,12 @@ import * as nodemailer from "nodemailer";
 // UVEK koristi App Password, ne običnu šifru!
 export const transporter = nodemailer.createTransport({
   service: "gmail",
+  // auth: {
+  //   user: "dajashopnis@gmail.com", // ZAMENI
+  //   pass: "kgegneigjhgsrfnk", // ZAMENI (16 slova)
+  // },
   auth: {
-    user: "dajashopnis@gmail.com", // ZAMENI
-    pass: "kgegneigjhgsrfnk", // ZAMENI (16 slova)
+    user: "prodaja@dajashop.com", // Postavi u .env fajlu
+    pass: "Nislija1", // Postavi u .env fajlu
   },
 });

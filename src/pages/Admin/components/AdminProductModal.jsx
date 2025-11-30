@@ -44,6 +44,8 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
     features: [],
     model3DUrl: '',
     slug: '',
+    thumbnailUrl: '',
+    mainImageUrl: '',
   });
 
   // State za Image Gallery Modal
@@ -79,10 +81,19 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
         model3DUrl: product.model3DUrl || '',
         department: product.department || 'satovi',
         slug: product.slug || '',
+        // [NOVO] Učitavamo postojeće URL-ove ako ih proizvod već ima
+        thumbnailUrl: product.thumbnailUrl || '',
+        mainImageUrl: product.mainImageUrl || '',
       });
     } else {
       // [NOVO] Reset za novi proizvod - dodajemo jedan prazan red da bude spremno
-      setForm((prev) => ({ ...prev, features: [{ title: '', subtitle: '' }] }));
+      setForm((prev) => ({
+        ...prev,
+        features: [{ title: '', subtitle: '' }],
+        // [NOVO] Učitavamo postojeće URL-ove ako ih proizvod već ima
+        thumbnailUrl: '',
+        mainImageUrl: '',
+      }));
     }
 
     return () => {
@@ -162,7 +173,7 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
       const payload = {
         ...form,
         price: Number(form.price),
-        image: form.images[0]?.url || '',
+        image: form.mainImageUrl || form.images[0]?.url || '',
         slug: finalSlug,
         features: cleanFeatures, // [NOVO] Dodajemo u payload
       };
@@ -181,6 +192,85 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
       setFlash({ open: true, title: 'Greška', ok: false });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // [NOVO] DEDICIRANI HANDLER ZA SVE PROMENE U NIZU SLIKA (Reorder, Delete, Local Upload)
+  // Ovo implementira logiku da se Thumbnail/Main URL menja samo ako se promeni index 0.
+  // src/pages/Admin/components/AdminProductModal.jsx
+
+  const handleImageChange = (newImages) => {
+    setForm((prev) => {
+      // URL prve slike pre i posle promene
+      const oldPrimaryUrl = prev.images[0]?.url || '';
+      const newPrimaryUrl = newImages[0]?.url || '';
+
+      const isPrimaryImageUnchanged = newPrimaryUrl === oldPrimaryUrl;
+      const isListNowEmpty = newImages.length === 0;
+
+      let nextThumbnailUrl = prev.thumbnailUrl;
+      let nextMainImageUrl = prev.mainImageUrl;
+
+      if (!isPrimaryImageUnchanged && !isListNowEmpty) {
+        // SLUČAJ 1: Slika na indexu 0 se promenila (reorderovana ili zamenjena novim LOKALNIM fajlom).
+        // GUBIMO link na posvećeni resize URL, pa resetujemo oba na URL nove prve slike.
+        nextMainImageUrl = newPrimaryUrl;
+        nextThumbnailUrl = newPrimaryUrl; // Privremeni fallback (originalni URL)
+      } else if (isListNowEmpty) {
+        // SLUČAJ 2: Niz je prazan. Resetujemo sve.
+        nextMainImageUrl = '';
+        nextThumbnailUrl = '';
+      } else {
+        // SLUČAJ 3: Slika na indexu 0 je ista (promene na indexima > 0).
+        // ZADRŽAVAMO postojeće dedicated URL-ove.
+        nextMainImageUrl = prev.mainImageUrl;
+        nextThumbnailUrl = prev.thumbnailUrl;
+      }
+
+      return {
+        ...prev,
+        images: newImages,
+        mainImageUrl: nextMainImageUrl,
+        thumbnailUrl: nextThumbnailUrl,
+      };
+    });
+  };
+
+  const handleRemoteImageSuccess = (res) => {
+    // očekujemo da backend pošalje različite URL-ove:
+    // thumbnailUrl = 500x500, mainImageUrl = original
+    if (res.thumbnailUrl && res.mainImageUrl) {
+      setForm((prev) => {
+        const currentPrimaryUrl = prev.images?.[0]?.url || null;
+
+        // Ako nema slika, tretiramo kao postavljanje prve (primarne) slike
+        if (!currentPrimaryUrl) {
+          return {
+            ...prev,
+            thumbnailUrl: res.thumbnailUrl,
+            mainImageUrl: res.mainImageUrl,
+          };
+        }
+
+        // Ako se backend-ov mainImageUrl poklapa sa URL-om slike na indexu 0,
+        // znači da upravo ta slika jeste primarna → sme da se override-uje.
+        if (currentPrimaryUrl === res.mainImageUrl) {
+          return {
+            ...prev,
+            thumbnailUrl: res.thumbnailUrl,
+            mainImageUrl: res.mainImageUrl,
+          };
+        }
+
+        // U svim ostalim slučajevima (dodavanje slika na index > 0) NE diramo primarne URL-ove
+        return prev;
+      });
+
+      setFlash({
+        open: true,
+        title: 'Slika preuzeta i optimizovana!',
+        ok: true,
+      });
     }
   };
 
@@ -557,10 +647,11 @@ export default function AdminProductModal({ product, onClose, onSuccess }) {
                 {/* PROSLEĐUJEMO onImageClick */}
                 <ImageManager
                   images={form.images}
-                  onChange={(imgs) => handleChange('images', imgs)}
+                  onChange={handleImageChange} // KORISTIMO DEDICIRANI HANDLER
                   onImageClick={(index) => setGalleryIndex(index)} // OTVARA GALERIJU
                   productSlug={form.slug} // <--- Dodato
                   productName={form.name} // <--- Dodato
+                  onRemoteUploadSuccess={handleRemoteImageSuccess}
                 />
                 <div className="mt-4 p-3 bg-blue-50 text-blue-700 text-xs rounded-lg border border-blue-100">
                   <p className="flex gap-2 items-start">
